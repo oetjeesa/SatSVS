@@ -59,7 +59,7 @@ parameters and analysis are defined. Analysis can be added as wished, the baseli
 
 _To be implemented at a later stage:_
 
-Satellite
+### Satellite
 - __sat_thermal__: Thermal conditions over orbit
 - __sat_attitude_control__: Satellite attitude control over orbit
 
