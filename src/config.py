@@ -3,11 +3,7 @@ from math import ceil, radians
 from astropy.time import Time
 import sgp4
 import os
-import sys
-sys.path.append('../src')
-sys.path.append('../input')
-sys.path.append('../output')
-
+os.environ['PROJ_LIB'] = '/Users/micheltossaint/Documents/anaconda3/share/proj'
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from geopandas import GeoSeries, GeoDataFrame
@@ -21,6 +17,9 @@ from analysis_cov import *
 from analysis_obs import *
 from analysis_com import *
 from analysis_nav import *
+from analysis_pow import *
+from analysis_dat import *
+
 from segments import Constellation, Satellite, Station, User, Ground2SpaceLink, User2SpaceLink, Space2SpaceLink
 import logging_svs as ls
 import misc_fn
@@ -493,6 +492,14 @@ class AppConfig:
                     self.analysis = AnalysisNavDOP()
                 if analysis_node.find('Type').text == 'nav_accuracy':
                     self.analysis = AnalysisNavAccuracy()
+                if analysis_node.find('Type').text == 'pow_battery_depth_discharge':
+                    self.analysis = AnalysisPowDepthDischarge()
+                if analysis_node.find('Type').text == 'pow_eclipse_duration':
+                    self.analysis = AnalysisPowEclipseDuration()
+                if analysis_node.find('Type').text == 'dat_storage':
+                    self.analysis = AnalysisSatDataStorage()
+                if analysis_node.find('Type').text == 'dat_latency':
+                    self.analysis = AnalysisSatDataLatency()
                 self.analysis.type = analysis_node.find('Type').text
                 self.analysis.read_config(analysis_node)  # Read the configuration for the specific analysis
 

@@ -1,8 +1,4 @@
 import os
-import sys
-sys.path.append('../src')
-sys.path.append('../input')
-sys.path.append('../output')
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap

@@ -1,7 +1,4 @@
 import sys
-sys.path.append('../src')
-sys.path.append('../input')
-sys.path.append('../output')
 import logging
 import logging.handlers as handlers
 

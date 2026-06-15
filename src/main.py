@@ -1,11 +1,5 @@
 # Import python modules
 import os
-import sys
-sys.path.append('../src')
-sys.path.append('../input')
-sys.path.append('../output')
-
-
 if os.path.exists('../output/main.log'):
     os.remove('../output/main.log')
 import datetime
@@ -162,8 +156,6 @@ if __name__ == '__main__':
 
     run_after_time_loop(sm)  # Run the after time loop
 
-# TODO analysis SAT Energy
-# TODO analysis SAT Data storage
 # TODO analysis SAT Thermal
 # TODO analysis SAT Aocs
 # TODO analysis SZA_pushbroom faster...

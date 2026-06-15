@@ -1,9 +1,4 @@
 import os
-import sys
-sys.path.append('../src')
-sys.path.append('../input')
-sys.path.append('../output')
-
 import numpy as np
 import pandas as pd
 from math import degrees, radians

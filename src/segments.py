@@ -1,8 +1,4 @@
 # Standard python packages
-import sys
-sys.path.append('../src')
-sys.path.append('../input')
-sys.path.append('../output')
 import numpy as np
 from math import floor, degrees, radians
 from astropy.coordinates import EarthLocation

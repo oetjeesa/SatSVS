@@ -1,8 +1,18 @@
 # Satellite Service Volume Simulator
 ## Open Source satellite, ground station and user tool
-### M. Tossaint - 2020 - v2
+### M. Tossaint - 2026 - v3
 
 <img src="/docs/schema.png" alt="schema"/>
+
+## Installation & first run
+Download from github, and install the following libraries:
+- Numpy, pandas and numba
+- Astropy and sgp4
+- Basemap and xarray
+- Geopandas and shapely
+- Itur
+
+To run, edit the config.xml file and run: python main.py
 
 ## Introduction
 Framework takes care of geometry computations, satellite propagation, ground station and user rotation in ECI/ECF.
@@ -27,6 +37,7 @@ parameters and analysis are defined. Analysis can be added as wished, the baseli
 ### Earth observation
 - __obs_swath_conical__: Swath coverage for satellite(s) with conical scanners
 - __obs_swath_pushbroom__: Swath coverage for satellite(s)
+- __obs_sza_push_broom__: Solar Zenith Angle (SZA) within the push broom swath of satellite(s)
 - __obs_sza_subsat__: Solar Zenith Angle (SZA) for all satellite(s) sub satellite point
 
 ### Communication
@@ -38,11 +49,17 @@ parameters and analysis are defined. Analysis can be added as wished, the baseli
 - __nav_dillution_of_precision__: DOP values for user(s) (also spacecraft user)
 - __nav_accuracy__: Navigation accuracy (UERE*DOP) values for user(s) (also spacecraft user)
 
+### Satellite power
+- __pow_battery_depth_discharge__: Battery state-of-charge / depth-of-discharge and power generation vs. draw over orbit
+- __pow_eclipse_duration__: Eclipse duration per orbit over the simulation
+
+### Data handling
+- __dat_storage__: Solid State Recorder (SSR) fill level over orbit (recording vs. downlink)
+- __dat_latency__: Data latency statistics from acquisition to ground reception
+
 _To be implemented at a later stage:_
 
 Satellite
-- __sat_power_subsystem__: Power over orbit including eclipse analysis
-- __sat_data_handling__: Data storage and downlink over orbit
 - __sat_thermal__: Thermal conditions over orbit
 - __sat_attitude_control__: Satellite attitude control over orbit
 
@@ -215,6 +232,7 @@ The following xml is used to setup the simulation parameters:
     <IncludeStation2SpaceLinks>True</IncludeStation2SpaceLinks>
     <IncludeUser2SpaceLinks>True</IncludeUser2SpaceLinks>
     <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
+    <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
     <OrbitPropagator>SGP4</OrbitPropagator>
 
     <Analysis>
@@ -227,6 +245,7 @@ The following explanations apply for the parameters:
 - The Start/Stop time parameters are in UTC time and TimeStep in seconds. 
 - The IncludeStation2SpaceLinks, etc. parameters determine whether links between different objects: sat, station and user are computed. Normally leave these to True so that all analysis works. Time could
 be saved by disabling some. 
+- The OrbitsFromPreviousRun flag (True/False) reuses the satellite ECI orbits cached in 'output/orbits_internal.txt' from a previous run instead of re-propagating, to save time when only the analysis changes.
 - The OrbitPropagator determines which propagator: 'Keplerian' or 'SGP4' to take.
 
 The analysis are described below:
@@ -435,6 +454,44 @@ what kind of statistic is displayed per user location.
 
 <img src="/docs/obs_swath_push_broom.png" alt="cov_satellite_push_broom"/>
 <img src="/docs/obs_swath_push_broom_revisit.png" alt="cov_satellite_push_broom_revisit"/>
+
+
+### obs_sza_push_broom
+Plots the mean Solar Zenith Angle (SZA) for the user locations falling within the push broom 
+swath of one or more satellites. It combines the push broom swath geometry (as in 
+obs_swath_push_broom) with a per-location solar zenith angle computation, so it shows the 
+illumination conditions under which each location is observed.
+The user segment is used to define the grid of analysis and defines the granularity of the result.
+
+_Note: this analysis is in an early stage and the solar angle computation makes it slow; use a 
+coarse user grid._
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>obs_sza_push_broom</Type>
+</Analysis>
+```
+In the constellation part of the space segment the instrument characteristics are defined the same
+way as for obs_swath_push_broom, either in meters at the edge:
+```
+<ObsSwathStart>250000.0</ObsSwathStart>
+<ObsSwathStop>650000.0</ObsSwathStop>
+```
+or in degrees incidence angle:
+```
+<ObsIncidenceAngleStart>20.0</ObsIncidenceAngleStart>
+<ObsIncidenceAngleStop>52.0</ObsIncidenceAngleStop>
+```
+
+Optional in the analysis part are:
+```
+<PolarView>60</PolarView>
+<SaveOutput>NetCDF</SaveOutput>
+```
+- PolarView angle: This parameter can be given to see one part of the globe in an stereographic view, eg. for the polar region.
+  When negative the area on the South Pole will be visible.
+- SaveOutput: NetCDF or Numpy This flag will enable saving the user swath coverage for every timestep.
 
 
 ### obs_sza_subsat
@@ -687,6 +744,122 @@ Additionally the constellation needs to be supplied with an elevation dependent 
 
 <img src="/docs/nav_accuracy.png" alt="nav_accuracy"/>
 
+
+### pow_battery_depth_discharge
+Models the satellite power subsystem over the simulation: it determines for each epoch whether the
+satellite is in eclipse (geometric Earth-shadow check against the Sun direction), computes the solar
+power generated, subtracts the bus and payload power draw, and integrates the battery state-of-charge.
+The result plots the battery Depth-of-Discharge (DoD) in % together with the generated and drawn power.
+The analysis uses the first satellite defined in the space segment.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>pow_battery_depth_discharge</Type>
+    <BatteryCapacityWh>500</BatteryCapacityWh>
+    <InitialSoC>1.0</InitialSoC>
+    <SolarPanelArea>5.0</SolarPanelArea>
+    <PanelEfficiency>0.3</PanelEfficiency>
+    <BasePowerDrawW>200</BasePowerDrawW>
+    <InstrumentPowerDrawW>400</InstrumentPowerDrawW>
+</Analysis>
+```
+Parameters are:
+- BatteryCapacityWh: Battery capacity in Wh.
+- InitialSoC: Initial state-of-charge as a fraction (1.0 = full).
+- SolarPanelArea: Solar panel area in m^2.
+- PanelEfficiency: Solar panel efficiency as a fraction (a solar constant of 1361 W/m^2 is assumed).
+- BasePowerDrawW: Continuous bus power draw in W.
+- InstrumentPowerDrawW: Additional payload power draw in W when the instrument is active.
+
+Optional in the analysis part is:
+```
+    <PayloadLatitudeLimit>60</PayloadLatitudeLimit>
+```
+- PayloadLatitudeLimit: The payload only draws power when the satellite is below this absolute
+  latitude in degrees (default 90, i.e. always on).
+
+<img src="/docs/pow_depth_discharge.png" alt="pow_battery_depth_discharge"/>
+
+
+### pow_eclipse_duration
+Detects eclipse entry/exit for the first satellite using the same geometric Earth-shadow check and
+plots the duration in minutes of each eclipse over the simulation (day-of-year on the x-axis).
+A small time step is recommended so eclipse transitions are captured accurately.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>pow_eclipse_duration</Type>
+</Analysis>
+```
+
+<img src="/docs/pow_eclipse_duration.png" alt="pow_eclipse_duration"/>
+
+
+### dat_storage
+Models the on-board Solid State Recorder (SSR). At each epoch data is recorded when the satellite is
+below the payload latitude limit, and downlinked when a ground station is in view (using the
+station-to-space links, so IncludeStation2SpaceLinks must be True). The SSR fill level is integrated
+and clipped between zero and the capacity, and plotted over time with downlink-active periods shaded.
+The analysis uses the first satellite defined in the space segment.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>dat_storage</Type>
+    <SSRCapacityGbits>2000</SSRCapacityGbits>
+    <InitialFillGbits>0</InitialFillGbits>
+    <InstrumentRateMbps>500</InstrumentRateMbps>
+    <DownlinkRateMbps>1200</DownlinkRateMbps>
+</Analysis>
+```
+Parameters are:
+- SSRCapacityGbits: Recorder capacity in Gbits.
+- InitialFillGbits: Initial amount of data stored in Gbits.
+- InstrumentRateMbps: Instrument data generation rate in Mbps (while recording).
+- DownlinkRateMbps: Downlink rate in Mbps (while a ground station is in view).
+
+Optional in the analysis part is:
+```
+    <PayloadLatitudeLimit>60</PayloadLatitudeLimit>
+```
+- PayloadLatitudeLimit: The instrument only records when the satellite is below this absolute
+  latitude in degrees (default 90, i.e. always recording).
+
+<img src="/docs/dat_storage.png" alt="dat_storage"/>
+
+
+### dat_latency
+Extends the SSR model of dat_storage with a first-in-first-out data queue to compute the latency
+between data acquisition and reception on the ground (orbit time until downlink plus a fixed ground
+processing delay). It plots the latency time series and a histogram, and reports mean, 95th
+percentile and the percentage of data received within 2 hours.
+The analysis uses the first satellite defined in the space segment and requires station-to-space
+links to be enabled.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>dat_latency</Type>
+    <SSRCapacityGbits>2000</SSRCapacityGbits>
+    <InitialFillGbits>0</InitialFillGbits>
+    <InstrumentRateMbps>500</InstrumentRateMbps>
+    <DownlinkRateMbps>1200</DownlinkRateMbps>
+</Analysis>
+```
+Parameters are the same as for dat_storage.
+
+Optional in the analysis part are:
+```
+    <PayloadLatitudeLimit>60</PayloadLatitudeLimit>
+    <GroundProcessingMin>15</GroundProcessingMin>
+```
+- PayloadLatitudeLimit: The instrument only records when the satellite is below this absolute
+  latitude in degrees (default 90).
+- GroundProcessingMin: Fixed ground processing delay in minutes added to each latency value (default 0).
+
+<img src="/docs/dat_latency_stats.png" alt="dat_latency"/>
 
 
 

@@ -1,5 +1,4 @@
 import math
-import os
 
 PI = math.pi
 RAD = PI / 180.0 / 3600  # Radians per arcseconds of degrees
