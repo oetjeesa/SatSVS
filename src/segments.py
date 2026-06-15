@@ -222,7 +222,7 @@ class Ground2SpaceLink:
 
         self.gr2sp_ecf = satellite.pos_ecf - station.pos_ecf
 
-        self.distance = np.linalg.norm(self.gr2sp_ecf)
+        self.distance = misc_fn.norm3(self.gr2sp_ecf)
 
         self.azimuth, self.elevation = misc_fn.calc_az_el(satellite.pos_ecf, station.pos_ecf)  # From Station to Satellite
         self.azimuth2, self.elevation2 = misc_fn.calc_az_el(station.pos_ecf, satellite.pos_ecf)  # From Satellite to Station
@@ -265,7 +265,7 @@ class User2SpaceLink:
 
         self.usr2sp_ecf = satellite.pos_ecf - user.pos_ecf
 
-        self.distance = np.linalg.norm(self.usr2sp_ecf)
+        self.distance = misc_fn.norm3(self.usr2sp_ecf)
 
         self.azimuth, self.elevation = misc_fn.calc_az_el(satellite.pos_ecf, user.pos_ecf)
 
@@ -313,7 +313,7 @@ class Space2SpaceLink:
 
         self.sp2sp_ecf = sat_2.pos_ecf - sat_1.pos_ecf
 
-        self.distance = np.linalg.norm(self.sp2sp_ecf)
+        self.distance = misc_fn.norm3(self.sp2sp_ecf)
 
         self.azimuth, self.elevation = misc_fn.calc_az_el(sat_1.pos_ecf, sat_2.pos_ecf)
         self.azimuth2, self.elevation2 = misc_fn.calc_az_el(sat_2.pos_ecf, sat_1.pos_ecf)
@@ -339,7 +339,7 @@ class Space2SpaceLink:
                 in_view_elevation = True
 
         # Also check whether the link is not passing through the Earth
-        intersect_earth, i_x1, i_x2 = misc_fn.line_sphere_intersect(sat_1.pos_eci, sat_2.pos_eci, R_EARTH, [0, 0, 0])
+        intersect_earth, i_x1, i_x2 = misc_fn.line_sphere_intersect(sat_1.pos_eci, sat_2.pos_eci, R_EARTH, np.zeros(3))
 
         if not intersect_earth and in_view_elevation:
             return True

@@ -2,7 +2,7 @@ import math
 from math import sin, cos, atan2, atan, fabs, acos
 import time
 import numpy as np
-from astropy.coordinates import EarthLocation, AltAz, get_sun
+from astropy.coordinates import EarthLocation, AltAz, get_sun, ITRS
 from astropy import time
 from astropy import coordinates, units as u
 from math import tan, sqrt, asin, degrees, radians
@@ -106,7 +106,7 @@ def mjd2gmst(mjd_requested):
     return theta_n
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def lla2xyz(lla):
     """
     :param lla: LLA Latitude rad/[-PI/2,PI/2] positive N, Longitude rad/[-PI,PI] positive E, height above ellipsoid
@@ -155,7 +155,7 @@ def lla2xyz_astropy(lla):
 #      longitude and height. For more information: Simo H. Laurila,
 #      "Electronic Surveying and Navigation", John Wiley & Sons (1976).
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def xyz2lla(xyz):
     """
     :param xyz: ECEF XYZ coordinates in m
@@ -208,7 +208,7 @@ def xyz2lla(xyz):
     return [lat, lon, height]
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def kep2xyz(mjd_requested,
             kepler_epoch_mjd, kepler_semi_major_axis, kepler_eccentricity, kepler_inclination,
             kepler_right_ascension, kepler_arg_perigee, kepler_mean_anomaly):
@@ -309,7 +309,7 @@ def newton_raphson (mean_anomaly, eccentricity):
     return big_e[k + 1]
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def spin_vector(angle, pos_vec, vel_vec):
     """
     :param angle: Angle Rotation angle (radians/double)
@@ -337,6 +337,18 @@ def spin_vector(angle, pos_vec, vel_vec):
     return pos, vel
 
 
+@jit(nopython=True, cache=True, fastmath=True)
+def norm3(v):
+    """
+    :param v: 3d vector
+    :return: Euclidean norm
+    Norm of a 3-vector with scalar math, avoiding the np.linalg.norm call overhead
+    in the per-epoch per-link inner loop.
+    """
+    return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
+
+
+@jit(nopython=True, cache=True)  # no fastmath: divisions by p can hit zero at the poles
 def calc_az_el(xs, xu):
     """
     :param xs: Xs Satellite position in ECEF (m/double)
@@ -344,52 +356,43 @@ def calc_az_el(xs, xu):
     :return: Az, El Azimuth and Elevation (radians/double)
     Compute Azimuth and Elevation from User to Satellite assuming the Earth is a perfect sphere
     """
-    az_el = np.zeros(2)
-    e3by3 = np.zeros((3,3))
-    d = np.zeros(3)
-
     x = xu[0]
     y = xu[1]
     z = xu[2]
     p = sqrt(x * x + y * y)
-
     R = sqrt(x * x + y * y + z * z)
-    e3by3[0][0] = -(y / p)
-    e3by3[0][1] = x / p
-    e3by3[0][2] = 0.0
-    e3by3[1][0] = -(x * z / (p * R))
-    e3by3[1][1] = -(y * z / (p * R))
-    e3by3[1][2] = p / R
-    e3by3[2][0] = x / R
-    e3by3[2][1] = y / R
-    e3by3[2][2] = z / R
 
-    # matrix multiply vector from user */
-    for k in range(3):
-        d[k] = 0.0
-        for i in range(3):
-            d[k] += (xs[i] - xu[i]) * e3by3[k][i]
+    # Line-of-sight vector from user to satellite
+    dx = xs[0] - x
+    dy = xs[1] - y
+    dz = xs[2] - z
 
-    s = d[2] / sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2])
+    # Project line-of-sight onto the local East-North-Up frame (avoids the 3x3 matrix)
+    d0 = (-y * dx + x * dy) / p                          # East
+    d1 = (-x * z * dx - y * z * dy) / (p * R) + p * dz / R  # North
+    d2 = (x * dx + y * dy + z * dz) / R                  # Up
+
+    s = d2 / sqrt(d0 * d0 + d1 * d1 + d2 * d2)
     if s == 1.0:
-        az_el[1] = 0.5 * PI
+        elevation = 0.5 * PI
     else:
-        az_el[1] = atan(s / sqrt(1.0 - s * s))
+        elevation = atan(s / sqrt(1.0 - s * s))
 
-    if d[1] == 0.0 and d[0] > 0.0:
-        az_el[0] = 0.5 * PI
-    elif d[1] == 0.0 and d[0] < 0.0:
-        az_el[0] = 1.5 * PI
+    if d1 == 0.0 and d0 > 0.0:
+        azimuth = 0.5 * PI
+    elif d1 == 0.0 and d0 < 0.0:
+        azimuth = 1.5 * PI
     else:
-        az_el[0] = atan(d[0] / d[1])
-        if d[1] < 0.0:
-            az_el[0] += PI
-        elif d[1] > 0.0 and d[0] < 0.0:
-            az_el[0] += 2.0 * PI
+        azimuth = atan(d0 / d1)
+        if d1 < 0.0:
+            azimuth += PI
+        elif d1 > 0.0 and d0 < 0.0:
+            azimuth += 2.0 * PI
 
-    return az_el[0], az_el[1]
+    return azimuth, elevation
 
 
+@jit(nopython=True, cache=True)  # no fastmath: divides by a, which is zero for coincident points
 def line_sphere_intersect(x1, x2, sphere_radius, sphere_center):
     """
     :param x1: Point 1 on the line
@@ -494,7 +497,7 @@ def sat_contour(lla, elevation_mask):
     return contour
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def dist_point_plane(point_q, plane_normal):
     """
     :param point_q: point q 3d vector
@@ -504,7 +507,7 @@ def dist_point_plane(point_q, plane_normal):
     return np.dot(point_q, plane_normal)
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def test_point_within_pyramid(point_q, planes_h):
     """
     :param point_q: point q
@@ -572,7 +575,7 @@ def rot_vec_vec(a, b, theta):
     return proj['par'] + proj['perp'] * cos(theta) + norm(proj['perp']) * make_unit(w) * sin(theta)
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def det_swath_radius(alt, inc_angle, r_earth):
     """
     :param alt: altitude in [m]
@@ -585,7 +588,7 @@ def det_swath_radius(alt, inc_angle, r_earth):
     return (oza - inc_angle)*r_earth
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def det_oza_fast(alt, r_earth, inc_angle):
     """
     :param alt: altitude in [m]
@@ -598,7 +601,7 @@ def det_oza_fast(alt, r_earth, inc_angle):
     return oza
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def earth_angle_beta(swath_radius, r_earth):
     """
     :param swath_radius: swath radius in [m]
@@ -609,7 +612,7 @@ def earth_angle_beta(swath_radius, r_earth):
     return beta
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def angle_two_vectors(u, v, norm_u, norm_v):
     """
     :param u: 3d vector
@@ -629,7 +632,7 @@ def angle_two_vectors(u, v, norm_u, norm_v):
     return result
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def incl_from_swath(swath_w, r_earth, alt):
     """
     :param swath_w: swath width in [m]
@@ -694,7 +697,7 @@ def earth_radius_lat(lat):
 #             shared_array[idx_user] = 1  # Within swath
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def check_users_in_plane(user_metric, user_pos, planes, cnt_epoch):
     n_users = len(user_metric)
     for idx_user in range(n_users):
@@ -703,18 +706,30 @@ def check_users_in_plane(user_metric, user_pos, planes, cnt_epoch):
     return user_metric[:,cnt_epoch]
 
 
-def det_sza_fast(user_metric, user_pos_lla, epoch, cnt_epoch): # In fact very slow, TBD
+def det_sza_fast(user_metric, user_pos_lla, epoch, cnt_epoch):
+    # Solar Zenith Angle for the users currently within the swath.
+    # The Sun direction is identical for all users at a given epoch, so it is computed
+    # once (in the Earth-fixed ITRS frame) and the per-user zenith angle is obtained from
+    # a dot product with the local geodetic up vector. This replaces the previous per-user
+    # astropy AltAz transform, which dominated the runtime of the SZA analysis.
+    sun_itrs = get_sun(epoch).transform_to(ITRS(obstime=epoch))
+    sun_vec = np.array([sun_itrs.x.value, sun_itrs.y.value, sun_itrs.z.value])
+    sun_dir = sun_vec / norm(sun_vec)
 
-    n_users = len(user_metric)
-    for idx_user in range(n_users):
-        location = EarthLocation(lat=user_pos_lla[idx_user,0]*u.rad,
-                                 lon=user_pos_lla[idx_user,1]*u.rad,
-                                 height=user_pos_lla[idx_user,2]*u.m)
-        altazframe = AltAz(obstime=epoch, location=location)
-        sun_altaz = get_sun(epoch).transform_to(altazframe)
-        if (user_metric[idx_user,cnt_epoch] > 0):  # Within swath
-            user_metric[idx_user, cnt_epoch] = 90 - sun_altaz.alt.value
-    return user_metric[:,cnt_epoch]
+    col = user_metric[:, cnt_epoch]
+    mask = col > 0  # Only users within the swath
+    if np.any(mask):
+        lat = user_pos_lla[mask, 0]
+        lon = user_pos_lla[mask, 1]
+        cos_lat = np.cos(lat)
+        # Local geodetic up (zenith) unit vectors in ECF
+        up = np.empty((lat.size, 3))
+        up[:, 0] = cos_lat * np.cos(lon)
+        up[:, 1] = cos_lat * np.sin(lon)
+        up[:, 2] = np.sin(lat)
+        cos_sza = np.clip(up @ sun_dir, -1.0, 1.0)
+        col[mask] = np.degrees(np.arccos(cos_sza))  # SZA = 90 - sun elevation
+    return col
 
 
 def det_sza(user_pos_lla, epoch):
@@ -730,7 +745,7 @@ def det_sza(user_pos_lla, epoch):
         return 0
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def check_users_from_nadir(user_metric, user_pos, sat_pos, earth_angle_swath, cnt_epoch):
     """
     :param user_metric: 0 or 1 for covered user[num_users,num_epoch)
@@ -949,7 +964,7 @@ def comp_cn0_required(modulation, ber, datarate):
         return 100
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def inverse4by4(a):
     """
     :param a: 4 by 4 numpy array
@@ -1071,7 +1086,7 @@ def inverse4by4(a):
 
     return out
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, fastmath=True)
 def ecef2enu(a, user_lat, user_lon):
     """
     :param a: point a from which East North Up is
