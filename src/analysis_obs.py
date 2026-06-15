@@ -268,7 +268,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
         self.det_angles_from_swath_before_loop(sm)
         self.user_pos_ecf = np.zeros((len(sm.users),3))  # User position in ECF
         self.user_pos_lla = np.zeros((len(sm.users),3))  # User lat,lon,alt in radians,m
-        self.user_metric = np.zeros((len(sm.users), sm.num_epoch), dtype=np.float)  # Range
+        self.user_metric = np.zeros((len(sm.users), sm.num_epoch), dtype=float)  # Range
         # self.shared_array = RawArray('i', len(sm.users))
         for idx_user, user in enumerate(sm.users):
             self.user_pos_ecf[idx_user,:] = user.pos_ecf
