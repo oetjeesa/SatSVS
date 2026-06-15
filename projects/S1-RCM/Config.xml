@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Simulation Scenario-->
+<Scenario>
+    <SpaceSegment>
+	     <Constellation>
+			<NumOfPlanes>1</NumOfPlanes>
+			<NumOfSatellites>2</NumOfSatellites>
+			<ConstellationID>1</ConstellationID>
+			<ConstellationName>s1</ConstellationName>
+			<ReceiverConstellation>11</ReceiverConstellation>
+			<TLEFileName>../projects/S1-RCM/s1_tle.txt</TLEFileName>
+			<ObsSwathStart>300000.0</ObsSwathStart>
+			<ObsSwathStop>550000.0</ObsSwathStop>
+        </Constellation>
+	    <Constellation>
+			<NumOfPlanes>1</NumOfPlanes>
+			<NumOfSatellites>2</NumOfSatellites>
+			<ConstellationID>2</ConstellationID>
+			<ConstellationName>rcm</ConstellationName>
+			<TLEFileName>../projects/S1-RCM/rcm_tle.txt</TLEFileName>
+			<ReceiverConstellation>11</ReceiverConstellation>
+			<ObsSwathStart>300000.0</ObsSwathStart>
+			<ObsSwathStop>600000.0</ObsSwathStop>
+        </Constellation>
+
+	</SpaceSegment>
+	<!--Defines the ground stations that should be simulated-->
+	<GroundSegment>
+      <NumStation>1</NumStation>
+      <NetworkName>RIMS</NetworkName>
+      <GroundStation>
+        <Type>RIMS</Type>
+        <ConstellationID>1</ConstellationID>
+        <GroundStationID>1</GroundStationID>
+        <GroundStationName>ALB</GroundStationName>
+        <Latitude>57.10</Latitude>
+        <Longitude>9.90</Longitude>
+        <Height>0</Height>
+        <ReceiverConstellation>11</ReceiverConstellation>
+        <ElevationMask>5</ElevationMask>
+      </GroundStation>
+	</GroundSegment>
+  <!--Defines the users that should be simulated-->
+	<UserSegment>
+        <User>
+            <Type>Grid</Type>
+            <LatMin>0</LatMin>
+            <LatMax>90</LatMax>
+            <LonMin>-180</LonMin>
+            <LonMax>180</LonMax>
+            <LatStep>1</LatStep>
+            <LonStep>1</LonStep>
+            <Height>0.0</Height>
+            <ReceiverConstellation>11</ReceiverConstellation>
+            <ElevationMask>0.0</ElevationMask>
+        </User>
+    </UserSegment>
+
+	<!--Defines the simulation parameters-->
+	<SimulationManager>
+	    <StartDate>2019-01-01 00:00:00</StartDate>
+	    <StopDate>2019-01-07 00:00:00</StopDate>
+	    <TimeStep>120</TimeStep>
+
+		<IncludeStation2SpaceLinks>False</IncludeStation2SpaceLinks>
+		<IncludeUser2SpaceLinks>False</IncludeUser2SpaceLinks>
+		<IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
+
+        <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
+        <OrbitPropagator>Keplerian</OrbitPropagator>
+
+			<Analysis>
+				<Type>obs_swath_push_broom</Type>
+	            <PolarView>30</PolarView>
+				<Revisit>True</Revisit>
+				<Statistic>Mean</Statistic>
+			</Analysis>
+
+	</SimulationManager>
+</Scenario>
