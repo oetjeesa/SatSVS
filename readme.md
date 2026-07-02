@@ -18,6 +18,12 @@ To run, edit the config.xml file and run: python main.py
 Framework takes care of geometry computations, satellite propagation, ground station and user rotation in ECI/ECF.
 It will also automatically compute links between stations and satellites, users and satellites, and between satellites.
 
+### Main structure of the tool
+
+<img src="/docs/satsvs_architecture.png" alt="schema"/>
+
+### Configuration of the tool
+
 Configuration of the tool can be done in the config.xml file where satellites, ground stations, users, simulation
 parameters and analysis are defined. Analysis can be added as wished, the baseline of analysis available are below 
 (and explained further below):
