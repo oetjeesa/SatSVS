@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 from math import ceil, radians
 from astropy.time import Time
-import sgp4
+from sgp4.api import Satrec, WGS84
 import os
 os.environ['PROJ_LIB'] = '/Users/micheltossaint/Documents/anaconda3/share/proj'
 import matplotlib.pyplot as plt
@@ -65,6 +65,18 @@ class AppConfig:
         self.num_usr2sp = 0
         self.user_latitudes = None
         self.user_longitudes = None
+
+        self.file_orbits = None  # Handle of the orbit cache file, open during the time loop
+        self.sat_pos_ecf = None  # (num_sat, 3) satellite ECF positions for the batched link kernels
+        self.time_jd = 0  # Loop time, julian date split in day + fraction (for sgp4)
+        self.time_fr = 0
+        self.times_mjd_pre = None  # Precomputed per-epoch times, see main.precompute_times
+        self.times_gmst_pre = None
+        self.times_jd_pre = None
+        self.times_fr_pre = None
+        self.times_str_pre = None
+        self.times_datetime_pre = None
+        self.times_f_doy_pre = None
 
     def load_satellites(self):
 
@@ -145,30 +157,18 @@ class AppConfig:
                 sat.kepler.arg_perigee = radians(float(satellite.find('ArgOfPerigee').text))
                 sat.kepler.mean_anomaly = radians(float(satellite.find('MeanAnomaly').text))
                 if const.frontal_area is not None:
-                    sat.satrec = sgp4.model.Satellite()
-                    sat.satrec.satnum = sat.sat_id
                     sat.frontal_area = const.frontal_area
                     sat.mass = const.mass
-                    sat.satrec.jdsatepoch = sat.kepler.epoch_mjd + 2400000.5
-                    sat.satrec.bstar = const.bstar
-                    sat.satrec.argpo = sat.kepler.arg_perigee
-                    sat.satrec.inclo = sat.kepler.inclination
-                    sat.satrec.mo = sat.kepler.mean_anomaly
-                    sat.satrec.no = np.sqrt(GM_EARTH/np.power(sat.kepler.semi_major_axis,3))*60.0   # in [rad/min]
-                    sat.satrec.ecco = sat.kepler.eccentricity
-                    sat.satrec.nodeo = sat.kepler.right_ascension
-                    sat.satrec.whichconst = sgp4.earth_gravity.wgs84
-                    sat.satrec.ndot = 0
-                    sat.satrec.nddot = 0
-                    sat.satrec.epoch = Time(sat.kepler.epoch_mjd, format='mjd').datetime
-                    sat.satrec.epochyr = sat.satrec.epoch.year
-                    sat.satrec.a = pow(sat.satrec.no * sgp4.earth_gravity.wgs84.tumin, (-2.0 / 3.0));
-                    sat.satrec.alta = sat.satrec.a*(1.0 + sat.satrec.ecco) - 1.0;
-                    sat.satrec.altp = sat.satrec.a * (1.0 - sat.satrec.ecco) - 1.0;
-                    sgp4.propagation.sgp4init(sgp4.earth_gravity.wgs84, 'i', sat.sat_id,
-                                              sat.satrec.jdsatepoch - 2433281.5,
-                                              sat.satrec.bstar, sat.satrec.ecco, sat.satrec.argpo, sat.satrec.inclo,
-                                              sat.satrec.mo, sat.satrec.no,sat.satrec.nodeo, sat.satrec)
+                    # sgp4 v2 accelerated (C) propagator, initialised from the Kepler elements
+                    sat.satrec = Satrec()
+                    sat.satrec.sgp4init(
+                        WGS84, 'i', sat.sat_id,
+                        sat.kepler.epoch_mjd + 2400000.5 - 2433281.5,  # epoch as days since 1949 December 31 00:00 UT
+                        const.bstar, 0.0, 0.0,  # bstar, ndot, nddot
+                        sat.kepler.eccentricity, sat.kepler.arg_perigee, sat.kepler.inclination,
+                        sat.kepler.mean_anomaly,
+                        np.sqrt(GM_EARTH/np.power(sat.kepler.semi_major_axis, 3))*60.0,  # no_kozai in [rad/min]
+                        sat.kepler.right_ascension)
                 ls.logger.info(sat.__dict__)
                 self.satellites.append(sat)
             for item in constellation.iter('TLEFileName'):
@@ -200,8 +200,8 @@ class AppConfig:
                             ls.logger.info(['Found satellite:', str(sat.sat_id), 'Kepler Elements', str(sat.kepler.__dict__)])
                             sat.rx_constellation = const.rx_constellation
                             sat.elevation_mask = const.elevation_mask
-                            sat.el_mask_mask = const.el_mask_max
-                            sat.satrec = sgp4.io.twoline2rv(sat.tle_line1, sat.tle_line2, sgp4.earth_gravity.wgs84)
+                            sat.el_mask_max = const.el_mask_max
+                            sat.satrec = Satrec.twoline2rv(sat.tle_line1, sat.tle_line2, WGS84)
                             self.satellites.append(sat)
                             cnt = -1  # reset so that next tle set starts at cnt=0
                         cnt += 1
@@ -414,7 +414,7 @@ class AppConfig:
         # USER <->SATELLITE LINKS
         self.usr2sp = [[User2SpaceLink() for j in range(self.num_sat)] for i in range(self.num_user)]
         for idx_user in range(self.num_user):
-            for j in range(self.num_sat):
+            for idx_sat in range(self.num_sat):
                 if self.users[idx_user].rx_constellation[self.satellites[idx_sat].constellation_id - 1] == '1':
                     self.usr2sp[idx_user][idx_sat].link_in_use = True
                 else:

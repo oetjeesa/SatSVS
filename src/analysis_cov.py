@@ -135,20 +135,21 @@ class AnalysisCovPassTime(AnalysisBase):
         metric = np.zeros(len(sm.users))
         for idx_usr, user in enumerate(sm.users):
             valid_value_list = []  # Define and clear
+            metric_int = user.metric.astype(np.int8)
             for idx_sat, satellite in enumerate(sm.satellites):
-                for idx_tim in range(1, len(self.times_f_doy)):  # Loop over time (ignoring first)
-                    if user.metric[idx_tim - 1][idx_sat] and not user.metric[idx_tim][idx_sat]:  # End pass detected
-                        length_of_pass = 1  # Compute the length of the pass
-                        found_beginning_pass = False
-                        while not found_beginning_pass:
-                            if idx_tim - length_of_pass >= 0:
-                                if user.metric[idx_tim - length_of_pass][idx_sat]:
-                                    length_of_pass += 1
-                                else:
-                                    found_beginning_pass = True
-                            else:
-                                found_beginning_pass = True
-                        valid_value_list.append(length_of_pass * time_step)  # Add pass length to the list for this user
+                # Vectorised run-length pass detection; like the original per-epoch scan,
+                # passes still ongoing at the last epoch are not counted
+                transitions = np.diff(metric_int[:, idx_sat])
+                ends = np.flatnonzero(transitions == -1) + 1  # First epoch after each completed pass
+                if ends.size == 0:
+                    continue
+                starts = np.flatnonzero(transitions == 1) + 1  # First epoch of each pass
+                if metric_int[0, idx_sat]:  # Pass already running at the first epoch
+                    starts = np.insert(starts, 0, 0)
+                # Runs alternate, so starts/ends pair up in order; +1 keeps the original
+                # backward-scan convention (in-view epochs + 1)
+                lengths = ends - starts[:ends.size] + 1
+                valid_value_list.extend((lengths * time_step).tolist())  # Add pass lengths to the list for this user
 
             if len(valid_value_list) == 0:
                 metric[idx_usr] = -1.0
@@ -302,6 +303,7 @@ class AnalysisCovSatellitePvt(AnalysisBase):
         super().__init__()
         self.constellation_id = 0  # Mandatory
         self.satellite_id = 0  # Mandatory
+        self.file_orbits = None
 
     def read_config(self, node):
         if node.find('ConstellationID') is not None:
@@ -310,28 +312,23 @@ class AnalysisCovSatellitePvt(AnalysisBase):
             self.satellite_id = int(node.find('SatelliteID').text)
 
     def before_loop(self, sm):
-        if os.path.exists('../output/orbits.txt'):
-            os.remove('../output/orbits.txt')
+        # One file handle for the whole run; opening per satellite per epoch dominated the loop
+        self.file_orbits = open('../output/orbits.txt', 'w')
 
     def in_loop(self, sm):
-        for idx_sat, satellite in enumerate(sm.satellites):
-            if self.satellite_id > 0:  # Only one satellite
-                if satellite.constellation_id == self.constellation_id and \
-                        satellite.sat_id == self.satellite_id:
-                    with open('../output/orbits.txt', 'a') as f:
-                        f.write("%13.6f,%d,%13.6f,%13.6f,%13.6f,%13.6f,%13.6f,%13.6f\n" \
-                                % (sm.time_mjd, satellite.sat_id,
-                                   satellite.pos_eci[0], satellite.pos_eci[1], satellite.pos_eci[2],
-                                   satellite.vel_eci[0], satellite.vel_eci[1], satellite.vel_eci[2]))
-            else:  # All satellites in constellation
-                if satellite.constellation_id == self.constellation_id:
-                    with open('../output/orbits.txt', 'a') as f:
-                        f.write("%13.6f,%d,%13.6f,%13.6f,%13.6f,%13.6f,%13.6f,%13.6f\n" \
-                                % (sm.time_mjd, satellite.sat_id,
-                                   satellite.pos_eci[0], satellite.pos_eci[1], satellite.pos_eci[2],
-                                   satellite.vel_eci[0], satellite.vel_eci[1], satellite.vel_eci[2]))
+        for satellite in sm.satellites:
+            if satellite.constellation_id != self.constellation_id:
+                continue
+            if self.satellite_id > 0 and satellite.sat_id != self.satellite_id:  # Only one satellite
+                continue
+            self.file_orbits.write("%13.6f,%d,%13.6f,%13.6f,%13.6f,%13.6f,%13.6f,%13.6f\n"
+                                   % (sm.time_mjd, satellite.sat_id,
+                                      satellite.pos_eci[0], satellite.pos_eci[1], satellite.pos_eci[2],
+                                      satellite.vel_eci[0], satellite.vel_eci[1], satellite.vel_eci[2]))
 
     def after_loop(self, sm):
+        self.file_orbits.close()
+        self.file_orbits = None
         data = pd.read_csv('../output/orbits.txt', sep=',', header=None,
                            names=['RunTime', 'ID', 'x', 'y', 'z', 'x_vel', 'y_vel', 'z_vel'])
         data2 = data[data.ID == 1]

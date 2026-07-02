@@ -8,7 +8,7 @@ from astropy import coordinates, units as u
 from math import tan, sqrt, asin, degrees, radians
 from numpy import dot, arccos, cross, sin, cos
 from numpy.linalg import norm
-from numba import jit, float64 # todo test new modes in numba: njit, fastmath, cache, paralel...
+from numba import jit, float64, prange
 from scipy import interpolate
 from scipy.special import jv  # Bessel function of 1st kind
 
@@ -392,6 +392,38 @@ def calc_az_el(xs, xu):
     return azimuth, elevation
 
 
+@jit(nopython=True, cache=True)
+def calc_az_el_dist_batch(origin, targets, reverse):
+    """
+    :param origin: origin position in ECEF (m), 3-vector (station/user/satellite)
+    :param targets: target positions in ECEF (m), (n,3) array (satellites)
+    :param reverse: also compute azimuth/elevation of the origin as seen from each target
+    :return: az, el (target seen from origin), az2, el2 (origin seen from target,
+             zeros if reverse is False), dist (m), los (n,3) line-of-sight vectors target-origin
+    One numba call per origin per epoch instead of 3-4 per (origin, satellite) pair,
+    which removes the Python<->numba boundary overhead from the per-epoch link loops.
+    """
+    n = targets.shape[0]
+    az = np.empty(n)
+    el = np.empty(n)
+    az2 = np.zeros(n)
+    el2 = np.zeros(n)
+    dist = np.empty(n)
+    los = np.empty((n, 3))
+    for i in range(n):
+        dx = targets[i, 0] - origin[0]
+        dy = targets[i, 1] - origin[1]
+        dz = targets[i, 2] - origin[2]
+        los[i, 0] = dx
+        los[i, 1] = dy
+        los[i, 2] = dz
+        dist[i] = sqrt(dx * dx + dy * dy + dz * dz)
+        az[i], el[i] = calc_az_el(targets[i], origin)
+        if reverse:
+            az2[i], el2[i] = calc_az_el(origin, targets[i])
+    return az, el, az2, el2, dist, los
+
+
 @jit(nopython=True, cache=True)  # no fastmath: divides by a, which is zero for coincident points
 def line_sphere_intersect(x1, x2, sphere_radius, sphere_center):
     """
@@ -441,6 +473,25 @@ def line_sphere_intersect(x1, x2, sphere_radius, sphere_center):
         i_x2[2] = x1[2] + u2 * (x2[2] - x1[2])
 
     return intersect, i_x1, i_x2
+
+
+@jit(nopython=True, cache=True)
+def line_sphere_intersect_bool(x1, x2, sphere_radius, sphere_center):
+    """
+    Boolean-only version of line_sphere_intersect for the per-epoch sp2sp masking loop:
+    only the discriminant is evaluated, the intersection points are never computed.
+    """
+    a = (x2[0] - x1[0]) * (x2[0] - x1[0]) + (x2[1] - x1[1]) * (x2[1] - x1[1]) + (x2[2] - x1[2]) * (x2[2] - x1[2])
+
+    b = 2.0 * ((x2[0] - x1[0]) * (x1[0] - sphere_center[0]) + (x2[1] - x1[1]) * (x1[1] - sphere_center[1]) +
+               (x2[2] - x1[2]) * (x1[2] - sphere_center[2]))
+
+    c = sphere_center[0] * sphere_center[0] + sphere_center[1] * sphere_center[1] + \
+        sphere_center[2] * sphere_center[2] + x1[0] * x1[0] + x1[1] * x1[1] + x1[2] * x1[2] - \
+        2.0 * (sphere_center[0] * x1[0] + sphere_center[1] * x1[1] + sphere_center[2] * x1[2]) - \
+        sphere_radius * sphere_radius
+
+    return (b * b - 4.0 * a * c) >= 0
 
 
 def sat_contour(lla, elevation_mask):
@@ -697,10 +748,10 @@ def earth_radius_lat(lat):
 #             shared_array[idx_user] = 1  # Within swath
 
 
-@jit(nopython=True, cache=True, fastmath=True)
+@jit(nopython=True, cache=True, fastmath=True, parallel=True)
 def check_users_in_plane(user_metric, user_pos, planes, cnt_epoch):
     n_users = len(user_metric)
-    for idx_user in range(n_users):
+    for idx_user in prange(n_users):
         if test_point_within_pyramid(user_pos[idx_user, :], planes):
             user_metric[idx_user,cnt_epoch] = 1  # Within swath
     return user_metric[:,cnt_epoch]
@@ -745,7 +796,7 @@ def det_sza(user_pos_lla, epoch):
         return 0
 
 
-@jit(nopython=True, cache=True, fastmath=True)
+@jit(nopython=True, cache=True, fastmath=True, parallel=True)
 def check_users_from_nadir(user_metric, user_pos, sat_pos, earth_angle_swath, cnt_epoch):
     """
     :param user_metric: 0 or 1 for covered user[num_users,num_epoch)
@@ -757,7 +808,7 @@ def check_users_from_nadir(user_metric, user_pos, sat_pos, earth_angle_swath, cn
     """
     norm_sat = norm(sat_pos)
     n_users = len(user_metric)
-    for idx_user in range(n_users):
+    for idx_user in prange(n_users):
         norm_user = norm(user_pos[idx_user,:])
         angle_user_zenith = angle_two_vectors(user_pos[idx_user, 0:3], sat_pos, user_pos[idx_user,3], norm_sat)
         if angle_user_zenith < earth_angle_swath:

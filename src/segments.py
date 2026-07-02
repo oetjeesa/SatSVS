@@ -3,13 +3,29 @@ import numpy as np
 from math import floor, degrees, radians
 from astropy.coordinates import EarthLocation
 from astropy.time import Time
-from sgp4.earth_gravity import wgs84
-from sgp4.io import twoline2rv
 # Modules from the project
 from constants import PI, R_EARTH, OMEGA_EARTH
 import misc_fn
 from astropy import time
 from astropy import coordinates, units as u
+
+SSO_NODAL_RATE = 2 * PI / 365.2421897  # SSO RAAN drift [rad/day]: one revolution per tropical year
+_ORIGIN = np.zeros(3)  # Earth centre, avoids reallocating in the per-epoch masking loop
+
+
+def det_sso_raan(obj, mjd_requested):
+    # RAAN for an SSO orbit at the requested time. The full astropy computation
+    # (raan_from_ltan: UT1/TDB conversions + sun position) costs tens of ms, so it is
+    # done once at the first epoch; afterwards the defining property of an SSO orbit
+    # (node precesses with the mean sun) gives RAAN by linear drift.
+    if obj.sso_raan_ref is None:
+        epoch = Time(mjd_requested, format='mjd')
+        epoch.delta_ut1_utc = 0.0  # avoid getting IERS outside range error
+        raan = misc_fn.raan_from_ltan(epoch, ltan=obj.ltan * u.hourangle)
+        obj.sso_raan_ref = radians(raan.value % 360.0)
+        obj.sso_raan_ref_mjd = mjd_requested
+    return (obj.sso_raan_ref + SSO_NODAL_RATE * (mjd_requested - obj.sso_raan_ref_mjd)) % (2 * PI)
+
 
 class KeplerSet:
 
@@ -55,6 +71,8 @@ class Satellite:
         self.name = ''  # Name of the satellite
         self.rx_constellation = ''  # Which constellations can this satellite receive (for SP2SP)
         self.ltan = -1 # If satellite defined as SSO
+        self.sso_raan_ref = None  # RAAN reference for SSO orbits (computed once, then linear drift)
+        self.sso_raan_ref_mjd = 0.0
 
         self.elevation_mask = []  # Could be varying over azimuth...
         self.el_mask_max = []  # Could be varying over azimuth...
@@ -91,21 +109,18 @@ class Satellite:
     def det_posvel_eci_keplerian(self, mjd_requested):
 
         if self.ltan != -1 : # For SSO orbits the RAAN depends on the time
-            epoch = Time(mjd_requested, format='mjd')
-            epoch.delta_ut1_utc = 0.0  # avoid getting IERS outside range error
-            raan = misc_fn.raan_from_ltan(epoch, ltan=self.ltan * u.hourangle)
-            self.kepler.right_ascension = radians(raan.value % 360.0)
+            self.kepler.right_ascension = det_sso_raan(self, mjd_requested)
 
         self.pos_eci, self.vel_eci = misc_fn.kep2xyz(mjd_requested, self.kepler.epoch_mjd,
                                                      self.kepler.semi_major_axis, self.kepler.eccentricity,
                                                      self.kepler.inclination, self.kepler.right_ascension,
                                                      self.kepler.arg_perigee, self.kepler.mean_anomaly)
 
-    def det_posvel_eci_sgp4(self, time_req):
-        self.pos_eci,self.vel_eci = self.satrec.propagate(time_req.year, time_req.month, time_req.day,
-                                      time_req.hour, time_req.minute, time_req.second)
-        self.pos_eci = np.array(self.pos_eci)*1000  # sgp4 outputs in km
-        self.vel_eci = np.array(self.vel_eci)*1000  # sgp4 outputs in km/s
+    def det_posvel_eci_sgp4(self, jd, fr):
+        # sgp4 v2 accelerated (C) propagation; jd+fr is the requested UTC julian date
+        err, pos, vel = self.satrec.sgp4(jd, fr)
+        self.pos_eci = np.array(pos)*1000  # sgp4 outputs in km
+        self.vel_eci = np.array(vel)*1000  # sgp4 outputs in km/s
 
     def det_posvel_ecf(self, gmst_requested):  # ECF
         self.pos_ecf, self.vel_ecf = misc_fn.spin_vector(-gmst_requested, self.pos_eci, self.vel_eci)  # assume ECI and GMST computed elsewhere
@@ -137,7 +152,9 @@ class Station:
 
     def det_posvel_eci(self, gmst_requested):
         self.pos_eci, self.vel_eci = misc_fn.spin_vector(gmst_requested, self.pos_ecf, self.vel_ecf)  # Requires the ECF to be computed first
-        self.vel_eci = np.cross(self.pos_eci, [0, 0, -OMEGA_EARTH])
+        self.vel_eci[0] = -OMEGA_EARTH * self.pos_eci[1]  # omega x r for omega = [0, 0, OMEGA_EARTH]
+        self.vel_eci[1] = OMEGA_EARTH * self.pos_eci[0]
+        self.vel_eci[2] = 0.0
 
     def det_posvel_eci_astropy(self):
         # Same as det_posvel_eci but now using Astropy
@@ -157,6 +174,9 @@ class User:
         self.user_id = 0
         self.rx_constellation = ''
         self.name = ''
+        self.ltan = -1  # If spacecraft user defined as SSO
+        self.sso_raan_ref = None  # RAAN reference for SSO orbits (computed once, then linear drift)
+        self.sso_raan_ref_mjd = 0.0
         self.elevation_mask = []  # Could be varying over azimuth...
         self.el_mask_max = []  # Could be varying over azimuth...
 
@@ -181,16 +201,15 @@ class User:
 
     def det_posvel_eci(self, gmst_requested):
         self.pos_eci, self.vel_eci = misc_fn.spin_vector(gmst_requested, self.pos_ecf, self.vel_ecf)  # Requires the ECF to be computed first
-        self.vel_eci = np.cross(self.pos_eci, [0, 0, -OMEGA_EARTH])
+        self.vel_eci[0] = -OMEGA_EARTH * self.pos_eci[1]  # omega x r for omega = [0, 0, OMEGA_EARTH]
+        self.vel_eci[1] = OMEGA_EARTH * self.pos_eci[0]
+        self.vel_eci[2] = 0.0
 
     def det_posvel_tle(self, gmst_requested, mjd_requested):  # For spacecraft user
         # Compute ECF and ECI coordinates from MJD and TLE set
 
         if self.ltan != -1 : # For SSO orbits the RAAN depends on the time
-            epoch = Time(mjd_requested, format='mjd')
-            epoch.delta_ut1_utc = 0.0  # avoid getting IERS outside range error
-            raan = misc_fn.raan_from_ltan(epoch, ltan=self.ltan * u.hourangle)
-            self.kepler.right_ascension = radians(raan.value % 360.0)
+            self.kepler.right_ascension = det_sso_raan(self, mjd_requested)
 
         self.pos_eci, self.vel_eci = misc_fn.kep2xyz(mjd_requested, self.kepler.epoch_mjd,
                                                      self.kepler.semi_major_axis, self.kepler.eccentricity,
@@ -339,7 +358,7 @@ class Space2SpaceLink:
                 in_view_elevation = True
 
         # Also check whether the link is not passing through the Earth
-        intersect_earth, i_x1, i_x2 = misc_fn.line_sphere_intersect(sat_1.pos_eci, sat_2.pos_eci, R_EARTH, np.zeros(3))
+        intersect_earth = misc_fn.line_sphere_intersect_bool(sat_1.pos_eci, sat_2.pos_eci, R_EARTH, _ORIGIN)
 
         if not intersect_earth and in_view_elevation:
             return True

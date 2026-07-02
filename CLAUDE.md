@@ -26,10 +26,10 @@ python main.py
 ```
 
 There are no requirements/environment files. Key third-party dependencies (install
-via conda — Basemap is easiest there): `numpy`, `astropy`, `sgp4` (note: the **v1.x**
-API — `sgp4.io`, `sgp4.earth_gravity`, `sgp4.propagation.sgp4init`; not the modern
-`Satrec` API), `matplotlib` + `mpl_toolkits.basemap`, `geopandas`/`shapely`, and
-`itur` (ITU-R propagation models, used only by `com_*` analyses).
+via conda — Basemap is easiest there): `numpy`, `astropy`, `sgp4` (v2.x — the
+accelerated `sgp4.api.Satrec` API), `numba`, `matplotlib` + `mpl_toolkits.basemap`,
+`geopandas`/`shapely`, and `itur` (ITU-R propagation models, used only by `com_*`
+analyses).
 
 ## Configuration drives everything
 
