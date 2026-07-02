@@ -3,12 +3,12 @@ import numpy as np
 import pandas as pd
 from math import degrees, radians
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
 
 # Import project modules
 import misc_fn
 from constants import PI
-from analysis import AnalysisBase
+from analysis import AnalysisBase, make_map_cyl, map_pcolormesh
 
 
 class AnalysisCovDepthOfCoverage(AnalysisBase):
@@ -31,20 +31,18 @@ class AnalysisCovDepthOfCoverage(AnalysisBase):
             satellite.metric[sm.cnt_epoch, 2] = len(satellite.idx_stat_in_view)
 
     def after_loop(self, sm):
-        fig = plt.figure(figsize=(10, 4))
-        cm = plt.cm.get_cmap('RdYlBu')
+        fig, ax = make_map_cyl(figsize=(10, 4))
+        sc = None
         for satellite in sm.satellites:
-            sc = plt.scatter(satellite.metric[:, 1], satellite.metric[:, 0], cmap=cm,
-                        c=satellite.metric[:, 2], vmin=0, vmax=len(sm.stations))
-        plt.colorbar(sc, shrink=0.85)
-        m = Basemap(projection='cyl', lon_0=0)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
+            sc = ax.scatter(satellite.metric[:, 1], satellite.metric[:, 0], cmap='RdYlBu',
+                            c=satellite.metric[:, 2], vmin=0, vmax=len(sm.stations),
+                            transform=ccrs.PlateCarree())
+        plt.colorbar(sc, ax=ax, shrink=0.85)
         for station in sm.stations:
-            plt.plot(degrees(station.lla[1]), degrees(station.lla[0]), 'r^')
-        m.drawcoastlines()
+            ax.plot(degrees(station.lla[1]), degrees(station.lla[0]), 'r^',
+                    transform=ccrs.PlateCarree())
         plt.subplots_adjust(left=.12, right=.999, top=0.999, bottom=0.01)
-        plt.text(50, 80, 'Red triangles: station locations')
+        ax.text(50, 80, 'Red triangles: station locations', transform=ccrs.PlateCarree())
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -84,22 +82,18 @@ class AnalysisCovGroundTrack(AnalysisBase):
 
     def after_loop(self, sm):
 
-        plt.figure(figsize=(10, 5))
-        m = Basemap(projection='cyl', lon_0=0)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
+        fig, ax = make_map_cyl()
         if self.satellite_id > 0:  # Only for one satellite
             for satellite in sm.satellites:
                 if satellite.constellation_id == self.constellation_id and \
                         satellite.sat_id == self.satellite_id:
                     y, x = satellite.metric[:, 0], satellite.metric[:, 1]
-                    plt.plot(x, y, 'r.')
+                    ax.plot(x, y, 'r.', transform=ccrs.PlateCarree())
         else:
             for satellite in sm.satellites:
                 y, x = satellite.metric[:, 0], satellite.metric[:, 1]
-                plt.plot(x, y, '+', label=str(satellite.sat_id))
-            plt.legend(fontsize=8)
+                ax.plot(x, y, '+', label=str(satellite.sat_id), transform=ccrs.PlateCarree())
+            ax.legend(fontsize=8)
         plt.subplots_adjust(left=.08, right=.95, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
@@ -129,7 +123,6 @@ class AnalysisCovPassTime(AnalysisBase):
                     user.metric[sm.cnt_epoch, user.idx_sat_in_view[j]] = True
 
     def after_loop(self, sm):
-        fig = plt.figure(figsize=(10, 5))
         lats, lons = [], []
         time_step = int((self.times_mjd[1] - self.times_mjd[0]) * 86400)
         metric = np.zeros(len(sm.users))
@@ -170,12 +163,9 @@ class AnalysisCovPassTime(AnalysisBase):
         x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
         y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
         z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
-        m = Basemap(projection='cyl', lon_0=0)
-        im1 = m.pcolormesh(x_new, y_new, z_new, shading='flat', cmap=plt.cm.jet, latlon=True)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
-        cb = m.colorbar(im1, "right", size="2%", pad="2%")
+        fig, ax = make_map_cyl()
+        im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
+        cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Pass Time Interval [s]', fontsize=10)
         plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
@@ -218,22 +208,19 @@ class AnalysisCovSatelliteContour(AnalysisBase):
         pass
 
     def after_loop(self, sm):
-        fig = plt.figure(figsize=(10, 5))
-        m = Basemap(projection='cyl', lon_0=0)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
+        fig, ax = make_map_cyl()
         if self.satellite_id > 0:  # One satellite
             sm.satellites[self.idx_found_satellite].det_lla()
             contour = misc_fn.sat_contour(sm.satellites[self.idx_found_satellite].lla, self.elevation_mask)
-            plt.plot(contour[:,1]/PI*180, contour[:,0]/PI*180, 'r.')
+            ax.plot(contour[:,1]/PI*180, contour[:,0]/PI*180, 'r.', transform=ccrs.PlateCarree())
         else:
             for idx_sat in self.idx_found_satellites:
                 sm.satellites[idx_sat].det_lla()
                 contour = misc_fn.sat_contour(sm.satellites[idx_sat].lla, self.elevation_mask)
-                plt.plot(contour[:, 1] / PI * 180, contour[:, 0] / PI * 180, '.',
-                         label='Satellite ID: '+str(sm.satellites[idx_sat].sat_id))
-                plt.legend()
+                ax.plot(contour[:, 1] / PI * 180, contour[:, 0] / PI * 180, '.',
+                        label='Satellite ID: '+str(sm.satellites[idx_sat].sat_id),
+                        transform=ccrs.PlateCarree())
+                ax.legend()
         plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
@@ -267,7 +254,6 @@ class AnalysisCovSatelliteHighest(AnalysisBase):
             user.metric[sm.cnt_epoch] = best_satellite_value
 
     def after_loop(self, sm):
-        fig = plt.figure(figsize=(10, 5))
         metric, lats, lons = [], [], []
         for user in sm.users:
             if self.statistic == 'Min':
@@ -285,12 +271,9 @@ class AnalysisCovSatelliteHighest(AnalysisBase):
         x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
         y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
         z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
-        m = Basemap(projection='cyl', lon_0=0)
-        im1 = m.pcolormesh(x_new, y_new, z_new, shading='flat', cmap=plt.cm.jet, latlon=True)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
-        cb = m.colorbar(im1, "right", size="2%", pad="2%")
+        fig, ax = make_map_cyl()
+        im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
+        cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' of Max Elevation satellites in view [deg]', fontsize=10)
         plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
@@ -448,7 +431,6 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase):
             user.metric[sm.cnt_epoch] = len(user.idx_sat_in_view)
 
     def after_loop(self, sm):
-        fig = plt.figure(figsize=(10, 5))
         metric, latitudes, longitudes = [], [], []
         for user in sm.users:
             if self.statistic == 'Min':
@@ -466,12 +448,9 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase):
         x_new = np.reshape(np.array(longitudes), (sm.users[0].num_lat, sm.users[0].num_lon))
         y_new = np.reshape(np.array(latitudes), (sm.users[0].num_lat, sm.users[0].num_lon))
         z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
-        m = Basemap(projection='cyl', lon_0=0)
-        im1 = m.pcolormesh(x_new, y_new, z_new, shading='flat', cmap=plt.cm.jet, latlon=True)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
-        cb = m.colorbar(im1, "right", size="2%", pad="2%")
+        fig, ax = make_map_cyl()
+        im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
+        cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Number of satellites in view [-]', fontsize=10)
         plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')

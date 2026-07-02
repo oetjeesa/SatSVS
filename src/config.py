@@ -3,9 +3,7 @@ from math import ceil, radians
 from astropy.time import Time
 from sgp4.api import Satrec, WGS84
 import os
-os.environ['PROJ_LIB'] = '/Users/micheltossaint/Documents/anaconda3/share/proj'
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
 from geopandas import GeoSeries, GeoDataFrame
 from shapely.geometry import Point, Polygon
 import numpy as np

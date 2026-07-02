@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
 from numpy.linalg import norm
 from math import sin, cos, asin, degrees, radians
 import xarray as xr
@@ -12,7 +12,7 @@ import pandas as pd
 
 # Project modules
 from constants import R_EARTH
-from analysis import AnalysisBase, AnalysisObs
+from analysis import AnalysisBase, AnalysisObs, make_map_cyl, make_map_polar
 import misc_fn
 import logging_svs as ls
 
@@ -378,27 +378,16 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
                     plot_points[idx_user, :] = [degrees(user.lla[1]), degrees(user.lla[0]), sza_stat]
         plot_points = plot_points[~np.all(plot_points == 0, axis=1)]  # Clean up empty rows
         if polar_view is not None:
-            fig = plt.figure(figsize=(7, 6))
-            if polar_view > 0:
-                m = Basemap(projection='npstere', lon_0=0, boundinglat=polar_view, resolution='l')
-            else:
-                m = Basemap(projection='spstere', lon_0=0, boundinglat=polar_view, resolution='l')
-            x, y = m(plot_points[:,0], plot_points[:,1])
-            sc = m.scatter(x, y, s=12, marker='o', cmap=plt.cm.jet, c=plot_points[:,2], alpha=.3)
+            fig, ax = make_map_polar(polar_view)
         else:
-            fig = plt.figure(figsize=(10, 5))
-            m = Basemap(projection='cyl', lon_0=0)
-            x, y = plot_points[:,0], plot_points[:,1]
-            sc = m.scatter(x, y, s=12, marker='o', cmap=plt.cm.jet, c=plot_points[:,2], alpha=.3)
-        cb = m.colorbar(sc, shrink=0.85)
+            fig, ax = make_map_cyl()
+        sc = ax.scatter(plot_points[:,0], plot_points[:,1], s=12, marker='o', cmap=plt.cm.jet,
+                        c=plot_points[:,2], alpha=.3, transform=ccrs.PlateCarree())
+        cb = plt.colorbar(sc, ax=ax, shrink=0.85)
         cb.set_label('Solar Zenith Angle Mean [deg]', fontsize=10)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
         plt.subplots_adjust(left=.1, right=.9, top=0.92, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
-        dum = 1
 
 
 
@@ -447,23 +436,14 @@ class AnalysisObsSzaSubSat(AnalysisBase):
 
         self.user_metric = self.user_metric[~np.all(self.user_metric == 0, axis=1)]
         if polar_view is not None:
-            fig = plt.figure(figsize=(7, 6))
-            if polar_view > 0:
-                m = Basemap(projection='npstere', lon_0=0, boundinglat=polar_view, resolution='l')
-            else:
-                m = Basemap(projection='spstere', lon_0=0, boundinglat=polar_view, resolution='l')
-            x, y = m( self.user_metric[:, 1],  self.user_metric[:, 0])
-            sc = m.scatter(x, y, s=12, marker='o', cmap=plt.cm.jet, c=self.user_metric[:, 2], alpha=.5)
+            fig, ax = make_map_polar(polar_view)
         else:
-            fig = plt.figure(figsize=(10, 5))
-            m = Basemap(projection='cyl', lon_0=0)
-            x, y =  self.user_metric[:, 1],  self.user_metric[:, 0]
-            sc = m.scatter(x, y, s=12, marker='o', cmap=plt.cm.jet, c=self.user_metric[:, 2], alpha=.5)
-        cb = m.colorbar(sc, shrink=0.85)
+            fig, ax = make_map_cyl()
+        sc = ax.scatter(self.user_metric[:, 1], self.user_metric[:, 0], s=12, marker='o',
+                        cmap=plt.cm.jet, c=self.user_metric[:, 2], alpha=.5,
+                        transform=ccrs.PlateCarree())
+        cb = plt.colorbar(sc, ax=ax, shrink=0.85)
         cb.set_label('Solar Zenith Angle [deg]', fontsize=10)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
         plt.subplots_adjust(left=.1, right=.9, top=0.92, bottom=0.1)
         plt.savefig('../output/' + self.type + '.png')
         plt.show()

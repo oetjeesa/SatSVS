@@ -27,9 +27,6 @@ def install_and_import(install_name, import_name=None):
         try:
             return importlib.import_module(import_name)
         except ImportError:
-            # Specific fix for basemap which is a bit weird
-            if install_name == 'basemap':
-                return importlib.import_module('mpl_toolkits.basemap')
             raise
 
 # --- Usage ---
@@ -43,17 +40,4 @@ geopandas = install_and_import('geopandas')
 shapely = install_and_import('shapely')
 itur = install_and_import('itur')
 numba = install_and_import('numba')
-
-# SPECIAL CASE: Basemap
-# It is installed as 'basemap' but lived inside 'mpl_toolkits'
-try:
-    from mpl_toolkits.basemap import Basemap
-    print("Basemap imported successfully!")
-except ImportError:
-    install_and_import('basemap')
-    from mpl_toolkits.basemap import Basemap
-    print("Basemap installed and imported successfully!")
-
-# Usage
-
-install_and_import('basemap')
+cartopy = install_and_import('cartopy')

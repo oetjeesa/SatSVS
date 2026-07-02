@@ -3,11 +3,10 @@ import numpy as np
 import pandas as pd
 from math import degrees, radians
 from matplotlib import pyplot as plt
-from mpl_toolkits.basemap import Basemap
 # Import project modules
 import misc_fn
 from constants import PI
-from analysis import AnalysisBase
+from analysis import AnalysisBase, make_map_cyl, map_pcolormesh
 
 
 class AnalysisNavDOP(AnalysisBase):
@@ -47,7 +46,6 @@ class AnalysisNavDOP(AnalysisBase):
                 user.metric[sm.cnt_epoch] = np.nan
 
     def after_loop(self, sm):
-        fig = plt.figure(figsize=(10, 5))
         lats, lons = [], []
         metric = np.zeros(len(sm.users))
         for idx_usr, user in enumerate(sm.users):
@@ -67,12 +65,9 @@ class AnalysisNavDOP(AnalysisBase):
         x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
         y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
         z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
-        m = Basemap(projection='cyl', lon_0=0)
-        im1 = m.pcolormesh(x_new, y_new, z_new, shading='flat', cmap=plt.cm.jet, latlon=True)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
-        cb = m.colorbar(im1, "right", size="2%", pad="2%")
+        fig, ax = make_map_cyl()
+        im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
+        cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' ' + self.direction + ' Dilution of Precision [-]', fontsize=10)
         plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
@@ -122,7 +117,6 @@ class AnalysisNavAccuracy(AnalysisBase):
                 user.metric[sm.cnt_epoch] = np.nan
 
     def after_loop(self, sm):
-        fig = plt.figure(figsize=(10, 5))
         lats, lons = [], []
         metric = np.zeros(len(sm.users))
         for idx_usr, user in enumerate(sm.users):
@@ -142,12 +136,9 @@ class AnalysisNavAccuracy(AnalysisBase):
         x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
         y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
         z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
-        m = Basemap(projection='cyl', lon_0=0)
-        im1 = m.pcolormesh(x_new, y_new, z_new, shading='flat', cmap=plt.cm.jet, latlon=True)
-        m.drawparallels(np.arange(-90., 99., 30.), labels=[True, False, False, True])
-        m.drawmeridians(np.arange(-180., 180., 60.), labels=[True, False, False, True])
-        m.drawcoastlines()
-        cb = m.colorbar(im1, "right", size="2%", pad="2%")
+        fig, ax = make_map_cyl()
+        im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
+        cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' ' + self.direction + ' Navigation Accuracy 95% [m]', fontsize=10)
         plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')

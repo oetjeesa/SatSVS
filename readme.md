@@ -8,7 +8,7 @@
 Download from github, and install the following libraries:
 - Numpy, pandas and numba
 - Astropy and sgp4
-- Basemap and xarray
+- Cartopy and xarray
 - Geopandas and shapely
 - Itur
 

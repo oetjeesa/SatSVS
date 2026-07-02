@@ -25,11 +25,10 @@ cd src
 python main.py
 ```
 
-There are no requirements/environment files. Key third-party dependencies (install
-via conda — Basemap is easiest there): `numpy`, `astropy`, `sgp4` (v2.x — the
-accelerated `sgp4.api.Satrec` API), `numba`, `matplotlib` + `mpl_toolkits.basemap`,
-`geopandas`/`shapely`, and `itur` (ITU-R propagation models, used only by `com_*`
-analyses).
+There are no requirements/environment files. Key third-party dependencies: `numpy`,
+`astropy`, `sgp4` (v2.x — the accelerated `sgp4.api.Satrec` API), `numba`,
+`matplotlib` + `cartopy`, `geopandas`/`shapely`, and `itur` (ITU-R propagation
+models, used only by `com_*` analyses).
 
 ## Configuration drives everything
 
@@ -76,8 +75,9 @@ instead of re-propagating.
 `main.py` calls them at the matching phases, and `after_loop` is where plots
 (`../output/<type>.png`) are produced. Concrete analyses live grouped by domain in
 `analysis_cov.py`, `analysis_obs.py`, `analysis_com.py`, `analysis_nav.py`;
-`analysis.py` also holds shared plotting mixins (e.g. `AnalysisObs` swath/revisit
-plotting on a Basemap). `misc_fn.py` holds geometry/time helpers (MJD/GMST, coordinate
+`analysis.py` also holds the cartopy map helpers (`make_map_cyl`, `make_map_polar`)
+and shared plotting mixins (e.g. `AnalysisObs` swath/revisit plotting on a map).
+`misc_fn.py` holds geometry/time helpers (MJD/GMST, coordinate
 conversions); `constants.py` holds physical constants (`R_EARTH`, `GM_EARTH`, etc.).
 
 ### Adding a new analysis (per readme.md)
