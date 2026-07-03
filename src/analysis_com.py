@@ -415,8 +415,8 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
                   K_BOLTZMANN - 10*np.log10(temp_sys)
 
             # Interference computation from second satellite
-            u = sm.satellites[0].pos_ecf - sm.stations[0].pos_ecf
-            v = sm.satellites[1].pos_ecf - sm.stations[0].pos_ecf
+            u = sm.satellites[0].pos_ecf - sm.stations[idx_station].pos_ecf
+            v = sm.satellites[1].pos_ecf - sm.stations[idx_station].pos_ecf
             off_boresight_angle = misc_fn.angle_two_vectors(u,v,np.linalg.norm(u),np.linalg.norm(v))
             C = self.eirp - fsl \
                   - a_g.value - a_r.value - a_c.value - a_s.value \
@@ -444,6 +444,12 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
 
     def after_loop(self, sm):
         self.metric = self.metric[~np.all(self.metric == 0, axis=1)]  # Clean up empty rows
+        if self.metric.size == 0:
+            ls.logger.error(f'No epoch had more than one satellite in view of GroundStationID '
+                            f'{self.station_id}: the interference analysis needs the leading satellite '
+                            f'(first in the space segment) and an interferer (second) visible '
+                            f'simultaneously. Configure at least 2 satellites. No plot produced.')
+            return
         fig = plt.figure(figsize=(10, 6))
         plt.subplots_adjust(left=.1, right=.95, top=0.95, bottom=0.07)
         time_list = self.metric[:, 0]

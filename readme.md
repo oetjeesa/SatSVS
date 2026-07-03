@@ -278,7 +278,7 @@ If this parameter is omitted all the satellites of the constellation are plotted
 <img src="/docs/cov_ground_track.png" alt="cov_ground_track"/>
 
 ### cov_satellite_pvt
-Plots the first satellite position and velocity and outputs the position and velocity to the 'output/orbits.txt' file. 
+Plots the satellite position and velocity and outputs the position and velocity to the 'output/orbits.txt' file. 
 The following parameters are needed:
 ```
 <Type>cov_satellite_pvt</Type>
@@ -288,8 +288,9 @@ Optional is:
 ```
 <SatelliteID>1</SatelliteID>
 ``` 
-If this parameter is omitted all the satellites of the constellation are output. Additionally an __/output/orbits.txt__ 
-file is saved to disk.
+For a TLE file the SatelliteID is the NORAD number. If this parameter is omitted all the satellites of the 
+constellation are output to file and the plot shows the first recorded satellite. Additionally an 
+__/output/orbits.txt__ file is saved to disk.
 <img src="/docs/cov_satellite_pvt.png" alt="cov_satellite_pvt"/>
 
 ### cov_satellite_visible

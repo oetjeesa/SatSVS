@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 # Import project modules
 import misc_fn
 from constants import PI
-from analysis import AnalysisBase, make_map_cyl, map_pcolormesh
+from analysis import AnalysisBase, make_map_cyl, map_pcolormesh, get_user_grid_shape
 
 
 class AnalysisNavDOP(AnalysisBase):
@@ -62,14 +62,16 @@ class AnalysisNavDOP(AnalysisBase):
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 
-        x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
-        y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
-        z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
+        grid_shape = get_user_grid_shape(sm, self.type)
+        if grid_shape is None:
+            return
+        x_new = np.reshape(np.array(lons), grid_shape)
+        y_new = np.reshape(np.array(lats), grid_shape)
+        z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' ' + self.direction + ' Dilution of Precision [-]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -133,14 +135,16 @@ class AnalysisNavAccuracy(AnalysisBase):
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 
-        x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
-        y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
-        z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
+        grid_shape = get_user_grid_shape(sm, self.type)
+        if grid_shape is None:
+            return
+        x_new = np.reshape(np.array(lons), grid_shape)
+        y_new = np.reshape(np.array(lats), grid_shape)
+        z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' ' + self.direction + ' Navigation Accuracy 95% [m]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 

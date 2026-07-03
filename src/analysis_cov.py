@@ -7,8 +7,9 @@ import cartopy.crs as ccrs
 
 # Import project modules
 import misc_fn
+import logging_svs as ls
 from constants import PI
-from analysis import AnalysisBase, make_map_cyl, map_pcolormesh
+from analysis import AnalysisBase, make_map_cyl, map_pcolormesh, get_user_grid_shape
 
 
 class AnalysisCovDepthOfCoverage(AnalysisBase):
@@ -41,7 +42,6 @@ class AnalysisCovDepthOfCoverage(AnalysisBase):
         for station in sm.stations:
             ax.plot(degrees(station.lla[1]), degrees(station.lla[0]), 'r^',
                     transform=ccrs.PlateCarree())
-        plt.subplots_adjust(left=.12, right=.999, top=0.999, bottom=0.01)
         ax.text(50, 80, 'Red triangles: station locations', transform=ccrs.PlateCarree())
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
@@ -94,7 +94,6 @@ class AnalysisCovGroundTrack(AnalysisBase):
                 y, x = satellite.metric[:, 0], satellite.metric[:, 1]
                 ax.plot(x, y, '+', label=str(satellite.sat_id), transform=ccrs.PlateCarree())
             ax.legend(fontsize=8)
-        plt.subplots_adjust(left=.08, right=.95, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -160,14 +159,16 @@ class AnalysisCovPassTime(AnalysisBase):
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 
-        x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
-        y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
-        z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
+        grid_shape = get_user_grid_shape(sm, self.type)
+        if grid_shape is None:
+            return
+        x_new = np.reshape(np.array(lons), grid_shape)
+        y_new = np.reshape(np.array(lats), grid_shape)
+        z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Pass Time Interval [s]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -221,7 +222,6 @@ class AnalysisCovSatelliteContour(AnalysisBase):
                         label='Satellite ID: '+str(sm.satellites[idx_sat].sat_id),
                         transform=ccrs.PlateCarree())
                 ax.legend()
-        plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -268,14 +268,16 @@ class AnalysisCovSatelliteHighest(AnalysisBase):
                 metric.append(np.median(user.metric))
             lats.append(degrees(user.lla[0]))
             lons.append(degrees(user.lla[1]))
-        x_new = np.reshape(np.array(lons), (sm.users[0].num_lat, sm.users[0].num_lon))
-        y_new = np.reshape(np.array(lats), (sm.users[0].num_lat, sm.users[0].num_lon))
-        z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
+        grid_shape = get_user_grid_shape(sm, self.type)
+        if grid_shape is None:
+            return
+        x_new = np.reshape(np.array(lons), grid_shape)
+        y_new = np.reshape(np.array(lats), grid_shape)
+        z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' of Max Elevation satellites in view [deg]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -312,9 +314,17 @@ class AnalysisCovSatellitePvt(AnalysisBase):
     def after_loop(self, sm):
         self.file_orbits.close()
         self.file_orbits = None
+        if os.path.getsize('../output/orbits.txt') == 0:
+            ls.logger.error(f'No satellite matched ConstellationID {self.constellation_id} / '
+                            f'SatelliteID {self.satellite_id}, nothing recorded. Available: ' +
+                            ', '.join(f'{s.constellation_id}/{s.sat_id}' for s in sm.satellites))
+            return
         data = pd.read_csv('../output/orbits.txt', sep=',', header=None,
                            names=['RunTime', 'ID', 'x', 'y', 'z', 'x_vel', 'y_vel', 'z_vel'])
-        data2 = data[data.ID == 1]
+        # Plot the configured satellite, or the first recorded one (satellite ids are
+        # NORAD catalog numbers for TLE-defined constellations, not 1-based)
+        sat_id = self.satellite_id if self.satellite_id > 0 else int(data.ID.iloc[0])
+        data2 = data[data.ID == sat_id]
         fig, ax1 = plt.subplots(figsize=(10, 6))
         plt.grid()
         ax1.set_ylabel('Position ECI [m]')
@@ -353,15 +363,14 @@ class AnalysisCovSatelliteSkyAngles(AnalysisBase):
                     satellite.sat_id == self.satellite_id:
                 self.idx_found_satellite = i
                 break
-        for user in sm.users:
-            user.metric = np.zeros((sm.num_epoch, 2))
+        sm.users[0].metric = np.zeros((sm.num_epoch, 2))
 
     def in_loop(self, sm):
-        num_sat = len(sm.satellites)
-        for idx_user, user in enumerate(sm.users):
-            if sm.usr2sp[idx_user][self.idx_found_satellite].elevation > 0:
-                user.metric[sm.cnt_epoch, 0] = degrees(sm.usr2sp[idx_user][self.idx_found_satellite].azimuth)
-                user.metric[sm.cnt_epoch, 1] = degrees(sm.usr2sp[idx_user][self.idx_found_satellite].elevation)
+        # Sky angles are plotted for the first user only
+        link = sm.usr2sp[0][self.idx_found_satellite]
+        if link.elevation > 0:
+            sm.users[0].metric[sm.cnt_epoch, 0] = degrees(link.azimuth)
+            sm.users[0].metric[sm.cnt_epoch, 1] = degrees(link.elevation)
 
     def after_loop(self, sm):
         fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -374,11 +383,12 @@ class AnalysisCovSatelliteSkyAngles(AnalysisBase):
         ax2.set_ylabel('Elevation [deg]')
         ax2.yaxis.label.set_color('blue')
         ax2.tick_params(axis='y', colors='blue')
-        for user in sm.users:
-            ax1.plot(self.times_f_doy, user.metric[:, 0], 'r+', label='Azimuth')
-            ax2.plot(self.times_f_doy, user.metric[:, 1], 'b+', label='Elevation')
+        user = sm.users[0]  # Sky angles are plotted for the first user only
+        ax1.plot(self.times_f_doy, user.metric[:, 0], 'r+', label='Azimuth')
+        ax2.plot(self.times_f_doy, user.metric[:, 1], 'b+', label='Elevation')
         plt.xlabel('DOY[-]');
-        plt.legend(); plt.grid()
+        ax1.legend(loc='upper left'); ax2.legend(loc='upper right')
+        plt.grid()
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -445,14 +455,16 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase):
                 metric.append(np.median(user.metric))
             latitudes.append(degrees(user.lla[0]))
             longitudes.append(degrees(user.lla[1]))
-        x_new = np.reshape(np.array(longitudes), (sm.users[0].num_lat, sm.users[0].num_lon))
-        y_new = np.reshape(np.array(latitudes), (sm.users[0].num_lat, sm.users[0].num_lon))
-        z_new = np.reshape(np.array(metric), (sm.users[0].num_lat, sm.users[0].num_lon))
+        grid_shape = get_user_grid_shape(sm, self.type)
+        if grid_shape is None:
+            return
+        x_new = np.reshape(np.array(longitudes), grid_shape)
+        y_new = np.reshape(np.array(latitudes), grid_shape)
+        z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Number of satellites in view [-]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 

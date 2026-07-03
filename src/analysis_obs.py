@@ -385,7 +385,6 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
                         c=plot_points[:,2], alpha=.3, transform=ccrs.PlateCarree())
         cb = plt.colorbar(sc, ax=ax, shrink=0.85)
         cb.set_label('Solar Zenith Angle Mean [deg]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.92, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -444,7 +443,6 @@ class AnalysisObsSzaSubSat(AnalysisBase):
                         transform=ccrs.PlateCarree())
         cb = plt.colorbar(sc, ax=ax, shrink=0.85)
         cb.set_label('Solar Zenith Angle [deg]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.92, bottom=0.1)
         plt.savefig('../output/' + self.type + '.png')
         plt.show()
 

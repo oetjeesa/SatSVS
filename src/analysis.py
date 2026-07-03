@@ -8,13 +8,15 @@ import numpy as np
 import logging_svs as ls
 
 
-def make_map_cyl(figsize=(10, 5)):
+def make_map_cyl(figsize=(10, 4.4)):
     """
     Global cylindrical (PlateCarree) map with gridlines and coastlines,
     the cartopy equivalent of the previous Basemap(projection='cyl') setup.
     Data plotted on the returned axes must pass transform=ccrs.PlateCarree().
+    Constrained layout plus a figure height close to the fixed 2:1 map aspect
+    keeps the white margins small.
     """
-    fig = plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize, layout='constrained')
     ax = plt.axes(projection=ccrs.PlateCarree())
     ax.set_global()
     gl = ax.gridlines(draw_labels=True, xlocs=np.arange(-180., 181., 60.),
@@ -25,13 +27,13 @@ def make_map_cyl(figsize=(10, 5)):
     return fig, ax
 
 
-def make_map_polar(polar_view, figsize=(7, 6)):
+def make_map_polar(polar_view, figsize=(7, 5.8)):
     """
     North (polar_view > 0) or south polar stereographic map bounded at latitude
     polar_view with a circular boundary, the cartopy equivalent of the previous
     Basemap npstere/spstere setup.
     """
-    fig = plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize, layout='constrained')
     if polar_view > 0:
         ax = plt.axes(projection=ccrs.NorthPolarStereo())
         ax.set_extent([-180, 180, polar_view, 90], ccrs.PlateCarree())
@@ -45,6 +47,22 @@ def make_map_polar(polar_view, figsize=(7, 6)):
                  linewidth=0.5, color='gray')
     ax.coastlines()
     return fig, ax
+
+
+def get_user_grid_shape(sm, analysis_type):
+    """
+    (num_lat, num_lon) shape of the user grid for the map-statistics analyses,
+    or None (with a clear error log) when the configured user segment is not a
+    Grid — those analyses reshape their per-user metric into a lat/lon grid.
+    """
+    num_lat = sm.users[0].num_lat if sm.users else 0
+    num_lon = sm.users[0].num_lon if sm.users else 0
+    if num_lat == 0 or num_lat * num_lon != len(sm.users):
+        ls.logger.error(f'Analysis {analysis_type} needs a user segment of Type Grid, '
+                        f'found {len(sm.users)} user(s) not forming a lat/lon grid. '
+                        f'No plot produced.')
+        return None
+    return num_lat, num_lon
 
 
 def map_pcolormesh(ax, x, y, z, **kwargs):
@@ -106,7 +124,6 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
                         c=plot_points[:,2], alpha=.3, transform=ccrs.PlateCarree())
         cb = plt.colorbar(sc, ax=ax, shrink=0.85)
         cb.set_label('Number of passes [-]', fontsize=10)
-        plt.subplots_adjust(left=.1, right=.9, top=0.92, bottom=0.1)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
@@ -147,7 +164,6 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
                             vmax=np.nanmax(plot_points[:,2]), transform=ccrs.PlateCarree())
             cb = plt.colorbar(sc, ax=ax, shrink=0.85)
             cb.set_label(statistic.capitalize() + ' Revisit Interval [hours]', fontsize=10)
-            plt.subplots_adjust(left=.1, right=.9, top=0.9, bottom=0.1)
             plt.savefig(f'../output/{self.type}_revisit.png')
             plt.show()
 
