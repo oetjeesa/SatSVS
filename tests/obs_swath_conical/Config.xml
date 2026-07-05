@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Simulation Scenario-->
+<Scenario>
+  <SpaceSegment>
+    <Constellation>
+      <ConstellationID>1</ConstellationID>
+      <NumOfSatellites>1</NumOfSatellites>
+      <NumOfPlanes>1</NumOfPlanes>
+      <ConstellationName>MetOp-A</ConstellationName>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <TLEFileName>../tests/obs_swath_conical/metop_a.txt</TLEFileName>
+      <ObsSwathStop>650000.0</ObsSwathStop>
+    </Constellation>
+  </SpaceSegment>
+  <GroundSegment>
+    <Network>
+      <NumStation>1</NumStation>
+      <NetworkName>Net1</NetworkName>
+    <GroundStation>
+      <Type>Downlink</Type>
+      <ConstellationID>1</ConstellationID>
+      <GroundStationID>1</GroundStationID>
+      <GroundStationName>Svalbard</GroundStationName>
+      <Latitude>77.875</Latitude>
+      <Longitude>20.9752</Longitude>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>5</ElevationMask>
+    </GroundStation>
+    </Network>
+  </GroundSegment>
+  <UserSegment>
+    <User>
+      <Type>Grid</Type>
+      <LatMin>-90</LatMin>
+      <LatMax>90</LatMax>
+      <LonMin>-180</LonMin>
+      <LonMax>180</LonMax>
+      <LatStep>2</LatStep>
+      <LonStep>2</LonStep>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>0</ElevationMask>
+    </User>
+  </UserSegment>
+  <SimulationManager>
+    <StartDate>2018-09-18 00:00:00</StartDate>
+    <StopDate>2018-09-19 00:00:00</StopDate>
+    <TimeStep>60</TimeStep>
+    <IncludeStation2SpaceLinks>True</IncludeStation2SpaceLinks>
+    <IncludeUser2SpaceLinks>False</IncludeUser2SpaceLinks>
+    <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
+    <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
+    <OrbitPropagator>SGP4</OrbitPropagator>
+    <Analysis>
+      <Type>obs_swath_conical</Type>
+      <Revisit>True</Revisit>
+      <Statistic>Mean</Statistic>
+      <SaveOutput>Numpy</SaveOutput>
+    </Analysis>
+  </SimulationManager>
+</Scenario>

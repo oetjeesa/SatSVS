@@ -155,19 +155,24 @@
       </GroundStation>
 	</GroundSegment>
   <!--Defines the users that should be simulated-->
-	<UserSegment>
-<!--        <User>-->
-<!--            <Type>Grid</Type>-->
-<!--            <LatMin>-90</LatMin>-->
-<!--            <LatMax>90</LatMax>-->
-<!--            <LonMin>-180</LonMin>-->
-<!--            <LonMax>180</LonMax>-->
-<!--            <LatStep>.5</LatStep>-->
-<!--            <LonStep>.5</LonStep>-->
-<!--            <Height>0.0</Height>-->
-<!--            <ReceiverConstellation>1111</ReceiverConstellation>-->
-<!--            <ElevationMask>0.0</ElevationMask>-->
-<!--        </User>-->
+
+
+  <UserSegment>
+
+
+       <!-- <User>
+           <Type>Grid</Type>
+           <LatMin>-90</LatMin>
+           <LatMax>90</LatMax>
+           <LonMin>-180</LonMin>
+           <LonMax>180</LonMax>
+           <LatStep>1</LatStep>
+           <LonStep>1</LonStep>
+           <Height>0.0</Height>
+           <ReceiverConstellation>1111</ReceiverConstellation>
+           <ElevationMask>0.0</ElevationMask>
+       </User> -->
+
 
         <User>
             <Type>Static</Type>
@@ -202,7 +207,7 @@
 	<!--Defines the simulation parameters-->
 	<SimulationManager>
 	    <StartDate>2026-02-01 00:00:00</StartDate>
-	    <StopDate>2026-02-02 23:59:59</StopDate>
+	    <StopDate>2026-02-01 23:59:59</StopDate>
 	    <TimeStep>60</TimeStep>
 
 		<IncludeStation2SpaceLinks>True</IncludeStation2SpaceLinks>
@@ -210,34 +215,66 @@
 		<IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
 
         <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
-        <OrbitPropagator>SGP4</OrbitPropagator>
+        <OrbitPropagator>HPOP</OrbitPropagator>
 
-<!--        <Analysis>-->
-<!--            <Type>obs_swath_conical</Type>-->
-<!--&lt;!&ndash;            <OrthoViewLatitude>90</OrthoViewLatitude>&ndash;&gt;-->
-<!--            <Revisit>True</Revisit>-->
-<!--	        <Statistic>Mean</Statistic>-->
-<!--        </Analysis>-->
+		<HPOP>
+			<IntegratorMinStep>0.001</IntegratorMinStep>
+			<IntegratorMaxStep>300</IntegratorMaxStep>
+			<IntegratorPositionTolerance>1.0</IntegratorPositionTolerance>
+			<Mass>500.0</Mass>
+			<Geopotential>True</Geopotential>
+			<GeopotentialDegree>21</GeopotentialDegree>
+			<GeopotentialOrder>21</GeopotentialOrder>
+			<EarthPoleRotation>True</EarthPoleRotation>
+			<Drag>True</Drag>
+			<DragArea>3.2</DragArea>
+			<DragCd>2.2</DragCd>
+			<DragModel>NRLMSISE00</DragModel>
+			<SolarRadiationPressure>True</SolarRadiationPressure>
+			<SRPArea>3.2</SRPArea>
+			<SRPCr>1.5</SRPCr>
+			<ThirdBodySun>True</ThirdBodySun>
+			<ThirdBodyMoon>True</ThirdBodyMoon>
+			<ThirdBodyPlanets>False</ThirdBodyPlanets>
+			<SolidTides>True</SolidTides>
+			<OceanTides>False</OceanTides>
+			<Relativity>False</Relativity>
+		</HPOP>
+		
+		
+		<Analysis>
+			<Type>orb_semi_major_axis</Type>
+			<ConstellationID>1</ConstellationID>
+		</Analysis>
 
-<!--		<Analysis>-->
-<!--		    <Type>com_gr2sp_budget</Type>-->
-<!--		    <GroundStationID>1</GroundStationID>-->
-<!--		    <TransmitterObject>Satellite</TransmitterObject>-->
-<!--		    <CarrierFrequency>26.25e9</CarrierFrequency>-->
-<!--		    <TransmitPowerW>50</TransmitPowerW>-->
-<!--		    <TransmitLossesdB>5</TransmitLossesdB>-->
-<!--		    <TransmitGaindB>32</TransmitGaindB>-->
-<!--		    <ReceiveGaindB>64</ReceiveGaindB>-->
-<!--		    <ReceiveLossesdB>3</ReceiveLossesdB>-->
-<!--		    <ReceiveTempK>290</ReceiveTempK>-->
-<!--		    <PExceedPerc>0.5</PExceedPerc>-->
-<!--		    <IncludeGas>True</IncludeGas>-->
-<!--		    <IncludeRain>True</IncludeRain>-->
-<!--		    <IncludeScintillation>True</IncludeScintillation>-->
-<!--		    <IncludeClouds>True</IncludeClouds>-->
-<!--		</Analysis>-->
 
-	<!-- <Analysis>
+       <!-- <Analysis>
+           <Type>obs_swath_conical</Type>
+           <OrthoViewLatitude>90</OrthoViewLatitude>
+           <Revisit>True</Revisit>
+	        <Statistic>Mean</Statistic>
+      </Analysis> -->
+
+		<!-- <Analysis>
+		    <Type>com_gr2sp_budget</Type>
+		    <GroundStationID>1</GroundStationID>
+		    <TransmitterObject>Satellite</TransmitterObject>
+		    <CarrierFrequency>26.25e9</CarrierFrequency>
+		    <TransmitPowerW>50</TransmitPowerW>
+		    <TransmitLossesdB>5</TransmitLossesdB>
+		    <TransmitGaindB>32</TransmitGaindB>
+		    <ReceiveGaindB>64</ReceiveGaindB>
+		    <ReceiveLossesdB>3</ReceiveLossesdB>
+		    <ReceiveTempK>290</ReceiveTempK>
+		    <PExceedPerc>0.5</PExceedPerc>
+		    <IncludeGas>True</IncludeGas>
+		    <IncludeRain>True</IncludeRain>
+		    <IncludeScintillation>True</IncludeScintillation>
+		    <IncludeClouds>True</IncludeClouds>
+		</Analysis> -->
+
+<!--
+	<Analysis>
 	    <Type>com_gr2sp_budget_interference</Type>
 	    <GroundStationID>1</GroundStationID>
 	    <TransmitterObject>Satellite</TransmitterObject>
@@ -259,19 +296,19 @@
 	    <IncludeClouds>True</IncludeClouds>
 	</Analysis> -->
 
-<!--			<Analysis>-->
-<!--				<Type>obs_swath_push_broom</Type>-->
-<!--&lt;!&ndash;	            <PolarView>60</PolarView>&ndash;&gt;-->
-<!--				<Revisit>False</Revisit>-->
-<!--				<Statistic>Mean</Statistic>-->
-<!--&lt;!&ndash;				<SaveOutput>NetCDF</SaveOutput>&ndash;&gt;-->
-<!--			</Analysis>-->
+			<!-- <Analysis>
+				<Type>obs_swath_push_broom</Type>
+				<PolarView>60</PolarView>
+				<Revisit>False</Revisit>
+				<Statistic>Mean</Statistic>
+				<SaveOutput>NetCDF</SaveOutput>
+			</Analysis> -->
 
-<!-- 
-		<Analysis>
+
+		<!-- <Analysis>
 			<Type>cov_ground_track</Type>
 			<ConstellationID>1</ConstellationID>
-			<SatelliteID>1</SatelliteID>
+			<SatelliteID>31698</SatelliteID>
 		</Analysis> -->
 
 		<!-- <Analysis>
@@ -280,7 +317,7 @@
 			<InitialSoC>1</InitialSoC>
 			<SolarPanelArea>10.0</SolarPanelArea>
 			<PanelEfficiency>0.22</PanelEfficiency>
-			<BasePowerDrawW>50</BasePowerDrawW> 
+			<BasePowerDrawW>50</BasePowerDrawW>
 			<InstrumentPowerDrawW>1500</InstrumentPowerDrawW>
 			<PayloadLatitudeLimit>90</PayloadLatitudeLimit>
 		</Analysis> -->
@@ -295,7 +332,7 @@
 		</Analysis> -->
 
 
-		<Analysis>
+		<!-- <Analysis>
 			<Type>dat_latency</Type>
 			<SSRCapacityGbits>4000</SSRCapacityGbits>
 			<InitialFillGbits>10.0</InitialFillGbits>
@@ -303,60 +340,67 @@
 			<DownlinkRateMbps>1070.0</DownlinkRateMbps>
 			<PayloadLatitudeLimit>90.0</PayloadLatitudeLimit>
 			<GroundProcessingMin>30.0</GroundProcessingMin>
-		</Analysis>
+		</Analysis> -->
 
 		<!-- <Analysis>
 			<Type>pow_eclipse_duration</Type>
 		</Analysis> -->
 
-<!--        <Analysis>-->
-<!--			<Type>cov_satellite_visible</Type>-->
-<!--        </Analysis>-->
+       <!-- <Analysis>
+			<Type>cov_satellite_visible</Type>
+       </Analysis> -->
 
-<!--        <Analysis>-->
-<!--          <Type>cov_satellite_visible_grid</Type>-->
-<!--          <Statistic>Min</Statistic>-->
-<!--        </Analysis>-->
+       <!-- <Analysis>
+         <Type>cov_satellite_visible_grid</Type>
+         <Statistic>Max</Statistic>
+       </Analysis> -->
 
-<!--    <Analysis>-->
-<!--      <Type>cov_satellite_visible_id</Type>-->
-<!--      <ConstellationID>1</ConstellationID>-->
-<!--    </Analysis>-->
+   <!-- <Analysis>
+     <Type>cov_satellite_visible_id</Type>
+     <ConstellationID>1</ConstellationID>
+   </Analysis> -->
 
-<!--    <Analysis>-->
-<!--      <Type>cov_satellite_contour</Type>-->
-<!--      <ConstellationID>1</ConstellationID>-->
-<!--&lt;!&ndash;      <SatelliteID>24307</SatelliteID>&ndash;&gt;-->
-<!--      <ElevationMask>10</ElevationMask>-->
-<!--    </Analysis>-->
+   <!-- <Analysis>
+     <Type>cov_satellite_contour</Type>
+     <ConstellationID>1</ConstellationID>
+     <SatelliteID>1</SatelliteID>
+     <ElevationMask>10</ElevationMask>
+   </Analysis> -->
 
-<!--          <Analysis>-->
-<!--            <Type>cov_satellite_sky_angles</Type>-->
-<!--            <ConstellationID>1</ConstellationID>-->
-<!--            <SatelliteID>1</SatelliteID>-->
-<!--          </Analysis>-->
+         <!-- <Analysis>
+           <Type>cov_satellite_sky_angles</Type>
+           <ConstellationID>1</ConstellationID>
+           <SatelliteID>1</SatelliteID>
+         </Analysis> -->
 
-<!--		<Analysis>-->
-<!--			<Type>cov_depth_of_coverage</Type>-->
-<!--		</Analysis>-->
+		<!-- <Analysis>
+			<Type>cov_depth_of_coverage</Type>
+		</Analysis> -->
 
-<!--		<Analysis>-->
-<!--			<Type>cov_pass_time</Type>-->
-<!--			<ConstellationID>1</ConstellationID>-->
-<!--			<Statistic>Max</Statistic>-->
-<!--		</Analysis>-->
+		<!-- <Analysis>
+			<Type>cov_pass_time</Type>
+			<ConstellationID>1</ConstellationID>
+			<Statistic>Max</Statistic>
+		</Analysis> -->
 
-<!--    <Analysis>-->
-<!--      <Type>cov_satellite_highest</Type>-->
-<!--      <ConstellationID>1</ConstellationID>-->
-<!--      <Statistic>Mean</Statistic>-->
-<!--    </Analysis>-->
+   <!-- <Analysis>
+     <Type>cov_satellite_highest</Type>
+     <ConstellationID>1</ConstellationID>
+     <Statistic>Mean</Statistic>
+   </Analysis> -->
 
-<!--    <Analysis>-->
-<!--      <Type>cov_satellite_pvt</Type>-->
-<!--      <ConstellationID>1</ConstellationID>-->
-<!--      <SatelliteID>1</SatelliteID>-->
-<!--    </Analysis>-->
+		<!-- <Analysis>
+			<Type>cov_satellite_pvt</Type>
+			<ConstellationID>1</ConstellationID>
+			<SatelliteID>31698</SatelliteID>
+		</Analysis> -->
+
+		<!-- <Analysis>
+			<Type>obs_sza_subsat</Type>
+			<PolarView>-90</PolarView>
+			<RangeLatitude>-80,80,10</RangeLatitude>
+			<SaveOutput>Numpy</SaveOutput>
+		</Analysis> -->
 
 	</SimulationManager>
 </Scenario>

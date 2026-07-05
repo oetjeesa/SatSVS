@@ -34,12 +34,16 @@ def make_map_polar(polar_view, figsize=(7, 5.8)):
     Basemap npstere/spstere setup.
     """
     fig = plt.figure(figsize=figsize, layout='constrained')
+    # PolarView 90/-90 (bounding latitude at the pole, as documented in readme.md)
+    # would give a zero-area extent that crashes cartopy at draw time; show the
+    # full hemisphere instead, matching the old Basemap tolerance for this value.
+    bounding_lat = polar_view if abs(polar_view) < 90 else 0
     if polar_view > 0:
         ax = plt.axes(projection=ccrs.NorthPolarStereo())
-        ax.set_extent([-180, 180, polar_view, 90], ccrs.PlateCarree())
+        ax.set_extent([-180, 180, bounding_lat, 90], ccrs.PlateCarree())
     else:
         ax = plt.axes(projection=ccrs.SouthPolarStereo())
-        ax.set_extent([-180, 180, -90, polar_view], ccrs.PlateCarree())
+        ax.set_extent([-180, 180, -90, bounding_lat], ccrs.PlateCarree())
     theta = np.linspace(0, 2 * np.pi, 200)
     circle = mpath.Path(np.vstack([np.sin(theta), np.cos(theta)]).T * 0.5 + [0.5, 0.5])
     ax.set_boundary(circle, transform=ax.transAxes)

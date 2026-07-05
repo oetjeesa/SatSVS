@@ -243,7 +243,10 @@ def kep2xyz(mjd_requested,
         big_e[1] = mean_anomaly
         big_e[0] = mean_anomaly * 2
 
-        while fabs(big_e[k + 1] / big_e[k] - 1) > 1e-15:  # Newton Rhapson
+        # Absolute-increment convergence test: the previous relative test divided by
+        # big_e[k], which is zero when the mean anomaly is exactly 0 (e.g. requested
+        # time equals the element epoch) and crashed with a ZeroDivisionError
+        while fabs(big_e[k + 1] - big_e[k]) > 1e-13:  # Newton Rhapson
             k += 1
             big_e[k + 1] = big_e[k] - (
                         (big_e[k] - kepler_eccentricity * np.sin(big_e[k]) - mean_anomaly) /
@@ -302,7 +305,7 @@ def newton_raphson (mean_anomaly, eccentricity):
     big_e[1] = mean_anomaly
     big_e[0] = mean_anomaly * 2
 
-    while fabs(big_e[k + 1] / big_e[k] - 1) > 1e-15:
+    while fabs(big_e[k + 1] - big_e[k]) > 1e-13:  # Absolute test, safe for mean_anomaly == 0
         k += 1
         big_e[k + 1] = big_e[k]-((big_e[k] - eccentricity * sin(big_e[k]) - mean_anomaly) / (1 - eccentricity * cos(big_e[k])))
 
@@ -418,6 +421,13 @@ def calc_az_el_dist_batch(origin, targets, reverse):
         los[i, 1] = dy
         los[i, 2] = dz
         dist[i] = sqrt(dx * dx + dy * dy + dz * dz)
+        if dist[i] == 0.0:
+            # Origin coincides with the target (e.g. the satellite-to-itself pair in
+            # the space-to-space loop): az/el are undefined, leave them at zero
+            # instead of dividing 0/0 in calc_az_el. Such links are never in use.
+            az[i] = 0.0
+            el[i] = 0.0
+            continue
         az[i], el[i] = calc_az_el(targets[i], origin)
         if reverse:
             az2[i], el2[i] = calc_az_el(origin, targets[i])

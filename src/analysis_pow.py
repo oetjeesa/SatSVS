@@ -150,7 +150,8 @@ class AnalysisPowEclipseDuration(AnalysisBase):
 
     def after_loop(self, sm):
         if not self.eclipse_durations:
-            ls.logger.warning("No eclipse events detected during the simulation.")
+            ls.logger.warning("No eclipse events detected during the simulation. No plot produced.")
+            return
 
         data = np.array(self.eclipse_durations)
         

@@ -8,6 +8,8 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 
 logger = logging.getLogger('main')
 logger.setLevel(logging.INFO)
+logger.propagate = False  # third-party libs (e.g. jpype/orekit) may configure the
+                          # root logger; without this every line would be duplicated
 
 logHandler = handlers.RotatingFileHandler('../output/main.log', maxBytes=5*1024*1024)  # log to the main.log file
 logHandler.setLevel(logging.INFO)

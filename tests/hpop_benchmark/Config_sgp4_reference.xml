@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Simulation Scenario-->
+<Scenario>
+  <SpaceSegment>
+    <Constellation>
+      <ConstellationID>1</ConstellationID>
+      <NumOfSatellites>1</NumOfSatellites>
+      <NumOfPlanes>1</NumOfPlanes>
+      <ConstellationName>TerraSAR-X</ConstellationName>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <TLEFileName>../tests/hpop_benchmark/terrasarx.txt</TLEFileName>
+    </Constellation>
+  </SpaceSegment>
+  <GroundSegment>
+    <Network>
+      <NumStation>1</NumStation>
+      <NetworkName>Net1</NetworkName>
+    <GroundStation>
+      <Type>Downlink</Type>
+      <ConstellationID>1</ConstellationID>
+      <GroundStationID>1</GroundStationID>
+      <GroundStationName>Kiruna</GroundStationName>
+      <Latitude>67.83</Latitude>
+      <Longitude>20.42</Longitude>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>5</ElevationMask>
+    </GroundStation>
+    </Network>
+  </GroundSegment>
+  <UserSegment>
+    <User>
+      <Type>Static</Type>
+      <Latitude>52.0</Latitude>
+      <Longitude>4.36</Longitude>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>5</ElevationMask>
+    </User>
+  </UserSegment>
+  <SimulationManager>
+    <StartDate>2026-02-01 00:00:00</StartDate>
+    <StopDate>2026-02-02 00:00:00</StopDate>
+    <TimeStep>60</TimeStep>
+    <IncludeStation2SpaceLinks>True</IncludeStation2SpaceLinks>
+    <IncludeUser2SpaceLinks>True</IncludeUser2SpaceLinks>
+    <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
+    <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
+    <OrbitPropagator>SGP4</OrbitPropagator>
+    <Analysis>
+      <Type>cov_satellite_pvt</Type>
+      <ConstellationID>1</ConstellationID>
+      <SatelliteID>31698</SatelliteID>
+    </Analysis>
+  </SimulationManager>
+</Scenario>

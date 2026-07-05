@@ -1,0 +1,13 @@
+HPOP (Orekit) propagation benchmark - 2026-02-01, 1 day, 60 s sampling
+
+A) Two-body HPOP vs analytical Keplerian propagation (frame independent)
+   max  position difference:      0.024 m   (threshold 10.0 m)
+   rms  position difference:      0.014 m
+   -> PASS
+
+B) Full-force HPOP vs SGP4 reference trajectory (TerraSAR-X TLE, known orbit file)
+   max  position difference:     10.807 km  (threshold 50.0 km)
+   rms  position difference:      6.669 km  (threshold 20.0 km)
+   -> PASS
+
+OVERALL: PASS

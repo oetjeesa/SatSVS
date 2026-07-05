@@ -28,7 +28,8 @@ python main.py
 There are no requirements/environment files. Key third-party dependencies: `numpy`,
 `astropy`, `sgp4` (v2.x — the accelerated `sgp4.api.Satrec` API), `numba`,
 `matplotlib` + `cartopy`, `geopandas`/`shapely`, and `itur` (ITU-R propagation
-models, used only by `com_*` analyses).
+models, used only by `com_*` analyses). The HPOP propagator additionally needs
+`orekit_jpype` + `jdk4py` and the Orekit data archive at `input/orekit-data.zip`.
 
 ## Configuration drives everything
 
@@ -64,9 +65,11 @@ adding a branch here** plus instantiating the class.
 only computes geometry for enabled pairs.
 
 **Time loop (`main.run_time_loop`)** iterates `num_epoch` steps. Each epoch: convert
-MJD→GMST, propagate every satellite (Keplerian or SGP4, selected by
-`<OrbitPropagator>`), update stations/users, recompute in-view lists
-(`idx_sat_in_view`, etc.), then call `sm.analysis.in_loop(sm)`. Setting
+MJD→GMST, propagate every satellite (Keplerian, SGP4 or HPOP, selected by
+`<OrbitPropagator>`; HPOP is the Orekit-based numerical propagator in
+`propagation_hpop.py`, configured by the `<HPOP>` block and sampling per-satellite
+dense ephemerides generated at load time), update stations/users, recompute in-view
+lists (`idx_sat_in_view`, etc.), then call `sm.analysis.in_loop(sm)`. Setting
 `OrbitsFromPreviousRun` reads cached ECI orbits from `output/orbits_internal.txt`
 instead of re-propagating.
 

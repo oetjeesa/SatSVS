@@ -6,8 +6,6 @@ from numpy.linalg import norm
 from math import sin, cos, asin, degrees, radians
 import xarray as xr
 from astropy import time
-from astropy.utils.iers import conf as iers_conf
-iers_conf.iers_auto_url = 'https://astroconda.org/aux/astropy_mirror/iers_a_1/finals2000A.all'
 import pandas as pd
 
 # Project modules
@@ -397,7 +395,8 @@ class AnalysisObsSzaSubSat(AnalysisBase):
         self.polar_view = None
         self.user_metric = None
         self.epoch = None
-        self.range_lat = None
+        self.save_output = None  # default if SaveOutput not in config
+        self.range_lat = [-90, 91, 10]  # default if RangeLatitude not in config
 
     def read_config(self, node):
         if node.find('PolarView') is not None:
@@ -461,10 +460,10 @@ class AnalysisObsSzaSubSat(AnalysisBase):
 
         fig = plt.figure(figsize=(10, 5))
         plt.plot(results[:,0],results[:,1])
-        plt.savefig('../output/' + self.type + '_lat.png')
         plt.xlabel('Latitude [deg]')
         plt.ylabel('Solar Zenith Angle [deg]')
         plt.grid()
+        plt.savefig('../output/' + self.type + '_lat.png')
         plt.show()
 
         if self.save_output=='numpy':
@@ -488,8 +487,8 @@ class AnalysisObsSzaSubSat(AnalysisBase):
             plt.plot(df3.index, df3.SZA, label=str(lat))
 
         plt.legend()
-        plt.savefig('../output/' + self.type + '_lat_year.png')
         plt.xlabel('DOY [-]')
         plt.ylabel('Solar Zenith Angle [deg]')
         plt.grid()
+        plt.savefig('../output/' + self.type + '_lat_year.png')
         plt.show()

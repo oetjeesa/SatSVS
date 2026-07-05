@@ -17,6 +17,7 @@ from analysis_com import *
 from analysis_nav import *
 from analysis_pow import *
 from analysis_dat import *
+from analysis_orb import *
 
 from segments import Constellation, Satellite, Station, User, Ground2SpaceLink, User2SpaceLink, Space2SpaceLink
 import logging_svs as ls
@@ -53,7 +54,9 @@ class AppConfig:
         self.include_sp2sp = True
         self.orbits_from_previous_run = False
         self.data_orbits = []  # Orbits from previous run
-        self.orbit_propagator = ''  # Text with either Keplerian / SGP4
+        self.orbit_propagator = ''  # Text with either Keplerian / SGP4 / HPOP
+        self.hpop_config = None  # Parsed <HPOP> block (HPOP propagator only)
+        self.hpop = None  # propagation_hpop.HpopPropagation instance (HPOP only)
         self.num_constellation = 0
         self.num_sat = 0
         self.num_station = 0
@@ -447,6 +450,16 @@ class AppConfig:
             self.orbits_from_previous_run = misc_fn.str2bool(sim.find('OrbitsFromPreviousRun').text)
             self.orbit_propagator = sim.find('OrbitPropagator').text
 
+            if self.orbit_propagator == 'HPOP':
+                # Deferred import: orekit/JVM dependencies only load for HPOP runs
+                from propagation_hpop import HpopConfig
+                self.hpop_config = HpopConfig()
+                if sim.find('HPOP') is not None:
+                    self.hpop_config.read_config(sim.find('HPOP'))
+                else:
+                    ls.logger.warning('OrbitPropagator is HPOP but no <HPOP> block was found; '
+                                      'using the default full force model')
+
             ls.logger.info(f'Loaded simulation, start MJD: {self.start_time}, stop MJD: {self.stop_time},' +
                            f' size time steps in sec: {self.time_step}')
             for analysis_node in root.iter('Analysis'):  # Only one analysis can be performed at a time
@@ -498,6 +511,8 @@ class AppConfig:
                     self.analysis = AnalysisSatDataStorage()
                 if analysis_node.find('Type').text == 'dat_latency':
                     self.analysis = AnalysisSatDataLatency()
+                if analysis_node.find('Type').text == 'orb_semi_major_axis':
+                    self.analysis = AnalysisOrbSemiMajorAxis()
                 self.analysis.type = analysis_node.find('Type').text
                 self.analysis.read_config(analysis_node)  # Read the configuration for the specific analysis
 

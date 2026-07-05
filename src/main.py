@@ -20,6 +20,9 @@ def load_configuration():
     sm.load_users()
     sm.load_simulation()
     sm.setup_links()
+    if sm.orbit_propagator == 'HPOP' and not sm.orbits_from_previous_run:
+        import propagation_hpop  # deferred: orekit/JVM only needed for HPOP runs
+        sm.hpop = propagation_hpop.HpopPropagation(sm)
     return sm  # Configuration is used as state machine
 
 
@@ -97,6 +100,8 @@ def update_satellites(sm):
                 satellite.det_posvel_eci_keplerian(sm.time_mjd)
             if sm.orbit_propagator == 'SGP4':
                 satellite.det_posvel_eci_sgp4(sm.time_jd, sm.time_fr)
+            if sm.orbit_propagator == 'HPOP':
+                sm.hpop.update_satellite(satellite, idx_sat, sm.time_mjd, sm.time_gmst)
             satellite.det_posvel_ecf(sm.time_gmst)
             satellite.idx_stat_in_view = []  # Reset before loop
         write_posvel_satellites(sm)

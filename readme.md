@@ -11,6 +11,9 @@ Download from github, and install the following libraries:
 - Cartopy and xarray
 - Geopandas and shapely
 - Itur
+- For the HPOP orbit propagator only: orekit_jpype and jdk4py (bundled JVM), plus the
+  Orekit physical data archive saved as __input/orekit-data.zip__
+  (download from https://gitlab.orekit.org/orekit/orekit-data)
 
 To run, edit the config.xml file and run: python main.py
 
@@ -62,6 +65,10 @@ parameters and analysis are defined. Analysis can be added as wished, the baseli
 ### Data handling
 - __dat_storage__: Solid State Recorder (SSR) fill level over orbit (recording vs. downlink)
 - __dat_latency__: Data latency statistics from acquisition to ground reception
+
+### Orbit
+- __orb_semi_major_axis__: Osculating semi-major axis over time, e.g. the orbital decay
+  under atmospheric drag with the HPOP propagator
 
 _To be implemented at a later stage:_
 
@@ -252,7 +259,81 @@ The following explanations apply for the parameters:
 - The IncludeStation2SpaceLinks, etc. parameters determine whether links between different objects: sat, station and user are computed. Normally leave these to True so that all analysis works. Time could
 be saved by disabling some. 
 - The OrbitsFromPreviousRun flag (True/False) reuses the satellite ECI orbits cached in 'output/orbits_internal.txt' from a previous run instead of re-propagating, to save time when only the analysis changes.
-- The OrbitPropagator determines which propagator: 'Keplerian' or 'SGP4' to take.
+- The OrbitPropagator determines which propagator to take: 'Keplerian', 'SGP4' or 'HPOP'.
+
+### HPOP orbit propagator
+'HPOP' selects the High Precision Orbit Propagation based on the Orekit library
+(numerical integration with a configurable perturbation force model, see
+src/propagation_hpop.py). It requires the python packages __orekit_jpype__ and
+__jdk4py__ and the Orekit physical data archive at __input/orekit-data.zip__.
+Satellites defined by a TLE file get their initial state from the TLE at the
+simulation start; satellites defined by Kepler elements are integrated from their
+EpochMJD (keep EpochMJD close to StartDate). Each satellite is integrated once over
+the whole simulation window; the time loop samples the resulting dense ephemeris.
+
+When (and only when) HPOP is selected, an additional <HPOP> block inside
+SimulationManager configures the force model. Every entry is optional — the
+defaults give the full force model shown here:
+```
+<HPOP>
+    <IntegratorMinStep>0.001</IntegratorMinStep>
+    <IntegratorMaxStep>300</IntegratorMaxStep>
+    <IntegratorPositionTolerance>1.0</IntegratorPositionTolerance>
+    <Mass>1000.0</Mass>
+
+    <Geopotential>True</Geopotential>
+    <GeopotentialDegree>21</GeopotentialDegree>
+    <GeopotentialOrder>21</GeopotentialOrder>
+
+    <EarthPoleRotation>True</EarthPoleRotation>
+
+    <Drag>True</Drag>
+    <DragArea>1.0</DragArea>
+    <DragCd>2.2</DragCd>
+    <DragModel>NRLMSISE00</DragModel>
+
+    <SolarRadiationPressure>True</SolarRadiationPressure>
+    <SRPArea>1.0</SRPArea>
+    <SRPCr>1.5</SRPCr>
+
+    <ThirdBodySun>True</ThirdBodySun>
+    <ThirdBodyMoon>True</ThirdBodyMoon>
+    <ThirdBodyPlanets>False</ThirdBodyPlanets>
+
+    <SolidTides>True</SolidTides>
+    <OceanTides>False</OceanTides>
+    <OceanTidesDegree>4</OceanTidesDegree>
+    <OceanTidesOrder>4</OceanTidesOrder>
+
+    <Relativity>False</Relativity>
+</HPOP>
+```
+The parameters are:
+- IntegratorMinStep/IntegratorMaxStep: variable step size bounds in seconds of the
+  Dormand-Prince 8(5,3) integrator.
+- IntegratorPositionTolerance: position error tolerance in m controlling the step size.
+- Mass: spacecraft mass in kg (used by drag and SRP accelerations).
+- Geopotential: spherical harmonics gravity field (Holmes-Featherstone) with
+  GeopotentialDegree x GeopotentialOrder resolution; the point-mass central
+  attraction is always applied.
+- EarthPoleRotation: True uses the full IERS 2010 Earth orientation (precession,
+  nutation, UT1 and polar motion from the EOP files) for the Earth-fixed frame of
+  the force models; False uses simplified equinox-based transforms without the
+  pole corrections.
+- Drag: atmospheric drag with DragArea (m^2), DragCd (drag coefficient) and
+  DragModel one of 'NRLMSISE00', 'DTM2000' (both driven by the CSSI space weather
+  file in orekit-data) or 'HarrisPriester' (static density model).
+- SolarRadiationPressure: isotropic SRP with SRPArea (m^2) and reflection
+  coefficient SRPCr, including Earth shadow.
+- ThirdBodySun/ThirdBodyMoon/ThirdBodyPlanets: point mass third-body attraction
+  (planets adds Venus, Mars and Jupiter).
+- SolidTides/OceanTides: tidal corrections to the gravity field (ocean tides up to
+  OceanTidesDegree x OceanTidesOrder).
+- Relativity: Schwarzschild relativistic correction.
+
+A benchmark of the HPOP propagator against an analytical two-body orbit (cm-level
+agreement) and against an SGP4 reference trajectory (km-level agreement) is
+available in tests/hpop_benchmark (run tests/hpop_benchmark/benchmark_hpop.py).
 
 The analysis are described below:
 
@@ -867,6 +948,28 @@ Optional in the analysis part are:
 - GroundProcessingMin: Fixed ground processing delay in minutes added to each latency value (default 0).
 
 <img src="/docs/dat_latency_stats.png" alt="dat_latency"/>
+
+
+### orb_semi_major_axis
+Plots the osculating semi-major axis of the satellite(s) over the simulation time,
+computed from the ECI state vector with the vis-viva equation. Run with the HPOP
+propagator and drag enabled this shows the orbital decay (the legend reports the
+secular change, i.e. the difference of the mean semi-major axis at the start and
+the end of the simulation, averaging out the J2 short-period oscillation). It also
+works with the other propagators: constant semi-major axis for Keplerian,
+mean-element variations for SGP4.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_semi_major_axis</Type>
+</Analysis>
+```
+Optional are, to select one constellation or one satellite:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
 
 
 

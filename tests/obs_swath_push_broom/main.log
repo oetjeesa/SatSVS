@@ -1,0 +1,59 @@
+2026-07-05 11:23:02,283 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_swath_push_broom/sentinel-1.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': 250000.0, 'obs_swath_stop': 650000.0, 'frontal_area': None, 'mass': None}
+2026-07-05 11:23:02,285 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 58945.03033, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001402, 'inclination': 1.7135991661930727, 'right_ascension': 1.8332065798322439, 'arg_perigee': 1.4609802102594134, 'mean_anomaly': 4.824578744702885}"]
+2026-07-05 11:23:02,466 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-05 11:23:02,933 - main - INFO - {'type': 'Grid', 'user_id': 16470, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.0], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-3.91862092e-10,  4.79892657e-26,  6.35675231e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.57079633, 3.14159265, 0.        ]), 'num_lat': 91, 'num_lon': 181, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x00000262CA0CF9D0>, 'metric': [], 'UserName': 'Grid'}
+2026-07-05 11:23:02,935 - main - INFO - Loaded simulation, start MJD: 58946.0, stop MJD: 58947.0, size time steps in sec: 60.0
+2026-07-05 11:23:02,935 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-05 11:23:02,949 - main - INFO - Loaded 16471 number of User to Spacecraft links
+2026-07-05 11:23:02,949 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-05 11:23:03,060 - main - INFO - Finished reading configuration file
+2026-07-05 11:23:03,073 - main - INFO - Simulation time: 2020-04-07 00:00:00, time step: 0
+2026-07-05 11:23:04,091 - main - INFO - Simulation time: 2020-04-07 01:40:00, time step: 100
+2026-07-05 11:23:04,119 - main - INFO - Simulation time: 2020-04-07 03:20:00, time step: 200
+2026-07-05 11:23:04,147 - main - INFO - Simulation time: 2020-04-07 05:00:00, time step: 300
+2026-07-05 11:23:04,175 - main - INFO - Simulation time: 2020-04-07 06:40:00, time step: 400
+2026-07-05 11:23:04,204 - main - INFO - Simulation time: 2020-04-07 08:20:00, time step: 500
+2026-07-05 11:23:04,234 - main - INFO - Simulation time: 2020-04-07 10:00:00, time step: 600
+2026-07-05 11:23:04,267 - main - INFO - Simulation time: 2020-04-07 11:40:00, time step: 700
+2026-07-05 11:23:04,297 - main - INFO - Simulation time: 2020-04-07 13:20:00, time step: 800
+2026-07-05 11:23:04,327 - main - INFO - Simulation time: 2020-04-07 15:00:00, time step: 900
+2026-07-05 11:23:04,360 - main - INFO - Simulation time: 2020-04-07 16:40:00, time step: 1000
+2026-07-05 11:23:04,395 - main - INFO - Simulation time: 2020-04-07 18:20:00, time step: 1100
+2026-07-05 11:23:04,429 - main - INFO - Simulation time: 2020-04-07 20:00:00, time step: 1200
+2026-07-05 11:23:04,465 - main - INFO - Simulation time: 2020-04-07 21:40:00, time step: 1300
+2026-07-05 11:23:04,497 - main - INFO - Simulation time: 2020-04-07 23:20:00, time step: 1400
+2026-07-05 11:23:04,512 - main - INFO - Plotting analysis obs_swath_push_broom
+2026-07-05 11:23:04,811 - main - INFO - User swath coverage 0 of 16471
+2026-07-05 11:23:04,814 - main - INFO - User swath coverage 1000 of 16471
+2026-07-05 11:23:04,822 - main - INFO - User swath coverage 2000 of 16471
+2026-07-05 11:23:04,828 - main - INFO - User swath coverage 3000 of 16471
+2026-07-05 11:23:04,833 - main - INFO - User swath coverage 4000 of 16471
+2026-07-05 11:23:04,839 - main - INFO - User swath coverage 5000 of 16471
+2026-07-05 11:23:04,843 - main - INFO - User swath coverage 6000 of 16471
+2026-07-05 11:23:04,847 - main - INFO - User swath coverage 7000 of 16471
+2026-07-05 11:23:04,852 - main - INFO - User swath coverage 8000 of 16471
+2026-07-05 11:23:04,856 - main - INFO - User swath coverage 9000 of 16471
+2026-07-05 11:23:04,860 - main - INFO - User swath coverage 10000 of 16471
+2026-07-05 11:23:04,864 - main - INFO - User swath coverage 11000 of 16471
+2026-07-05 11:23:04,870 - main - INFO - User swath coverage 12000 of 16471
+2026-07-05 11:23:04,875 - main - INFO - User swath coverage 13000 of 16471
+2026-07-05 11:23:04,881 - main - INFO - User swath coverage 14000 of 16471
+2026-07-05 11:23:04,888 - main - INFO - User swath coverage 15000 of 16471
+2026-07-05 11:23:04,897 - main - INFO - User swath coverage 16000 of 16471
+2026-07-05 11:23:05,380 - main - INFO - User revisit 0 of 16471
+2026-07-05 11:23:05,386 - main - INFO - User revisit 1000 of 16471
+2026-07-05 11:23:05,403 - main - INFO - User revisit 2000 of 16471
+2026-07-05 11:23:05,412 - main - INFO - User revisit 3000 of 16471
+2026-07-05 11:23:05,421 - main - INFO - User revisit 4000 of 16471
+2026-07-05 11:23:05,428 - main - INFO - User revisit 5000 of 16471
+2026-07-05 11:23:05,436 - main - INFO - User revisit 6000 of 16471
+2026-07-05 11:23:05,444 - main - INFO - User revisit 7000 of 16471
+2026-07-05 11:23:05,451 - main - INFO - User revisit 8000 of 16471
+2026-07-05 11:23:05,458 - main - INFO - User revisit 9000 of 16471
+2026-07-05 11:23:05,465 - main - INFO - User revisit 10000 of 16471
+2026-07-05 11:23:05,473 - main - INFO - User revisit 11000 of 16471
+2026-07-05 11:23:05,481 - main - INFO - User revisit 12000 of 16471
+2026-07-05 11:23:05,489 - main - INFO - User revisit 13000 of 16471
+2026-07-05 11:23:05,499 - main - INFO - User revisit 14000 of 16471
+2026-07-05 11:23:05,510 - main - INFO - User revisit 15000 of 16471
+2026-07-05 11:23:05,530 - main - INFO - User revisit 16000 of 16471

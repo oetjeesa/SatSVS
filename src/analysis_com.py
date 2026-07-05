@@ -157,7 +157,7 @@ class AnalysisComSp2SpBudget(AnalysisBase):
     def __init__(self):
         super().__init__()
         self.sat_id1 = None
-        self.sat_id1 = None
+        self.sat_id2 = None
 
         self.carrier_frequency = None
         self.transmit_power = None
