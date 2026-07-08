@@ -51,6 +51,7 @@
       <Type>obs_sza_subsat</Type>
       <RangeLatitude>-80,80,10</RangeLatitude>
       <SaveOutput>Numpy</SaveOutput>
+      <Plot3D>True</Plot3D>
     </Analysis>
   </SimulationManager>
 </Scenario>

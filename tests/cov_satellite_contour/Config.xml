@@ -304,7 +304,7 @@
   <SimulationManager>
     <StartDate>2026-02-01 00:00:00</StartDate>
     <StopDate>2026-02-02 00:00:00</StopDate>
-    <TimeStep>3600</TimeStep>
+    <TimeStep>300</TimeStep>
     <IncludeStation2SpaceLinks>True</IncludeStation2SpaceLinks>
     <IncludeUser2SpaceLinks>True</IncludeUser2SpaceLinks>
     <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
@@ -315,6 +315,8 @@
       <ConstellationID>1</ConstellationID>
       <SatelliteID>1</SatelliteID>
       <ElevationMask>10</ElevationMask>
+      <Plot3D>True</Plot3D>
+      <SatelliteModelScale>500000</SatelliteModelScale>
     </Analysis>
   </SimulationManager>
 </Scenario>

@@ -318,6 +318,8 @@
       <Type>cov_pass_time</Type>
       <ConstellationID>1</ConstellationID>
       <Statistic>Mean</Statistic>
+      <Plot3D>True</Plot3D>
+      <ShowSatellite>False</ShowSatellite>
     </Analysis>
   </SimulationManager>
 </Scenario>

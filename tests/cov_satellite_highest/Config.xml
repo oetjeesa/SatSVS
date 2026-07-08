@@ -318,6 +318,8 @@
       <Type>cov_satellite_highest</Type>
       <ConstellationID>1</ConstellationID>
       <Statistic>Mean</Statistic>
+      <Plot3D>True</Plot3D>
+      <SatelliteModelScale>500000</SatelliteModelScale>
     </Analysis>
   </SimulationManager>
 </Scenario>

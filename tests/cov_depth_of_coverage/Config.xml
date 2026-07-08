@@ -71,6 +71,7 @@
     <OrbitPropagator>SGP4</OrbitPropagator>
     <Analysis>
       <Type>cov_depth_of_coverage</Type>
+      <Plot3D>True</Plot3D>
     </Analysis>
   </SimulationManager>
 </Scenario>

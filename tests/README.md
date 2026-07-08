@@ -42,7 +42,7 @@ regenerates all test configs from scratch.
 
 | Test | Outcome (visually verified) |
 |---|---|
-| cov_ground_track | SSO ground track over one day, correct pattern |
+| cov_ground_track | SSO ground track over one day, correct pattern; also the 3D globe render (Plot3D with pyvista): textured Earth, track, ECF orbit and satellite model in cov_ground_track_3d.png |
 | cov_satellite_pvt | ECI pos/vel sinusoids, 12 h GPS period, orbits.txt written |
 | cov_satellite_visible | 6–10 GPS satellites in view per user |
 | cov_satellite_visible_grid | Min 5–7 satellites in view worldwide |
@@ -52,8 +52,8 @@ regenerates all test configs from scratch.
 | cov_satellite_highest | Mean max-elevation map, symmetric bands |
 | cov_depth_of_coverage | 0–2 stations in view along TerraSAR-X track |
 | cov_pass_time | Mean pass 14000–27000 s, equatorial maximum |
-| obs_swath_conical (+revisit) | Classic conical swath coverage/revisit diamonds |
-| obs_swath_push_broom (+revisit) | 400 km strips; NetCDF export works |
+| obs_swath_conical (+revisit) | Classic conical swath coverage/revisit diamonds; 3D swath ribbon render (Plot3D) in obs_swath_conical_3d.png |
+| obs_swath_push_broom (+revisit) | 400 km strips; NetCDF export works; 3D swath ribbon render (Plot3D) in obs_swath_push_broom_3d.png |
 | obs_sza_push_broom | Mean SZA in swath, N–S gradient |
 | obs_sza_subsat (+lat, +lat_year) | Dawn-dusk daylight SZA, plots labelled |
 | com_gr2sp_budget | C/N0 95–110 dBHz vs required, ITU-R attenuations |
@@ -68,6 +68,14 @@ regenerates all test configs from scratch.
 | dat_latency | Mean 0.95 h, 95% 1.57 h, 100% < 2 h |
 | orb_semi_major_axis | HPOP + drag: 18.1 km secular SMA decay over 3 days at ~250 km |
 | hpop_benchmark | Two-body HPOP vs analytic Kepler: max 0.024 m/day (PASS); full-force HPOP vs SGP4 reference: RMS 6.7 km, max 10.8 km/day (PASS) |
+
+## 3D plots
+
+Every world-map analysis test enables `<Plot3D>True</Plot3D>` and stores the 3D
+globe render as `<type>_3d.png` in its folder. The GPS grid tests also
+demonstrate the flags: `cov_pass_time` uses `<ShowSatellite>False</ShowSatellite>`
+(orbit shells only), `cov_satellite_visible_grid` uses
+`<ShowOrbit>False</ShowOrbit>` (satellite models only).
 
 ## HPOP benchmark
 

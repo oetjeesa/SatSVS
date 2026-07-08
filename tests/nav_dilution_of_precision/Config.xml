@@ -318,6 +318,8 @@
       <Type>nav_dilution_of_precision</Type>
       <Direction>Ver</Direction>
       <Statistic>Max</Statistic>
+      <Plot3D>True</Plot3D>
+      <ShowSatellite>False</ShowSatellite>
     </Analysis>
   </SimulationManager>
 </Scenario>

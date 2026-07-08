@@ -55,6 +55,7 @@
     <OrbitPropagator>SGP4</OrbitPropagator>
     <Analysis>
       <Type>obs_sza_push_broom</Type>
+      <Plot3D>True</Plot3D>
     </Analysis>
   </SimulationManager>
 </Scenario>

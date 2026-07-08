@@ -14,6 +14,9 @@ Download from github, and install the following libraries:
 - For the HPOP orbit propagator only: orekit_jpype and jdk4py (bundled JVM), plus the
   Orekit physical data archive saved as __input/orekit-data.zip__
   (download from https://gitlab.orekit.org/orekit/orekit-data)
+- For the 3D plots only: pyvista, plus an equirectangular Earth texture saved as
+  __input/earth_texture.jpg__ (e.g. the public domain NASA Blue Marble image
+  https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57752/land_shallow_topo_2048.jpg)
 
 To run, edit the config.xml file and run: python main.py
 
@@ -343,6 +346,43 @@ In order to run an analysis block it has to be uncommented and the parameters ad
 - Use as a template one of the other analysis classes above or the base analysis class definition
 - Add the class instantiation at the end of config.py
 
+### 3D plots
+All analyses that produce a world map (cov_ground_track, cov_satellite_contour,
+cov_satellite_visible_grid, cov_satellite_highest, cov_depth_of_coverage,
+cov_pass_time, obs_swath_conical, obs_swath_push_broom, obs_sza_push_broom,
+obs_sza_subsat, nav_dilution_of_precision, nav_accuracy) can additionally render
+their result on a textured 3D Earth (needs pyvista and input/earth_texture.jpg,
+see the installation section). The 3D plot is saved as
+__output/<analysis_type>_3d.png__; when the tool runs with a display (not
+headless) an interactive pyvista window opens first and the screenshot is saved
+on closing it. The following parameters in the Analysis block control it:
+```
+<Plot3D>True</Plot3D>
+<ShowSatellite>True</ShowSatellite>
+<ShowOrbit>True</ShowOrbit>
+<SatelliteModelFile>../input/my_satellite.stl</SatelliteModelFile>
+<SatelliteModelScale>200000</SatelliteModelScale>
+```
+- Plot3D: enables the 3D plot (default False).
+- ShowSatellite: draw a 3D satellite model at the last simulated epoch of every
+  satellite, nadir pointing with the solar panel axis cross-track and a yellow
+  line to the subsatellite point (default True). Without SatelliteModelFile a
+  simple procedural bus + solar panels + antenna dish model is drawn.
+- ShowOrbit: draw the satellite orbital track(s) as cyan lines (default True).
+  The track is the inertial orbit path over the simulation, oriented as the
+  Earth stands at the final epoch — i.e. the familiar orbit ellipse(s) (the
+  path relative to the rotating Earth is what the ground track shows).
+- SatelliteModelFile: optional satellite mesh file (STL/OBJ/PLY/VTK, +x flight
+  direction, +y solar panel axis, +z towards nadir).
+- SatelliteModelScale: size of the (hugely exaggerated) satellite model in
+  metres, default 200000, so that it is visible at globe scale. For MEO
+  constellations like GPS a larger value (e.g. 500000) is recommended.
+Ground stations are always drawn as magenta markers. Near-Earth scenes use a
+perspective camera above the (last) satellite; scenes whose orbits reach far
+above the Earth (MEO/GEO, e.g. GNSS constellations) are rendered with a fitted
+parallel projection instead, so the Earth and the orbits appear at their true
+relative size.
+
 The specific parameters for the existing analysis are given here below:
 
 ### cov_ground_track
@@ -357,6 +397,13 @@ Optional is SatelliteID for selection of one satellite. For a TLE file it is the
 ```
 If this parameter is omitted all the satellites of the constellation are plotted.
 <img src="/docs/cov_ground_track.png" alt="cov_ground_track"/>
+
+Optionally the ground track can additionally be rendered in 3D with the red ground
+track on the surface (see the 3D plots section above for all Plot3D parameters):
+```
+<Plot3D>True</Plot3D>
+```
+<img src="/docs/cov_ground_track_3d.png" alt="cov_ground_track_3d"/>
 
 ### cov_satellite_pvt
 Plots the satellite position and velocity and outputs the position and velocity to the 'output/orbits.txt' file. 
@@ -392,6 +439,10 @@ median. The following parameters are needed:
 ```
 <img src="/docs/cov_satellite_visible_grid.png" alt="cov_satellite_visible_grid"/>
 
+With <Plot3D>True</Plot3D> the statistic is also draped over the 3D globe (see the
+3D plots section for all parameters; the example below uses <ShowOrbit>False</ShowOrbit>):
+<img src="/docs/cov_satellite_visible_grid_3d.png" alt="cov_satellite_visible_grid_3d"/>
+
 ### cov_satellite_visible_id
 Plots the satellite IDs in view over time for the first user. The following parameters are needed:
 ```
@@ -419,6 +470,10 @@ The elevation mask is for the user who has to receive the satellite. The satelli
 satellite ID or multiple if satellite ID is omitted.
 <img src="/docs/cov_satellite_contour.png" alt="cov_satellite_contour"/>
 
+With <Plot3D>True</Plot3D> the visibility contour(s) at the end of the simulation are
+drawn as coloured rings on the 3D globe (see the 3D plots section for all parameters):
+<img src="/docs/cov_satellite_contour_3d.png" alt="cov_satellite_contour_3d"/>
+
 ### cov_satellite_sky_angles
 Plots the satellite azimuth and elevation over time for the first user. The following parameters are needed:
 ```
@@ -442,6 +497,10 @@ The following parameters are needed:
 The elevation mask is taken by the ground station setup.
 <img src="/docs/cov_depth_of_coverage.png" alt="cov_depth_of_coverage"/>
 
+With <Plot3D>True</Plot3D> the ground track is drawn on the 3D globe with the points
+coloured by the number of stations in view (see the 3D plots section for all parameters):
+<img src="/docs/cov_depth_of_coverage_3d.png" alt="cov_depth_of_coverage_3d"/>
+
 ### cov_pass_time
 Plots the satellite constellation pass time statistics for a user grid. The following parameters are needed:
 ```
@@ -453,6 +512,11 @@ Plots the satellite constellation pass time statistics for a user grid. The foll
 ```
 <img src="/docs/cov_pass_time.png" alt="cov_pass_time"/>
 
+With <Plot3D>True</Plot3D> the statistic is draped over the 3D globe (the example
+below uses <ShowSatellite>False</ShowSatellite>, showing only the constellation
+orbital tracks; see the 3D plots section for all parameters):
+<img src="/docs/cov_pass_time_3d.png" alt="cov_pass_time_3d"/>
+
 ### cov_satellite_highest
 Plots elevation for the highest satellite in view over a user grid. The following parameters are needed:
 ```
@@ -463,6 +527,10 @@ Plots elevation for the highest satellite in view over a user grid. The followin
 </Analysis>
 ```
 <img src="/docs/cov_satellite_highest.png" alt="cov_satellite_highest"/>
+
+With <Plot3D>True</Plot3D> the statistic is draped over the 3D globe together with
+the constellation (see the 3D plots section for all parameters):
+<img src="/docs/cov_satellite_highest_3d.png" alt="cov_satellite_highest_3d"/>
 
 ### obs_swath_conical
 Plots the swath coverage for a conical scanner on one or more satellites defined in the space segment. 
@@ -497,9 +565,13 @@ Optional in the analysis part are:
 - Revisit flag: This flag will enable revisit computation after the swath coverage. The statistic will determine
 what kind of statistic is displayed per user location.
 - SaveOutput: NetCDF or Numpy This flag will enable saving user swath coverage for every timestep.
+- Plot3D flag: additionally renders the swath as a semi-transparent ribbon on a
+  textured 3D Earth, saved as output/obs_swath_conical_3d.png (see the 3D plots
+  section for all Plot3D parameters).
 
 <img src="/docs/obs_swath_conical.png" alt="obs_swath_conical"/>
 <img src="/docs/obs_swath_conical_revisit.png" alt="obs_swath_conical_revisit"/>
+<img src="/docs/obs_swath_conical_3d.png" alt="obs_swath_conical_3d"/>
 
 ### obs_swath_push_broom
 Plots the swath coverage for a push broom scanner on one or more satellites defined in the space segment. 
@@ -539,9 +611,13 @@ Optional in the analysis part are:
 - Revisit flag: This flag will enable revisit computation after the swath coverage. The statistic will determine
 what kind of statistic is displayed per user location.
 - SaveOutput: NetCDF or Numpy This flag will enable saving user swath coverage for every timestep.
+- Plot3D flag: additionally renders the swath as a semi-transparent ribbon on a
+  textured 3D Earth, saved as output/obs_swath_push_broom_3d.png (see the 3D plots
+  section for all Plot3D parameters).
 
 <img src="/docs/obs_swath_push_broom.png" alt="cov_satellite_push_broom"/>
 <img src="/docs/obs_swath_push_broom_revisit.png" alt="cov_satellite_push_broom_revisit"/>
+<img src="/docs/obs_swath_push_broom_3d.png" alt="obs_swath_push_broom_3d"/>
 
 
 ### obs_sza_push_broom
@@ -576,10 +652,15 @@ Optional in the analysis part are:
 ```
 <PolarView>60</PolarView>
 <SaveOutput>NetCDF</SaveOutput>
+<Plot3D>True</Plot3D>
 ```
 - PolarView angle: This parameter can be given to see one part of the globe in an stereographic view, eg. for the polar region.
   When negative the area on the South Pole will be visible.
 - SaveOutput: NetCDF or Numpy This flag will enable saving the user swath coverage for every timestep.
+- Plot3D flag: additionally renders the mean SZA of the observed locations as
+  coloured points on the 3D globe (see the 3D plots section for all parameters):
+
+<img src="/docs/obs_sza_push_broom_3d.png" alt="obs_sza_push_broom_3d"/>
 
 
 ### obs_sza_subsat
@@ -604,6 +685,10 @@ Optional in the analysis part are:
   When negative the area on the South Pole will be visible.
 - RangeLatitude: Min_Lat, Max_Lat and Lat_Step in degrees, will enable plots vs. latitude.
 - SaveOutput: Will write to file the SZA vs latitude averaged over the simulation time.
+- Plot3D (True/False): additionally renders the subsatellite SZA points on the 3D
+  globe (see the 3D plots section for all parameters):
+
+<img src="/docs/obs_sza_subsat_3d.png" alt="obs_sza_subsat_3d"/>
 
 <img src="/docs/obs_sza_subsat_lat.png" alt="obs_sza_subsat_lat"/>
 <img src="/docs/obs_sza_subsat_lat_year.png" alt="obs_sza_subsat_lat_year"/>    
@@ -809,6 +894,11 @@ Parameters are:
 
 <img src="/docs/nav_dilution_of_precision.png" alt="nav_dilution_of_precision"/>
 
+With <Plot3D>True</Plot3D> the DOP statistic is draped over the 3D globe (the example
+below uses <ShowSatellite>False</ShowSatellite>; see the 3D plots section for all
+parameters):
+<img src="/docs/nav_dilution_of_precision_3d.png" alt="nav_dilution_of_precision_3d"/>
+
 
 ### nav_accuracy
 Plots navigation accuracy for a user grid based on on sqrt(uere)*DOP computations. 
@@ -831,6 +921,10 @@ Additionally the constellation needs to be supplied with an elevation dependent 
 ```
 
 <img src="/docs/nav_accuracy.png" alt="nav_accuracy"/>
+
+With <Plot3D>True</Plot3D> the accuracy statistic is draped over the 3D globe (see
+the 3D plots section for all parameters):
+<img src="/docs/nav_accuracy_3d.png" alt="nav_accuracy_3d"/>
 
 
 ### pow_battery_depth_discharge
@@ -970,6 +1064,8 @@ Optional are, to select one constellation or one satellite:
     <ConstellationID>1</ConstellationID>
     <SatelliteID>1</SatelliteID>
 ```
+<img src="/docs/orb_semi_major_axis.png" alt="semi_major_axis"/>
+
 
 
 

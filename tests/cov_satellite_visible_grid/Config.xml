@@ -317,6 +317,9 @@
     <Analysis>
       <Type>cov_satellite_visible_grid</Type>
       <Statistic>Min</Statistic>
+      <Plot3D>True</Plot3D>
+      <ShowOrbit>False</ShowOrbit>
+      <SatelliteModelScale>500000</SatelliteModelScale>
     </Analysis>
   </SimulationManager>
 </Scenario>

@@ -193,7 +193,8 @@ write_test('cov_ground_track', config(
     ground_segment(['Kiruna']), static_users(DELFT), *FEB26, 60,
     '      <Type>cov_ground_track</Type>\n'
     '      <ConstellationID>1</ConstellationID>\n'
-    '      <SatelliteID>31698</SatelliteID>',
+    '      <SatelliteID>31698</SatelliteID>\n'
+    '      <Plot3D>True</Plot3D>',
     propagator='SGP4'), tle='terrasarx.txt')
 
 write_test('cov_satellite_pvt', config(
@@ -210,7 +211,10 @@ write_test('cov_satellite_visible', config(
 write_test('cov_satellite_visible_grid', config(
     gps_constellation(), ground_segment(['Kourou']), grid_users(10), *FEB26, 300,
     '      <Type>cov_satellite_visible_grid</Type>\n'
-    '      <Statistic>Min</Statistic>'))
+    '      <Statistic>Min</Statistic>\n'
+    '      <Plot3D>True</Plot3D>\n'
+    '      <ShowOrbit>False</ShowOrbit>\n'
+    '      <SatelliteModelScale>500000</SatelliteModelScale>'))
 
 write_test('cov_satellite_visible_id', config(
     gps_constellation(), ground_segment(['Kourou']), static_users(DELFT), *FEB26, 120,
@@ -218,11 +222,13 @@ write_test('cov_satellite_visible_id', config(
     '      <ConstellationID>1</ConstellationID>'))
 
 write_test('cov_satellite_contour', config(
-    gps_constellation(), ground_segment(['Kourou']), static_users(DELFT), *FEB26, 3600,
+    gps_constellation(), ground_segment(['Kourou']), static_users(DELFT), *FEB26, 300,
     '      <Type>cov_satellite_contour</Type>\n'
     '      <ConstellationID>1</ConstellationID>\n'
     '      <SatelliteID>1</SatelliteID>\n'
-    '      <ElevationMask>10</ElevationMask>'))
+    '      <ElevationMask>10</ElevationMask>\n'
+    '      <Plot3D>True</Plot3D>\n'
+    '      <SatelliteModelScale>500000</SatelliteModelScale>'))
 
 write_test('cov_satellite_sky_angles', config(
     gps_constellation(), ground_segment(['Kourou']), static_users(DELFT), *FEB26, 120,
@@ -234,19 +240,24 @@ write_test('cov_satellite_highest', config(
     gps_constellation(), ground_segment(['Kourou']), grid_users(10), *FEB26, 300,
     '      <Type>cov_satellite_highest</Type>\n'
     '      <ConstellationID>1</ConstellationID>\n'
-    '      <Statistic>Mean</Statistic>'))
+    '      <Statistic>Mean</Statistic>\n'
+    '      <Plot3D>True</Plot3D>\n'
+    '      <SatelliteModelScale>500000</SatelliteModelScale>'))
 
 write_test('cov_depth_of_coverage', config(
     tle_constellation('TerraSAR-X', 'terrasarx.txt', 'cov_depth_of_coverage'),
     ground_segment(['Svalbard', 'Kiruna', 'Inuvik']), static_users(DELFT), *FEB26, 60,
-    '      <Type>cov_depth_of_coverage</Type>',
+    '      <Type>cov_depth_of_coverage</Type>\n'
+    '      <Plot3D>True</Plot3D>',
     propagator='SGP4'), tle='terrasarx.txt')
 
 write_test('cov_pass_time', config(
     gps_constellation(), ground_segment(['Kourou']), grid_users(10), *FEB26, 300,
     '      <Type>cov_pass_time</Type>\n'
     '      <ConstellationID>1</ConstellationID>\n'
-    '      <Statistic>Mean</Statistic>'))
+    '      <Statistic>Mean</Statistic>\n'
+    '      <Plot3D>True</Plot3D>\n'
+    '      <ShowSatellite>False</ShowSatellite>'))
 
 # ------------------------------------------------------------ earth observation
 write_test('obs_swath_conical', config(
@@ -255,7 +266,8 @@ write_test('obs_swath_conical', config(
     '      <Type>obs_swath_conical</Type>\n'
     '      <Revisit>True</Revisit>\n'
     '      <Statistic>Mean</Statistic>\n'
-    '      <SaveOutput>Numpy</SaveOutput>',
+    '      <SaveOutput>Numpy</SaveOutput>\n'
+    '      <Plot3D>True</Plot3D>',
     propagator='SGP4', usr2sp=False), tle='metop_a.txt')
 
 write_test('obs_swath_push_broom', config(
@@ -264,14 +276,16 @@ write_test('obs_swath_push_broom', config(
     '      <Type>obs_swath_push_broom</Type>\n'
     '      <Revisit>True</Revisit>\n'
     '      <Statistic>Mean</Statistic>\n'
-    '      <SaveOutput>NetCDF</SaveOutput>',
+    '      <SaveOutput>NetCDF</SaveOutput>\n'
+    '      <Plot3D>True</Plot3D>',
     propagator='SGP4', usr2sp=False), tle='sentinel-1.txt')
 
 write_test('obs_sza_push_broom', config(
     tle_constellation('Sentinel-1', 'sentinel-1.txt', 'obs_sza_push_broom', extra=SWATH_PB),
     ground_segment(['Svalbard']), grid_users(5, mask=0),
     '2020-04-07 00:00:00', '2020-04-07 12:00:00', 60,
-    '      <Type>obs_sza_push_broom</Type>',
+    '      <Type>obs_sza_push_broom</Type>\n'
+    '      <Plot3D>True</Plot3D>',
     propagator='SGP4', usr2sp=False), tle='sentinel-1.txt')
 
 write_test('obs_sza_subsat', config(
@@ -280,7 +294,8 @@ write_test('obs_sza_subsat', config(
     '2020-04-07 00:00:00', '2020-04-09 00:00:00', 60,
     '      <Type>obs_sza_subsat</Type>\n'
     '      <RangeLatitude>-80,80,10</RangeLatitude>\n'
-    '      <SaveOutput>Numpy</SaveOutput>',
+    '      <SaveOutput>Numpy</SaveOutput>\n'
+    '      <Plot3D>True</Plot3D>',
     propagator='SGP4'), tle='sentinel-1.txt')
 
 # ------------------------------------------------------------- communication
@@ -359,13 +374,17 @@ write_test('nav_dilution_of_precision', config(
     gps_constellation(), ground_segment(['Kourou']), grid_users(10), *FEB26, 300,
     '      <Type>nav_dilution_of_precision</Type>\n'
     '      <Direction>Ver</Direction>\n'
-    '      <Statistic>Max</Statistic>'))
+    '      <Statistic>Max</Statistic>\n'
+    '      <Plot3D>True</Plot3D>\n'
+    '      <ShowSatellite>False</ShowSatellite>'))
 
 write_test('nav_accuracy', config(
     gps_constellation(uere=True), ground_segment(['Kourou']), grid_users(10), *FEB26, 300,
     '      <Type>nav_accuracy</Type>\n'
     '      <Direction>Hor</Direction>\n'
-    '      <Statistic>Mean</Statistic>'))
+    '      <Statistic>Mean</Statistic>\n'
+    '      <Plot3D>True</Plot3D>\n'
+    '      <ShowSatellite>False</ShowSatellite>'))
 
 # -------------------------------------------------------------------- power
 write_test('pow_battery_depth_discharge', config(

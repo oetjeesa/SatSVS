@@ -6,25 +6,28 @@ from matplotlib import pyplot as plt
 # Import project modules
 import misc_fn
 from constants import PI
-from analysis import AnalysisBase, make_map_cyl, map_pcolormesh, get_user_grid_shape
+from analysis import AnalysisBase, AnalysisPlot3D, make_map_cyl, map_pcolormesh, get_user_grid_shape
 
 
-class AnalysisNavDOP(AnalysisBase):
+class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
 
     def __init__(self):
         super().__init__()
         self.direction = None  # Mandatory
         self.statistic = None  # Mandatory
+        self.init_3d()
 
     def read_config(self, node):
         if node.find('Direction') is not None:
             self.direction = node.find('Direction').text
         if node.find('Statistic') is not None:
             self.statistic = node.find('Statistic').text
+        self.read_config_3d(node)
 
     def before_loop(self, sm):
         for user in sm.users:
             user.metric = np.zeros(sm.num_epoch)
+        self.before_loop_3d(sm)
 
     def in_loop(self, sm):
         for user_idx, user in enumerate(sm.users):
@@ -44,6 +47,7 @@ class AnalysisNavDOP(AnalysisBase):
                 user.metric[sm.cnt_epoch] = dop
             else:
                 user.metric[sm.cnt_epoch] = np.nan
+        self.in_loop_3d(sm)
 
     def after_loop(self, sm):
         lats, lons = [], []
@@ -75,22 +79,30 @@ class AnalysisNavDOP(AnalysisBase):
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
-class AnalysisNavAccuracy(AnalysisBase):
+        if self.plot_3d:
+            self.render_3d_grid(sm, sm.user_latitudes, sm.user_longitudes, z_new,
+                                self.statistic + ' ' + self.direction + ' DOP [-]')
+
+
+class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
 
     def __init__(self):
         super().__init__()
         self.direction = None  # Mandatory
         self.statistic = None  # Mandatory
+        self.init_3d()
 
     def read_config(self, node):
         if node.find('Direction') is not None:
             self.direction = node.find('Direction').text
         if node.find('Statistic') is not None:
             self.statistic = node.find('Statistic').text
+        self.read_config_3d(node)
 
     def before_loop(self, sm):
         for user in sm.users:
             user.metric = np.zeros(sm.num_epoch)
+        self.before_loop_3d(sm)
 
     def in_loop(self, sm):
         for user_idx, user in enumerate(sm.users):
@@ -117,6 +129,7 @@ class AnalysisNavAccuracy(AnalysisBase):
                 user.metric[sm.cnt_epoch] = acc
             else:
                 user.metric[sm.cnt_epoch] = np.nan
+        self.in_loop_3d(sm)
 
     def after_loop(self, sm):
         lats, lons = [], []
@@ -147,6 +160,10 @@ class AnalysisNavAccuracy(AnalysisBase):
         cb.set_label(self.statistic + ' ' + self.direction + ' Navigation Accuracy 95% [m]', fontsize=10)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
+
+        if self.plot_3d:
+            self.render_3d_grid(sm, sm.user_latitudes, sm.user_longitudes, z_new,
+                                self.statistic + ' ' + self.direction + ' Nav Accuracy 95% [m]')
 
 
 

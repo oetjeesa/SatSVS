@@ -10,14 +10,14 @@ import pandas as pd
 
 # Project modules
 from constants import R_EARTH
-from analysis import AnalysisBase, AnalysisObs, make_map_cyl, make_map_polar
+from analysis import AnalysisBase, AnalysisObs, AnalysisPlot3D, make_map_cyl, make_map_polar
 import misc_fn
 import logging_svs as ls
 
 
 # from multiprocessing import Process, Value, Array, RawArray
 
-class AnalysisObsSwathConical(AnalysisBase, AnalysisObs):
+class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
 
     def __init__(self):
         super().__init__()
@@ -28,6 +28,9 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs):
         self.user_metric = None
         self.save_output = None
         self.earth_angle_swath = None
+        self.init_3d()
+        self.sat_pos_hist = None  # Satellite ECF positions for the 3D plot
+        self.swath_edges = None  # Left/right swath edge points for the 3D plot
 
     def read_config(self, node):
         if node.find('PolarView') is not None:
@@ -38,6 +41,7 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs):
             self.statistic = node.find('Statistic').text.lower()
         if node.find('SaveOutput') is not None:
             self.save_output = node.find('SaveOutput').text.lower()
+        self.read_config_3d(node)
 
     def before_loop(self, sm):
         self.det_angles_from_swath_before_loop(sm)
@@ -46,6 +50,9 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs):
         for idx_user, user in enumerate(sm.users):
             self.user_pos_ecf[idx_user,0:3] = user.pos_ecf
             self.user_pos_ecf[idx_user,3] = norm(self.user_pos_ecf[idx_user,0:3])
+        if self.plot_3d:
+            self.sat_pos_hist = np.zeros((len(sm.satellites), sm.num_epoch, 3))
+            self.swath_edges = np.zeros((len(sm.satellites), sm.num_epoch, 2, 3))
 
     def det_angles_from_swath_before_loop(self, sm):
         for satellite in sm.satellites:
@@ -70,11 +77,24 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs):
     def in_loop(self, sm):
         # Computed by angle distance point and satellite ground point
         # Just 10% faster if done by checking normal euclidean distance
-        for satellite in sm.satellites:
+        for idx_sat, satellite in enumerate(sm.satellites):
             self.det_angles_from_swath_in_loop(satellite)
             self.user_metric[:,sm.cnt_epoch] = \
                 misc_fn.check_users_from_nadir(self.user_metric, self.user_pos_ecf, satellite.pos_ecf,
                                                self.earth_angle_swath, sm.cnt_epoch)
+            if self.plot_3d:
+                # Cross-track swath extremes: the subsatellite ground point
+                # rotated about the along-track horizontal axis by the swath
+                # earth angle, in both directions. The orbit history is kept in
+                # ECI (plot_3d draws the inertial path at the final epoch).
+                r_hat = satellite.pos_ecf / norm(satellite.pos_ecf)
+                ground = r_hat * misc_fn.earth_radius_lat(satellite.lla[0])
+                axis = np.array(satellite.vel_ecf) - np.dot(satellite.vel_ecf, r_hat) * r_hat
+                self.swath_edges[idx_sat, sm.cnt_epoch, 0] = \
+                    misc_fn.rot_vec_vec(ground, axis, self.earth_angle_swath)
+                self.swath_edges[idx_sat, sm.cnt_epoch, 1] = \
+                    misc_fn.rot_vec_vec(ground, axis, -self.earth_angle_swath)
+                self.sat_pos_hist[idx_sat, sm.cnt_epoch] = satellite.pos_eci
 
     def det_angles_from_swath_in_loop(self, satellite):
         satellite.det_lla()
@@ -112,9 +132,23 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs):
         if self.revisit:
             self.plot_swath_revisit(sm, self.user_metric, self.statistic, self.polar_view)
 
+        if self.plot_3d:
+            plot_swath_3d_from_analysis(self, sm)
 
 
-class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs):
+def plot_swath_3d_from_analysis(analysis, sm):
+    """Shared <Plot3D> hook of the swath analyses: render the recorded swath
+    edge histories as 3D ribbons on the textured globe (needs pyvista)."""
+    p3d = analysis._plot_3d_module()
+    if p3d is None:
+        return
+    p3d.plot_swath_3d(sm, sm.satellites, analysis.sat_pos_hist,
+                      analysis.swath_edges,
+                      '../output/' + analysis.type + '_3d.png',
+                      **analysis._kwargs_3d())
+
+
+class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
 
     def __init__(self):
         super().__init__()
@@ -125,6 +159,9 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs):
         self.user_pos_ecf = None
         self.user_metric = None
         self.save_output = None
+        self.init_3d()
+        self.sat_pos_hist = None  # Satellite ECF positions for the 3D plot
+        self.swath_edges = None  # Left/right swath edge points for the 3D plot
 
     def read_config(self, node):
         if node.find('PolarView') is not None:
@@ -135,6 +172,7 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs):
             self.statistic = node.find('Statistic').text.lower()
         if node.find('SaveOutput') is not None:
             self.save_output = node.find('SaveOutput').text.lower()
+        self.read_config_3d(node)
 
     def before_loop(self, sm):
         # Get the incidence angles for each of the satelllites
@@ -144,6 +182,9 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs):
         # self.shared_array = RawArray('i', len(sm.users))
         for idx_user, user in enumerate(sm.users):
             self.user_pos_ecf[idx_user,:] = user.pos_ecf
+        if self.plot_3d:
+            self.sat_pos_hist = np.zeros((len(sm.satellites), sm.num_epoch, 3))
+            self.swath_edges = np.zeros((len(sm.satellites), sm.num_epoch, 2, 3))
 
     def det_angles_from_swath_before_loop(self, sm):
         for satellite in sm.satellites:
@@ -177,7 +218,7 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs):
 
     def in_loop(self, sm):
 
-        for satellite in sm.satellites:
+        for idx_sat, satellite in enumerate(sm.satellites):
             r_earth = self.det_angles_from_swath_in_loop(satellite)
             point_vec1 = misc_fn.rot_vec_vec(-satellite.pos_ecf, np.array(satellite.vel_ecf),
                                              -satellite.obs_inci_angle_start)  # minus for right looking, plus for left
@@ -199,6 +240,13 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs):
                 #      self.user_pos_ecf, self.planes, self.shared_array)
                 self.user_metric[:,sm.cnt_epoch] = misc_fn.check_users_in_plane(self.user_metric, self.user_pos_ecf,
                                                                                 self.planes, sm.cnt_epoch)
+            if self.plot_3d:
+                # The two line-of-sight ground intersections are the swath edges;
+                # the orbit history is kept in ECI (plot_3d draws the inertial
+                # path at the final epoch)
+                self.swath_edges[idx_sat, sm.cnt_epoch, 0] = satellite.p1
+                self.swath_edges[idx_sat, sm.cnt_epoch, 1] = satellite.p2
+                self.sat_pos_hist[idx_sat, sm.cnt_epoch] = satellite.pos_eci
 
     def det_angles_from_swath_in_loop(self, satellite):
 
@@ -237,8 +285,11 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs):
         if self.revisit:
             self.plot_swath_revisit(sm, self.user_metric, self.statistic, self.polar_view)
 
+        if self.plot_3d:
+            plot_swath_3d_from_analysis(self, sm)
 
-class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but very slow
+
+class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early stages, runs but very slow
 
     # Tried it but solar angle computation makes this way too slow...
     # Just kept it not to loose the effort...
@@ -252,6 +303,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
         self.user_pos_lla = None
         self.user_metric = None
         self.save_output = None
+        self.init_3d()
 
     def read_config(self, node):
         if node.find('PolarView') is not None:
@@ -260,6 +312,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
             self.statistic = node.find('Statistic').text.lower()
         if node.find('SaveOutput') is not None:
             self.save_output = node.find('SaveOutput').text.lower()
+        self.read_config_3d(node)
 
     def before_loop(self, sm):
         # Get the incidence angles for each of the satelllites
@@ -271,6 +324,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
         for idx_user, user in enumerate(sm.users):
             self.user_pos_ecf[idx_user,:] = user.pos_ecf
             self.user_pos_lla[idx_user, :] = user.lla
+        self.before_loop_3d(sm)
 
     def det_angles_from_swath_before_loop(self, sm):
         for satellite in sm.satellites:
@@ -330,6 +384,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
                                                                                  self.planes, sm.cnt_epoch)
                 self.user_metric[:, sm.cnt_epoch] = misc_fn.det_sza_fast(self.user_metric, self.user_pos_lla,
                                                                         epoch, sm.cnt_epoch)
+        self.in_loop_3d(sm)
 
     def det_angles_from_swath_in_loop(self, satellite):
 
@@ -365,6 +420,15 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
 
         self.plot_sza_coverage(sm, self.user_metric, self.polar_view)
 
+        if self.plot_3d:
+            points = []
+            for idx_user, user in enumerate(sm.users):
+                in_swath = self.user_metric[idx_user, np.nonzero(self.user_metric[idx_user, :])]
+                if in_swath.size and in_swath.mean() >= 1:
+                    points.append([degrees(user.lla[1]), degrees(user.lla[0]), in_swath.mean()])
+            self.render_3d_points(sm, np.array(points), 'Solar Zenith Angle Mean [deg]',
+                                  point_size=10)
+
     def plot_sza_coverage(self, sm, user_metric, polar_view):
         plot_points = np.zeros((len(sm.users), 3))
         for idx_user, user in enumerate(sm.users):
@@ -388,7 +452,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase): # In very early stages, runs but ve
 
 
 
-class AnalysisObsSzaSubSat(AnalysisBase):
+class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
 
     def __init__(self):
         super().__init__()
@@ -397,6 +461,7 @@ class AnalysisObsSzaSubSat(AnalysisBase):
         self.epoch = None
         self.save_output = None  # default if SaveOutput not in config
         self.range_lat = [-90, 91, 10]  # default if RangeLatitude not in config
+        self.init_3d()
 
     def read_config(self, node):
         if node.find('PolarView') is not None:
@@ -405,12 +470,14 @@ class AnalysisObsSzaSubSat(AnalysisBase):
             self.save_output = node.find('SaveOutput').text.lower()
         if node.find('RangeLatitude') is not None:
             self.range_lat = [int(i) for i in node.find('RangeLatitude').text.split(',')]
+        self.read_config_3d(node)
 
     def before_loop(self, sm):
         # Get the incidence angles for each of the satelllites
         self.user_metric = np.zeros((sm.num_epoch,4))
         self.epoch = time.Time(sm.time_mjd, format='mjd')
         self.epoch.delta_ut1_utc = 0.0  # avoid getting IERS outside range error
+        self.before_loop_3d(sm)
 
     def in_loop(self, sm):
 
@@ -423,8 +490,13 @@ class AnalysisObsSzaSubSat(AnalysisBase):
                 self.user_metric[sm.cnt_epoch, 0] = degrees(satellite.lla[0])
                 self.user_metric[sm.cnt_epoch, 1] = degrees(satellite.lla[1])
                 self.user_metric[sm.cnt_epoch, 3] = self.times_f_doy[sm.cnt_epoch]
+        self.in_loop_3d(sm)
 
     def after_loop(self, sm):
+
+        if self.plot_3d:
+            points = self.user_metric[~np.all(self.user_metric == 0, axis=1)]
+            self.render_3d_points(sm, points[:, [1, 0, 2]], 'Solar Zenith Angle [deg]')
 
         self.plot_sza_subsat(sm, self.user_metric, self.polar_view)
         self.plot_sza_latitude(sm, self.user_metric, self.polar_view, range(self.range_lat[0],self.range_lat[1],self.range_lat[2]))

@@ -58,6 +58,7 @@
       <Revisit>True</Revisit>
       <Statistic>Mean</Statistic>
       <SaveOutput>NetCDF</SaveOutput>
+      <Plot3D>True</Plot3D>
     </Analysis>
   </SimulationManager>
 </Scenario>

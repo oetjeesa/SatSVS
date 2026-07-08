@@ -6,6 +6,7 @@ import numpy as np
 
 # Modules from project
 import logging_svs as ls
+import misc_fn
 
 
 def make_map_cyl(figsize=(10, 4.4)):
@@ -106,6 +107,101 @@ class AnalysisBase:
 
     def after_loop(self, sm):
         pass
+
+
+class AnalysisPlot3D:
+    """Mixin for analyses that offer a 3D globe version of their world map
+    (<Plot3D>True</Plot3D>, rendered by plot_3d.py with pyvista).
+
+    Provides the shared configuration flags (ShowSatellite, ShowOrbit,
+    SatelliteModelFile, SatelliteModelScale), the per-epoch recording of the
+    satellite positions for the orbit tracks, and guarded wrappers around the
+    plot_3d renderers. Call init_3d() in __init__, read_config_3d(node) in
+    read_config, before_loop_3d(sm) in before_loop and in_loop_3d(sm) in
+    in_loop; then use one of the render_3d_* methods in after_loop."""
+
+    def init_3d(self):
+        self.plot_3d = False  # Optional 3D globe plot (needs pyvista)
+        self.show_satellite = True  # Draw the 3D satellite model(s)
+        self.show_orbit = True  # Draw the orbital track(s)
+        self.model_file = None  # Optional satellite mesh (STL/OBJ/PLY/VTK)
+        self.model_scale = 200e3  # Satellite model size in m (exaggerated)
+        # (num_sat, num_epoch, 3) ECI positions: the orbit is drawn as the
+        # inertial path oriented at the final epoch (plot_3d rotates it by the
+        # final GMST), which reads as the familiar orbit ellipse instead of the
+        # pretzel a ground-repeat orbit traces in the rotating frame
+        self.sat_pos_hist_3d = None
+
+    def read_config_3d(self, node):
+        if node.find('Plot3D') is not None:
+            self.plot_3d = misc_fn.str2bool(node.find('Plot3D').text)
+        if node.find('ShowSatellite') is not None:
+            self.show_satellite = misc_fn.str2bool(node.find('ShowSatellite').text)
+        if node.find('ShowOrbit') is not None:
+            self.show_orbit = misc_fn.str2bool(node.find('ShowOrbit').text)
+        if node.find('SatelliteModelFile') is not None:
+            self.model_file = node.find('SatelliteModelFile').text
+        if node.find('SatelliteModelScale') is not None:
+            self.model_scale = float(node.find('SatelliteModelScale').text)
+
+    def before_loop_3d(self, sm):
+        if self.plot_3d and self.show_orbit:
+            self.sat_pos_hist_3d = np.zeros((len(sm.satellites), sm.num_epoch, 3))
+
+    def in_loop_3d(self, sm):
+        if self.sat_pos_hist_3d is not None:
+            for idx_sat, satellite in enumerate(sm.satellites):
+                self.sat_pos_hist_3d[idx_sat, sm.cnt_epoch] = satellite.pos_eci
+
+    def _plot_3d_module(self):
+        try:
+            import plot_3d  # Deferred: pyvista only needed for 3D plots
+            return plot_3d
+        except ImportError:
+            ls.logger.error('Plot3D requested but pyvista is not installed '
+                            '(pip install pyvista). 3D plot skipped.')
+            return None
+
+    def _kwargs_3d(self):
+        return dict(model_file=self.model_file, model_scale=self.model_scale,
+                    show_satellite=self.show_satellite, show_orbit=self.show_orbit)
+
+    def _sats_and_hist(self, sm, satellites):
+        """Satellite subset with the matching rows of the position history."""
+        if satellites is None:
+            return sm.satellites, self.sat_pos_hist_3d
+        if self.sat_pos_hist_3d is None:
+            return satellites, None
+        idx = [sm.satellites.index(satellite) for satellite in satellites]
+        return satellites, self.sat_pos_hist_3d[idx]
+
+    def render_3d_points(self, sm, points_llv, scalar_label, cmap='jet', clim=None,
+                         point_size=7.0, satellites=None):
+        p3d = self._plot_3d_module()
+        if p3d is None:
+            return
+        sats, hist = self._sats_and_hist(sm, satellites)
+        p3d.plot_points_3d(sm, sats, hist, np.asarray(points_llv), scalar_label,
+                           '../output/' + self.type + '_3d.png', cmap=cmap, clim=clim,
+                           point_size=point_size, **self._kwargs_3d())
+
+    def render_3d_grid(self, sm, lats_deg, lons_deg, values, scalar_label,
+                       cmap='jet', clim=None, satellites=None):
+        p3d = self._plot_3d_module()
+        if p3d is None:
+            return
+        sats, hist = self._sats_and_hist(sm, satellites)
+        p3d.plot_grid_3d(sm, sats, hist, lats_deg, lons_deg, values, scalar_label,
+                         '../output/' + self.type + '_3d.png', cmap=cmap, clim=clim,
+                         **self._kwargs_3d())
+
+    def render_3d_contours(self, sm, contours, satellites=None):
+        p3d = self._plot_3d_module()
+        if p3d is None:
+            return
+        sats, hist = self._sats_and_hist(sm, satellites)
+        p3d.plot_contours_3d(sm, sats, hist, contours,
+                             '../output/' + self.type + '_3d.png', **self._kwargs_3d())
 
 
 class AnalysisObs:   # Common methods needed for some OBS analysis

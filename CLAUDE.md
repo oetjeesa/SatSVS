@@ -30,6 +30,9 @@ There are no requirements/environment files. Key third-party dependencies: `nump
 `matplotlib` + `cartopy`, `geopandas`/`shapely`, and `itur` (ITU-R propagation
 models, used only by `com_*` analyses). The HPOP propagator additionally needs
 `orekit_jpype` + `jdk4py` and the Orekit data archive at `input/orekit-data.zip`.
+3D plots (`<Plot3D>` on every world-map analysis via the `AnalysisPlot3D` mixin in
+`analysis.py`, rendered by `plot_3d.py`) need `pyvista` and the Earth texture at
+`input/earth_texture.jpg`.
 
 ## Configuration drives everything
 

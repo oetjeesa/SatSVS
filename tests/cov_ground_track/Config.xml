@@ -51,6 +51,7 @@
       <Type>cov_ground_track</Type>
       <ConstellationID>1</ConstellationID>
       <SatelliteID>31698</SatelliteID>
+      <Plot3D>True</Plot3D>
     </Analysis>
   </SimulationManager>
 </Scenario>

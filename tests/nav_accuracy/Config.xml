@@ -319,6 +319,8 @@
       <Type>nav_accuracy</Type>
       <Direction>Hor</Direction>
       <Statistic>Mean</Statistic>
+      <Plot3D>True</Plot3D>
+      <ShowSatellite>False</ShowSatellite>
     </Analysis>
   </SimulationManager>
 </Scenario>
