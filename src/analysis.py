@@ -204,26 +204,92 @@ class AnalysisPlot3D:
                              '../output/' + self.type + '_3d.png', **self._kwargs_3d())
 
 
+def swath_ribbon_polygons(edges, max_step_deg=30.0):
+    """Filled-polygon outlines (lon, lat arrays in deg inside [-180, 180]) of a
+    swath edge history, for drawing smooth swaths on a 2D map.
+
+    edges: (num_epoch, 2, 3) left/right swath edge points on the Earth surface
+    in ECF; all-zero rows mark epochs without a swath. The history is cut into
+    strips at recording gaps, at along-track jumps larger than max_step_deg
+    (coarse time steps) and at the latitude turning points of the orbit (so a
+    strip cannot fold back over itself). Longitudes are unwrapped along track
+    and each strip is clipped against the map window once per overlapping
+    360 deg copy, so date line crossings come out as two clean pieces.
+    """
+    from shapely.geometry import Polygon, box
+
+    window = box(-180.0, -90.0, 180.0, 90.0)
+    polygons = []
+    valid = ~np.all(edges.reshape(len(edges), -1) == 0, axis=1)
+    idx_valid = np.flatnonzero(valid)
+    if idx_valid.size < 2:
+        return polygons
+    for run in np.split(idx_valid, np.flatnonzero(np.diff(idx_valid) > 1) + 1):
+        if len(run) < 2:
+            continue
+        e = edges[run].astype(float)
+        r = np.linalg.norm(e, axis=2)
+        lat = np.degrees(np.arcsin(np.clip(e[:, :, 2] / r, -1.0, 1.0)))
+        lon = np.degrees(np.arctan2(e[:, :, 1], e[:, :, 0]))
+        # Continuous coordinates across the date line: unwrap the left edge
+        # along track and keep the right edge within +/-180 deg of it
+        lon_l = np.degrees(np.unwrap(np.radians(lon[:, 0])))
+        lon_r = lon_l + (lon[:, 1] - lon_l + 180.0) % 360.0 - 180.0
+        lat_l, lat_r = lat[:, 0], lat[:, 1]
+
+        # Along-track step in ground degrees (cos scales out the meridian
+        # convergence, so near-polar epochs are not mistaken for jumps)
+        mean_lat = np.radians((lat_l[1:] + lat_l[:-1]) / 2.0)
+        step = np.hypot(np.diff(lon_l) * np.cos(mean_lat), np.diff(lat_l))
+        dlat = np.diff(lat_l)
+        turning = set((np.flatnonzero(np.sign(dlat[1:]) * np.sign(dlat[:-1]) < 0) + 1).tolist())
+        strips, current = [], [0]
+        for k in range(1, len(run)):
+            if step[k - 1] > max_step_deg:  # Jump: start a new strip
+                strips.append(current)
+                current = [k]
+            else:
+                current.append(k)
+                if k in turning:  # Fold point: new strip sharing the vertex
+                    strips.append(current)
+                    current = [k]
+        strips.append(current)
+
+        for strip in strips:
+            if len(strip) < 2:
+                continue
+            s = np.asarray(strip)
+            px = np.concatenate([lon_l[s], lon_r[s][::-1]])  # Left edge out, right edge back
+            py = np.concatenate([lat_l[s], lat_r[s][::-1]])
+            for shift in range(int(np.ceil((-180.0 - px.max()) / 360.0)),
+                               int(np.floor((180.0 - px.min()) / 360.0)) + 1):
+                poly = Polygon(np.column_stack([px + 360.0 * shift, py]))
+                if not poly.is_valid:
+                    poly = poly.buffer(0)
+                inter = poly.intersection(window)
+                geoms = [inter] if inter.geom_type == 'Polygon' else getattr(inter, 'geoms', [])
+                for g in geoms:
+                    if g.geom_type == 'Polygon' and not g.is_empty:
+                        x, y = g.exterior.xy
+                        polygons.append((np.asarray(x), np.asarray(y)))
+    return polygons
+
+
 class AnalysisObs:   # Common methods needed for some OBS analysis
 
-    def plot_swath_coverage(self, sm, user_metric, polar_view):
-        plot_points = np.zeros((len(sm.users), 3))
-        for idx_user, user in enumerate(sm.users):
-            if idx_user % 1000 == 0:
-                ls.logger.info(f'User swath coverage {user.user_id} of {len(sm.users)}')
-            if user_metric[idx_user, :].any():  # Any value bigger than 0
-                num_swaths = len(np.flatnonzero(np.diff(user_metric[idx_user, :]))) / 2
-                if num_swaths >= 1:
-                    plot_points[idx_user, :] = [degrees(user.lla[1]), degrees(user.lla[0]), num_swaths]
-        plot_points = plot_points[~np.all(plot_points == 0, axis=1)]  # Clean up empty rows
+    def plot_swath_coverage(self, sm, swath_edges, polar_view):
+        """Swath coverage as smooth semi-transparent ribbons on the map — the
+        2D counterpart of the 3D globe render, built from the same left/right
+        swath edge histories instead of colouring the discrete user grid
+        points. Overlapping passes show darker through the alpha stacking."""
         if polar_view is not None:
             fig, ax = make_map_polar(polar_view)
         else:
             fig, ax = make_map_cyl()
-        sc = ax.scatter(plot_points[:,0], plot_points[:,1], s=3, marker='o', cmap=plt.cm.jet,
-                        c=plot_points[:,2], alpha=.3, transform=ccrs.PlateCarree())
-        cb = plt.colorbar(sc, ax=ax, shrink=0.85)
-        cb.set_label('Number of passes [-]', fontsize=10)
+        for idx_sat in range(swath_edges.shape[0]):
+            for lon, lat in swath_ribbon_polygons(swath_edges[idx_sat]):
+                ax.fill(lon, lat, facecolor='orangered', edgecolor='orangered',
+                        linewidth=0.3, alpha=0.4, transform=ccrs.PlateCarree())
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 

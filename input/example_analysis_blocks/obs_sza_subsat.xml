@@ -1,0 +1,7 @@
+<Analysis>
+    <Type>obs_sza_subsat</Type>             <!-- Solar zenith angle at the subsatellite point (map, vs latitude, vs DOY) -->
+    <RangeLatitude>-80,80,10</RangeLatitude><!-- Optional: min,max,step of the latitude bins -->
+    <SaveOutput>Numpy</SaveOutput>          <!-- Optional: dump of the SZA vs latitude table -->
+    <PolarView>60</PolarView>               <!-- Optional: polar stereographic view bounded at this latitude -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

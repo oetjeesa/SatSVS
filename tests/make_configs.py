@@ -141,6 +141,9 @@ def grid_users(step, mask=5):
 
 def config(space, ground, users, start, stop, step, analysis,
            propagator='Keplerian', gr2sp=True, usr2sp=True, sp2sp=False, extra_sim=''):
+    if isinstance(analysis, str):  # One or a list of <Analysis> block contents
+        analysis = [analysis]
+    analysis_blocks = '\n'.join(f'    <Analysis>\n{a}\n    </Analysis>' for a in analysis)
     return f"""<?xml version="1.0" encoding="utf-8"?>
 <!--Simulation Scenario-->
 <Scenario>
@@ -158,9 +161,7 @@ def config(space, ground, users, start, stop, step, analysis,
     <IncludeSpace2SpaceLinks>{sp2sp}</IncludeSpace2SpaceLinks>
     <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
     <OrbitPropagator>{propagator}</OrbitPropagator>
-{extra_sim}    <Analysis>
-{analysis}
-    </Analysis>
+{extra_sim}{analysis_blocks}
   </SimulationManager>
 </Scenario>
 """
@@ -443,12 +444,12 @@ def hpop_block(mass, area):
 """
 
 
-write_test('orb_semi_major_axis', config(
+write_test('orb_kepler_elements', config(
     # 250 km LEO: strong drag makes the semi-major axis decay clearly visible
     sso_constellation(sma=6628137, incl=96.5, raan=140.0),
     ground_segment(['Svalbard']), static_users(DELFT),
     '2026-02-01 00:00:00', '2026-02-04 00:00:00', 60,
-    '      <Type>orb_semi_major_axis</Type>\n'
+    '      <Type>orb_kepler_elements</Type>\n'
     '      <ConstellationID>1</ConstellationID>',
     propagator='HPOP', gr2sp=False, usr2sp=False,
     extra_sim=hpop_block(mass=500.0, area=3.2)))
@@ -484,5 +485,19 @@ write_test('dat_latency', config(
     '      <DownlinkRateMbps>1070</DownlinkRateMbps>\n'
     '      <PayloadLatitudeLimit>60</PayloadLatitudeLimit>\n'
     '      <GroundProcessingMin>15</GroundProcessingMin>'))
+
+# ------------------------------------------------- multiple analyses per run
+# Three analyses in one simulation, incl. a repeated type (sky angles for two
+# satellites) whose second output must come out numbered *_2.png
+write_test('multi_analysis', config(
+    gps_constellation(), ground_segment(['Kourou']),
+    static_users([(52.0, 4.36), (1.35, 103.82)]), *FEB26, 300,
+    ['      <Type>cov_satellite_visible</Type>',
+     '      <Type>cov_satellite_sky_angles</Type>\n'
+     '      <ConstellationID>1</ConstellationID>\n'
+     '      <SatelliteID>1</SatelliteID>',
+     '      <Type>cov_satellite_sky_angles</Type>\n'
+     '      <ConstellationID>1</ConstellationID>\n'
+     '      <SatelliteID>7</SatelliteID>']))
 
 print('done')

@@ -191,27 +191,28 @@ SCALAR_BAR_ARGS = dict(color='white', title_font_size=22, label_font_size=17,
                        vertical=False, position_x=0.25, position_y=0.03, width=0.5)
 
 
-def plot_ground_track_3d(sm, satellites, file_name,
+def plot_ground_track_3d(sm, satellites, metrics, file_name,
                          model_file=None, model_scale=200e3,
                          show_satellite=True, show_orbit=True):
     """Render ground track(s), ECF orbit path(s), stations and a 3D satellite
-    model on a textured Earth. satellites: list of Satellite objects whose
-    metric holds per-epoch [lat_deg, lon_deg, x_ecf, y_ecf, z_ecf]."""
+    model on a textured Earth. satellites: list of Satellite objects; metrics:
+    matching list of (num_epoch, 5) arrays holding per-epoch
+    [lat_deg, lon_deg, x_eci, y_eci, z_eci]."""
     import pyvista as pv
 
     plotter, off_screen = _open_scene(sm)
     r_content = 0.0
-    for satellite in satellites:
-        used = ~np.all(satellite.metric == 0, axis=1)  # Skip never-filled epochs
+    for satellite, metric in zip(satellites, metrics):
+        used = ~np.all(metric == 0, axis=1)  # Skip never-filled epochs
         if not used.any():
             continue
-        lats, lons = satellite.metric[used, 0], satellite.metric[used, 1]
+        lats, lons = metric[used, 0], metric[used, 1]
 
         # Ground track slightly above the surface to avoid z-fighting
         track = pv.lines_from_points(_track_points(lats, lons, R_EARTH * 1.003))
         plotter.add_mesh(track, color='red', line_width=3)
 
-        pos_hist = satellite.metric[used, 2:5]  # ECI history
+        pos_hist = metric[used, 2:5]  # ECI history
         if show_orbit:
             r_content = max(r_content, np.linalg.norm(pos_hist, axis=1).max())
         _add_orbit_and_model(plotter, satellite, _orbit_scene_points(pos_hist, sm.time_gmst),

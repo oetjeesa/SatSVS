@@ -1,0 +1,16 @@
+<!-- Inter-satellite link budget; needs <IncludeSpace2SpaceLinks>True</IncludeSpace2SpaceLinks> -->
+<Analysis>
+    <Type>com_sp2sp_budget</Type>
+    <SatelliteID1>1</SatelliteID1>
+    <SatelliteID2>2</SatelliteID2>
+    <CarrierFrequency>23e9</CarrierFrequency>         <!-- Hz -->
+    <TransmitPowerW>10</TransmitPowerW>
+    <TransmitLossesdB>2</TransmitLossesdB>
+    <TransmitGaindB>30</TransmitGaindB>
+    <ReceiveGaindB>30</ReceiveGaindB>
+    <ReceiveLossesdB>2</ReceiveLossesdB>
+    <ReceiveTempK>290</ReceiveTempK>
+    <ModulationType>BPSK</ModulationType>             <!-- For the required C/N0 line -->
+    <BitErrorRate>1e-5</BitErrorRate>
+    <DataRateBitPerSec>1e6</DataRateBitPerSec>
+</Analysis>

@@ -29,8 +29,8 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         self.save_output = None
         self.earth_angle_swath = None
         self.init_3d()
-        self.sat_pos_hist = None  # Satellite ECF positions for the 3D plot
-        self.swath_edges = None  # Left/right swath edge points for the 3D plot
+        self.sat_pos_hist = None  # Satellite ECI positions for the 3D plot
+        self.swath_edges = None  # Left/right swath edge points (2D ribbon map + 3D plot)
 
     def read_config(self, node):
         if node.find('PolarView') is not None:
@@ -50,9 +50,10 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         for idx_user, user in enumerate(sm.users):
             self.user_pos_ecf[idx_user,0:3] = user.pos_ecf
             self.user_pos_ecf[idx_user,3] = norm(self.user_pos_ecf[idx_user,0:3])
-        if self.plot_3d:
-            self.sat_pos_hist = np.zeros((len(sm.satellites), sm.num_epoch, 3))
-            self.swath_edges = np.zeros((len(sm.satellites), sm.num_epoch, 2, 3))
+        # Swath edge/orbit histories: the edges feed the smooth 2D ribbon map
+        # and, together with the ECI positions, the optional 3D globe render
+        self.sat_pos_hist = np.zeros((len(sm.satellites), sm.num_epoch, 3))
+        self.swath_edges = np.zeros((len(sm.satellites), sm.num_epoch, 2, 3))
 
     def det_angles_from_swath_before_loop(self, sm):
         for satellite in sm.satellites:
@@ -82,19 +83,18 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
             self.user_metric[:,sm.cnt_epoch] = \
                 misc_fn.check_users_from_nadir(self.user_metric, self.user_pos_ecf, satellite.pos_ecf,
                                                self.earth_angle_swath, sm.cnt_epoch)
-            if self.plot_3d:
-                # Cross-track swath extremes: the subsatellite ground point
-                # rotated about the along-track horizontal axis by the swath
-                # earth angle, in both directions. The orbit history is kept in
-                # ECI (plot_3d draws the inertial path at the final epoch).
-                r_hat = satellite.pos_ecf / norm(satellite.pos_ecf)
-                ground = r_hat * misc_fn.earth_radius_lat(satellite.lla[0])
-                axis = np.array(satellite.vel_ecf) - np.dot(satellite.vel_ecf, r_hat) * r_hat
-                self.swath_edges[idx_sat, sm.cnt_epoch, 0] = \
-                    misc_fn.rot_vec_vec(ground, axis, self.earth_angle_swath)
-                self.swath_edges[idx_sat, sm.cnt_epoch, 1] = \
-                    misc_fn.rot_vec_vec(ground, axis, -self.earth_angle_swath)
-                self.sat_pos_hist[idx_sat, sm.cnt_epoch] = satellite.pos_eci
+            # Cross-track swath extremes: the subsatellite ground point
+            # rotated about the along-track horizontal axis by the swath
+            # earth angle, in both directions. The orbit history is kept in
+            # ECI (plot_3d draws the inertial path at the final epoch).
+            r_hat = satellite.pos_ecf / norm(satellite.pos_ecf)
+            ground = r_hat * misc_fn.earth_radius_lat(satellite.lla[0])
+            axis = np.array(satellite.vel_ecf) - np.dot(satellite.vel_ecf, r_hat) * r_hat
+            self.swath_edges[idx_sat, sm.cnt_epoch, 0] = \
+                misc_fn.rot_vec_vec(ground, axis, self.earth_angle_swath)
+            self.swath_edges[idx_sat, sm.cnt_epoch, 1] = \
+                misc_fn.rot_vec_vec(ground, axis, -self.earth_angle_swath)
+            self.sat_pos_hist[idx_sat, sm.cnt_epoch] = satellite.pos_eci
 
     def det_angles_from_swath_in_loop(self, satellite):
         satellite.det_lla()
@@ -115,7 +115,7 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
                           dims=('lat', 'lon', 'time_mjd'),
                           coords={'lat': sm.user_latitudes,
                                   'lon': sm.user_longitudes,
-                                  'time_mjd': sm.analysis.times_mjd},
+                                  'time_mjd': self.times_mjd},
                           name='swath_coverage')
         da.to_netcdf(file_name)
 
@@ -127,7 +127,7 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         if self.save_output=='netcdf':
             self.export2nc(sm, '../output/user_cov_swath.nc')  # Save to netcdf file
 
-        self.plot_swath_coverage(sm, self.user_metric, self.polar_view)
+        self.plot_swath_coverage(sm, self.swath_edges, self.polar_view)
 
         if self.revisit:
             self.plot_swath_revisit(sm, self.user_metric, self.statistic, self.polar_view)
@@ -160,8 +160,8 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         self.user_metric = None
         self.save_output = None
         self.init_3d()
-        self.sat_pos_hist = None  # Satellite ECF positions for the 3D plot
-        self.swath_edges = None  # Left/right swath edge points for the 3D plot
+        self.sat_pos_hist = None  # Satellite ECI positions for the 3D plot
+        self.swath_edges = None  # Left/right swath edge points (2D ribbon map + 3D plot)
 
     def read_config(self, node):
         if node.find('PolarView') is not None:
@@ -182,9 +182,10 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         # self.shared_array = RawArray('i', len(sm.users))
         for idx_user, user in enumerate(sm.users):
             self.user_pos_ecf[idx_user,:] = user.pos_ecf
-        if self.plot_3d:
-            self.sat_pos_hist = np.zeros((len(sm.satellites), sm.num_epoch, 3))
-            self.swath_edges = np.zeros((len(sm.satellites), sm.num_epoch, 2, 3))
+        # Swath edge/orbit histories: the edges feed the smooth 2D ribbon map
+        # and, together with the ECI positions, the optional 3D globe render
+        self.sat_pos_hist = np.zeros((len(sm.satellites), sm.num_epoch, 3))
+        self.swath_edges = np.zeros((len(sm.satellites), sm.num_epoch, 2, 3))
 
     def det_angles_from_swath_before_loop(self, sm):
         for satellite in sm.satellites:
@@ -240,13 +241,12 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
                 #      self.user_pos_ecf, self.planes, self.shared_array)
                 self.user_metric[:,sm.cnt_epoch] = misc_fn.check_users_in_plane(self.user_metric, self.user_pos_ecf,
                                                                                 self.planes, sm.cnt_epoch)
-            if self.plot_3d:
-                # The two line-of-sight ground intersections are the swath edges;
-                # the orbit history is kept in ECI (plot_3d draws the inertial
-                # path at the final epoch)
-                self.swath_edges[idx_sat, sm.cnt_epoch, 0] = satellite.p1
-                self.swath_edges[idx_sat, sm.cnt_epoch, 1] = satellite.p2
-                self.sat_pos_hist[idx_sat, sm.cnt_epoch] = satellite.pos_eci
+            # The two line-of-sight ground intersections are the swath edges;
+            # the orbit history is kept in ECI (plot_3d draws the inertial
+            # path at the final epoch)
+            self.swath_edges[idx_sat, sm.cnt_epoch, 0] = satellite.p1
+            self.swath_edges[idx_sat, sm.cnt_epoch, 1] = satellite.p2
+            self.sat_pos_hist[idx_sat, sm.cnt_epoch] = satellite.pos_eci
 
     def det_angles_from_swath_in_loop(self, satellite):
 
@@ -269,7 +269,7 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
                           dims=('lat', 'lon', 'time_mjd'),
                           coords={'lat': sm.user_latitudes,
                                   'lon': sm.user_longitudes,
-                                  'time_mjd': sm.analysis.times_mjd},
+                                  'time_mjd': self.times_mjd},
                           name='swath_coverage')
         da.to_netcdf(file_name)
 
@@ -280,7 +280,7 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         if self.save_output=='netcdf':
             self.export2nc(sm, '../output/user_cov_swath.nc')  # Save to netcdf file
 
-        self.plot_swath_coverage(sm, self.user_metric, self.polar_view)
+        self.plot_swath_coverage(sm, self.swath_edges, self.polar_view)
 
         if self.revisit:
             self.plot_swath_revisit(sm, self.user_metric, self.statistic, self.polar_view)
@@ -407,7 +407,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
                           dims=('lat', 'lon', 'time_mjd'),
                           coords={'lat': sm.user_latitudes,
                                   'lon': sm.user_longitudes,
-                                  'time_mjd': sm.analysis.times_mjd},
+                                  'time_mjd': self.times_mjd},
                           name='swath_coverage')
         da.to_netcdf(file_name)
 

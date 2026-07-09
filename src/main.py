@@ -4,6 +4,7 @@ if os.path.exists('../output/main.log'):
     os.remove('../output/main.log')
 import datetime
 import numpy as np
+import matplotlib.pyplot as plt
 from astropy.time import Time
 
 # Import project modules
@@ -27,7 +28,8 @@ def load_configuration():
 
 
 def run_before_time_loop(sm):
-    sm.analysis.before_loop(sm)  # Run analysis which is needed before time loop
+    for analysis in sm.analyses:
+        analysis.before_loop(sm)  # Run analyses which are needed before time loop
     ls.logger.info('Finished reading configuration file')
 
 
@@ -46,7 +48,8 @@ def run_time_loop(sm):
         update_stations(sm)  # Update pvt on ground stations and links
         update_users(sm)  # Update pvt on users and links
 
-        sm.analysis.in_loop(sm)  # Run analyses which are needed in time loop
+        for analysis in sm.analyses:
+            analysis.in_loop(sm)  # Run analyses which are needed in time loop
 
     if sm.file_orbits is not None:  # Close the orbit cache file
         sm.file_orbits.close()
@@ -54,8 +57,10 @@ def run_time_loop(sm):
 
 
 def run_after_time_loop(sm):
-    ls.logger.info(f'Plotting analysis {sm.analysis.type}')
-    sm.analysis.after_loop(sm)  # Run analysis after time loop
+    for analysis in sm.analyses:
+        ls.logger.info(f'Plotting analysis {analysis.type}')
+        analysis.after_loop(sm)  # Run analysis after time loop
+        plt.close('all')  # Fresh matplotlib state so analyses cannot touch each other's figures
 
 
 def precompute_times(sm):
@@ -81,8 +86,9 @@ def convert_times(sm):
     sm.time_fr = float(sm.times_fr_pre[cnt])
     sm.time_str = sm.times_str_pre[cnt]
     sm.time_datetime = sm.times_datetime_pre[cnt]
-    sm.analysis.times_mjd.append(sm.time_mjd)  # Keep for plotting
-    sm.analysis.times_f_doy.append(sm.times_f_doy_pre[cnt])
+    for analysis in sm.analyses:  # Each analysis keeps its own time lists for plotting
+        analysis.times_mjd.append(sm.time_mjd)
+        analysis.times_f_doy.append(sm.times_f_doy_pre[cnt])
 
 
 def update_satellites(sm):

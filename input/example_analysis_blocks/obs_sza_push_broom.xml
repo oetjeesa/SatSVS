@@ -1,0 +1,8 @@
+<!-- Instrument in the <Constellation> block as for obs_swath_push_broom. Slow analysis:
+     use a coarse user grid and a short simulation window -->
+<Analysis>
+    <Type>obs_sza_push_broom</Type>         <!-- Mean solar zenith angle of the observed user locations -->
+    <SaveOutput>Numpy</SaveOutput>          <!-- Optional: Numpy or NetCDF dump -->
+    <PolarView>60</PolarView>               <!-- Optional: polar stereographic view bounded at this latitude -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

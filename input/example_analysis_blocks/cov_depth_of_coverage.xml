@@ -1,0 +1,4 @@
+<Analysis>
+    <Type>cov_depth_of_coverage</Type>      <!-- Number of ground stations in view along the ground track(s) -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

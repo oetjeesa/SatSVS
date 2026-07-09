@@ -16,30 +16,32 @@ class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
 
     def __init__(self):
         super().__init__()
+        self.sat_metric = None  # Per-satellite metric memory (num_sat, num_epoch, 3)
         self.init_3d()
 
     def read_config(self, node):
         self.read_config_3d(node)
 
     def before_loop(self, sm):
-        for satellite in sm.satellites:
-            satellite.metric = np.zeros((sm.num_epoch, 3))
+        # Columns: lat [deg], lon [deg], number of stations in view
+        self.sat_metric = np.zeros((sm.num_sat, sm.num_epoch, 3))
         self.before_loop_3d(sm)
 
     def in_loop(self, sm):
-        for satellite in sm.satellites:
+        for idx_sat, satellite in enumerate(sm.satellites):
             satellite.det_lla()
-            satellite.metric[sm.cnt_epoch, 0] = degrees(satellite.lla[0])
-            satellite.metric[sm.cnt_epoch, 1] = degrees(satellite.lla[1])
-            satellite.metric[sm.cnt_epoch, 2] = len(satellite.idx_stat_in_view)
+            self.sat_metric[idx_sat, sm.cnt_epoch, 0] = degrees(satellite.lla[0])
+            self.sat_metric[idx_sat, sm.cnt_epoch, 1] = degrees(satellite.lla[1])
+            self.sat_metric[idx_sat, sm.cnt_epoch, 2] = len(satellite.idx_stat_in_view)
         self.in_loop_3d(sm)
 
     def after_loop(self, sm):
         fig, ax = make_map_cyl(figsize=(10, 4))
         sc = None
-        for satellite in sm.satellites:
-            sc = ax.scatter(satellite.metric[:, 1], satellite.metric[:, 0], cmap='RdYlBu',
-                            c=satellite.metric[:, 2], vmin=0, vmax=len(sm.stations),
+        for idx_sat in range(sm.num_sat):
+            metric = self.sat_metric[idx_sat]
+            sc = ax.scatter(metric[:, 1], metric[:, 0], cmap='RdYlBu',
+                            c=metric[:, 2], vmin=0, vmax=len(sm.stations),
                             transform=ccrs.PlateCarree())
         plt.colorbar(sc, ax=ax, shrink=0.85)
         for station in sm.stations:
@@ -50,7 +52,7 @@ class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
         plt.show()
 
         if self.plot_3d:
-            points = np.vstack([s.metric[:, [1, 0, 2]] for s in sm.satellites])
+            points = np.vstack([m[:, [1, 0, 2]] for m in self.sat_metric])
             self.render_3d_points(sm, points, 'Number of stations in view [-]',
                                   cmap='RdYlBu', clim=(0, len(sm.stations)))
 
@@ -61,6 +63,7 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
         super().__init__()
         self.constellation_id = 0  # Mandatory
         self.satellite_id = 0  # Optional
+        self.sat_metric = None  # Per-satellite metric memory (num_sat, num_epoch, 5)
         self.init_3d()
 
     def read_config(self, node):
@@ -76,30 +79,29 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
         return self.satellite_id == 0 or satellite.sat_id == self.satellite_id
 
     def before_loop(self, sm):
-        for satellite in sm.satellites:
-            # Columns: lat [deg], lon [deg], ECI position x, y, z [m] (the 3D
-            # plot draws the inertial orbit path oriented at the final epoch)
-            satellite.metric = np.zeros((sm.num_epoch, 5))
+        # Columns: lat [deg], lon [deg], ECI position x, y, z [m] (the 3D
+        # plot draws the inertial orbit path oriented at the final epoch)
+        self.sat_metric = np.zeros((sm.num_sat, sm.num_epoch, 5))
 
     def in_loop(self, sm):
-        for satellite in sm.satellites:
+        for idx_sat, satellite in enumerate(sm.satellites):
             if self._selected(satellite):
                 satellite.det_lla()
-                satellite.metric[sm.cnt_epoch, 0] = degrees(satellite.lla[0])
-                satellite.metric[sm.cnt_epoch, 1] = degrees(satellite.lla[1])
-                satellite.metric[sm.cnt_epoch, 2:5] = satellite.pos_eci
+                self.sat_metric[idx_sat, sm.cnt_epoch, 0] = degrees(satellite.lla[0])
+                self.sat_metric[idx_sat, sm.cnt_epoch, 1] = degrees(satellite.lla[1])
+                self.sat_metric[idx_sat, sm.cnt_epoch, 2:5] = satellite.pos_eci
 
     def after_loop(self, sm):
 
         fig, ax = make_map_cyl()
         if self.satellite_id > 0:  # Only for one satellite
-            for satellite in sm.satellites:
+            for idx_sat, satellite in enumerate(sm.satellites):
                 if self._selected(satellite):
-                    y, x = satellite.metric[:, 0], satellite.metric[:, 1]
+                    y, x = self.sat_metric[idx_sat, :, 0], self.sat_metric[idx_sat, :, 1]
                     ax.plot(x, y, 'r.', transform=ccrs.PlateCarree())
         else:
-            for satellite in sm.satellites:
-                y, x = satellite.metric[:, 0], satellite.metric[:, 1]
+            for idx_sat, satellite in enumerate(sm.satellites):
+                y, x = self.sat_metric[idx_sat, :, 0], self.sat_metric[idx_sat, :, 1]
                 ax.plot(x, y, '+', label=str(satellite.sat_id), transform=ccrs.PlateCarree())
             ax.legend(fontsize=8)
         plt.savefig('../output/'+self.type+'.png')
@@ -109,9 +111,10 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
             p3d = self._plot_3d_module()
             if p3d is None:
                 return
-            selected = [s for s in sm.satellites if self._selected(s)]
-            p3d.plot_ground_track_3d(sm, selected, '../output/'+self.type+'_3d.png',
-                                     **self._kwargs_3d())
+            idx_selected = [i for i, s in enumerate(sm.satellites) if self._selected(s)]
+            p3d.plot_ground_track_3d(sm, [sm.satellites[i] for i in idx_selected],
+                                     [self.sat_metric[i] for i in idx_selected],
+                                     '../output/'+self.type+'_3d.png', **self._kwargs_3d())
 
 
 class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
@@ -120,6 +123,7 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
         super().__init__()
         self.constellation_id = 0  # Mandatory
         self.statistic = ''  # Mandatory
+        self.user_metric = None  # Per-user metric memory (num_user, num_epoch, num_sat)
         self.init_3d()
 
     def read_config(self, node):
@@ -130,15 +134,14 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
         self.read_config_3d(node)
 
     def before_loop(self, sm):
-        for user in sm.users:
-            user.metric = np.full((sm.num_epoch, len(sm.satellites)), False, dtype=bool)
+        self.user_metric = np.full((sm.num_user, sm.num_epoch, sm.num_sat), False, dtype=bool)
         self.before_loop_3d(sm)
 
     def in_loop(self, sm):
-        for user in sm.users:
+        for idx_user, user in enumerate(sm.users):
             for j in range(len(user.idx_sat_in_view)):
                 if sm.satellites[user.idx_sat_in_view[j]].constellation_id == self.constellation_id:
-                    user.metric[sm.cnt_epoch, user.idx_sat_in_view[j]] = True
+                    self.user_metric[idx_user, sm.cnt_epoch, user.idx_sat_in_view[j]] = True
         self.in_loop_3d(sm)
 
     def after_loop(self, sm):
@@ -147,7 +150,7 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
         metric = np.zeros(len(sm.users))
         for idx_usr, user in enumerate(sm.users):
             valid_value_list = []  # Define and clear
-            metric_int = user.metric.astype(np.int8)
+            metric_int = self.user_metric[idx_usr].astype(np.int8)
             for idx_sat, satellite in enumerate(sm.satellites):
                 # Vectorised run-length pass detection; like the original per-epoch scan,
                 # passes still ongoing at the last epoch are not counted
@@ -268,6 +271,7 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
         super().__init__()
         self.statistic = ''  # Mandatory
         self.constellation_id = 0  # Mandatory
+        self.user_metric = None  # Per-user metric memory (num_user, num_epoch)
         self.init_3d()
 
     def read_config(self, node):
@@ -278,8 +282,7 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
         self.read_config_3d(node)
 
     def before_loop(self, sm):
-        for user in sm.users:
-            user.metric = np.zeros(sm.num_epoch)
+        self.user_metric = np.zeros((sm.num_user, sm.num_epoch))
         self.before_loop_3d(sm)
 
     def in_loop(self, sm):
@@ -290,22 +293,22 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
                     elevation = degrees(sm.usr2sp[idx_user][user.idx_sat_in_view[idx_sat]].elevation)
                     if elevation > best_satellite_value:
                         best_satellite_value = elevation
-            user.metric[sm.cnt_epoch] = best_satellite_value
+            self.user_metric[idx_user, sm.cnt_epoch] = best_satellite_value
         self.in_loop_3d(sm)
 
     def after_loop(self, sm):
         metric, lats, lons = [], [], []
-        for user in sm.users:
+        for idx_usr, user in enumerate(sm.users):
             if self.statistic == 'Min':
-                metric.append(np.min(user.metric))
+                metric.append(np.min(self.user_metric[idx_usr]))
             if self.statistic == 'Mean':
-                metric.append(np.mean(user.metric))
+                metric.append(np.mean(self.user_metric[idx_usr]))
             if self.statistic == 'Max':
-                metric.append(np.max(user.metric))
+                metric.append(np.max(self.user_metric[idx_usr]))
             if self.statistic == 'Std':
-                metric.append(np.std(user.metric))
+                metric.append(np.std(self.user_metric[idx_usr]))
             if self.statistic == 'Median':
-                metric.append(np.median(user.metric))
+                metric.append(np.median(self.user_metric[idx_usr]))
             lats.append(degrees(user.lla[0]))
             lons.append(degrees(user.lla[1]))
         grid_shape = get_user_grid_shape(sm, self.type)
@@ -393,6 +396,7 @@ class AnalysisCovSatelliteSkyAngles(AnalysisBase):
         self.constellation_id = 0  # Mandatory
         self.satellite_id = 0  # Mandatory
         self.idx_found_satellite = 0
+        self.user_metric = None  # Metric memory for the first user (num_epoch, 2)
 
     def read_config(self, node):
         if node.find('ConstellationID') is not None:
@@ -407,14 +411,14 @@ class AnalysisCovSatelliteSkyAngles(AnalysisBase):
                     satellite.sat_id == self.satellite_id:
                 self.idx_found_satellite = i
                 break
-        sm.users[0].metric = np.zeros((sm.num_epoch, 2))
+        self.user_metric = np.zeros((sm.num_epoch, 2))
 
     def in_loop(self, sm):
         # Sky angles are plotted for the first user only
         link = sm.usr2sp[0][self.idx_found_satellite]
         if link.elevation > 0:
-            sm.users[0].metric[sm.cnt_epoch, 0] = degrees(link.azimuth)
-            sm.users[0].metric[sm.cnt_epoch, 1] = degrees(link.elevation)
+            self.user_metric[sm.cnt_epoch, 0] = degrees(link.azimuth)
+            self.user_metric[sm.cnt_epoch, 1] = degrees(link.elevation)
 
     def after_loop(self, sm):
         fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -427,9 +431,9 @@ class AnalysisCovSatelliteSkyAngles(AnalysisBase):
         ax2.set_ylabel('Elevation [deg]')
         ax2.yaxis.label.set_color('blue')
         ax2.tick_params(axis='y', colors='blue')
-        user = sm.users[0]  # Sky angles are plotted for the first user only
-        ax1.plot(self.times_f_doy, user.metric[:, 0], 'r+', label='Azimuth')
-        ax2.plot(self.times_f_doy, user.metric[:, 1], 'b+', label='Elevation')
+        # Sky angles are plotted for the first user only
+        ax1.plot(self.times_f_doy, self.user_metric[:, 0], 'r+', label='Azimuth')
+        ax2.plot(self.times_f_doy, self.user_metric[:, 1], 'b+', label='Elevation')
         plt.xlabel('DOY[-]');
         ax1.legend(loc='upper left'); ax2.legend(loc='upper right')
         plt.grid()
@@ -441,24 +445,23 @@ class AnalysisCovSatelliteVisible(AnalysisBase):
 
     def __init__(self):
         super().__init__()
+        self.user_metric = None  # Per-user metric memory (num_user, num_epoch)
 
     def read_config(self, node):
         pass
 
     def before_loop(self, sm):
-        # Find the index of the user that is needed
-        for user in sm.users:
-            user.metric = np.zeros(sm.num_epoch)
+        self.user_metric = np.zeros((sm.num_user, sm.num_epoch))
 
     def in_loop(self, sm):
-        for user in sm.users:
-            user.metric[sm.cnt_epoch] = len(user.idx_sat_in_view)
+        for idx_user, user in enumerate(sm.users):
+            self.user_metric[idx_user, sm.cnt_epoch] = len(user.idx_sat_in_view)
 
     def after_loop(self, sm):
         fig = plt.figure(figsize=(10, 6))
         plt.subplots_adjust(left=.1, right=.95, top=0.95, bottom=0.07)
-        for user in sm.users:
-            plt.plot(self.times_f_doy, user.metric, '-',
+        for idx_user, user in enumerate(sm.users):
+            plt.plot(self.times_f_doy, self.user_metric[idx_user], '-',
                      label=f'User lat/lon {round(degrees(user.lla[0]),1)} {round(degrees(user.lla[1]),1)}')
         plt.xlabel('DOY[-]'); plt.ylabel('Number of satellites in view [-]')
         plt.grid(); plt.legend()
@@ -471,6 +474,7 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
     def __init__(self):
         super().__init__()
         self.statistic = ''  # Mandatory
+        self.user_metric = None  # Per-user metric memory (num_user, num_epoch)
         self.init_3d()
 
     def read_config(self, node):
@@ -479,28 +483,27 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
         self.read_config_3d(node)
 
     def before_loop(self, sm):
-        for user in sm.users:
-            user.metric = np.zeros(sm.num_epoch)
+        self.user_metric = np.zeros((sm.num_user, sm.num_epoch))
         self.before_loop_3d(sm)
 
     def in_loop(self, sm):
-        for user in sm.users:
-            user.metric[sm.cnt_epoch] = len(user.idx_sat_in_view)
+        for idx_user, user in enumerate(sm.users):
+            self.user_metric[idx_user, sm.cnt_epoch] = len(user.idx_sat_in_view)
         self.in_loop_3d(sm)
 
     def after_loop(self, sm):
         metric, latitudes, longitudes = [], [], []
-        for user in sm.users:
+        for idx_user, user in enumerate(sm.users):
             if self.statistic == 'Min':
-                metric.append(np.min(user.metric))
+                metric.append(np.min(self.user_metric[idx_user]))
             if self.statistic == 'Mean':
-                metric.append(np.mean(user.metric))
+                metric.append(np.mean(self.user_metric[idx_user]))
             if self.statistic == 'Max':
-                metric.append(np.max(user.metric))
+                metric.append(np.max(self.user_metric[idx_user]))
             if self.statistic == 'Std':
-                metric.append(np.std(user.metric))
+                metric.append(np.std(self.user_metric[idx_user]))
             if self.statistic == 'Median':
-                metric.append(np.median(user.metric))
+                metric.append(np.median(self.user_metric[idx_user]))
             latitudes.append(degrees(user.lla[0]))
             longitudes.append(degrees(user.lla[1]))
         grid_shape = get_user_grid_shape(sm, self.type)
@@ -526,24 +529,25 @@ class AnalysisCovSatelliteVisibleId(AnalysisBase):
     def __init__(self):
         super().__init__()
         self.constellation_id = 0  # Mandatory
+        self.user_metric = None  # Metric memory for the first user (num_epoch, num_sat)
 
     def read_config(self, node):
         if node.find('ConstellationID') is not None:
             self.constellation_id = int(node.find('ConstellationID').text)
 
     def before_loop(self, sm):
-        for i in range(len(sm.users)):
-            sm.users[i].metric = np.ones((sm.num_epoch, len(sm.satellites))) * np.nan
+        # IDs in view are recorded for the first user only
+        self.user_metric = np.ones((sm.num_epoch, sm.num_sat)) * np.nan
 
     def in_loop(self, sm):
         for idx_sat in range(len(sm.users[0].idx_sat_in_view)):
             if sm.satellites[sm.users[0].idx_sat_in_view[idx_sat]].constellation_id == self.constellation_id:
-                sm.users[0].metric[sm.cnt_epoch, idx_sat] = sm.satellites[sm.users[0].idx_sat_in_view[idx_sat]].sat_id
+                self.user_metric[sm.cnt_epoch, idx_sat] = sm.satellites[sm.users[0].idx_sat_in_view[idx_sat]].sat_id
 
     def after_loop(self, sm):
         fig = plt.figure(figsize=(10, 6))
         plt.subplots_adjust(left=.1, right=.95, top=0.95, bottom=0.07)
-        plt.plot(self.times_f_doy, sm.users[0].metric, 'r+')
+        plt.plot(self.times_f_doy, self.user_metric, 'r+')
         plt.xlabel('DOY[-]'); plt.ylabel('IDs of satellites in view [-]')
         plt.grid()
         plt.savefig('../output/'+self.type+'.png')

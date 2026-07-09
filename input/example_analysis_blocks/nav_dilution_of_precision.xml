@@ -1,0 +1,6 @@
+<Analysis>
+    <Type>nav_dilution_of_precision</Type>  <!-- DOP statistic on a map; needs a Grid user segment -->
+    <Direction>Ver</Direction>              <!-- Pos / Hor / Ver -->
+    <Statistic>Max</Statistic>              <!-- Min / Mean / Max / Std / Median -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

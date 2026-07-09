@@ -1,0 +1,5 @@
+<Analysis>
+    <Type>cov_satellite_sky_angles</Type>   <!-- Azimuth/elevation over time, seen from the first user -->
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+</Analysis>

@@ -1,0 +1,10 @@
+<Analysis>
+    <Type>pow_battery_depth_discharge</Type> <!-- Battery state of charge / depth of discharge over time -->
+    <BatteryCapacityWh>500</BatteryCapacityWh>
+    <InitialSoC>1.0</InitialSoC>             <!-- 0..1 -->
+    <SolarPanelArea>5.0</SolarPanelArea>     <!-- m^2 -->
+    <PanelEfficiency>0.3</PanelEfficiency>   <!-- 0..1 -->
+    <BasePowerDrawW>200</BasePowerDrawW>
+    <InstrumentPowerDrawW>400</InstrumentPowerDrawW>
+    <PayloadLatitudeLimit>60</PayloadLatitudeLimit>  <!-- Instrument active below this |latitude| in deg -->
+</Analysis>

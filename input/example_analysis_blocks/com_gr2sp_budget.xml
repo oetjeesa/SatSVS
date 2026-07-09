@@ -1,0 +1,21 @@
+<!-- X-band downlink budget example (payload data downlink to a ground station) -->
+<Analysis>
+    <Type>com_gr2sp_budget</Type>
+    <GroundStationID>1</GroundStationID>
+    <TransmitterObject>Satellite</TransmitterObject>  <!-- Satellite (downlink) or GroundStation (uplink) -->
+    <CarrierFrequency>8.025e9</CarrierFrequency>      <!-- Hz -->
+    <TransmitPowerW>10</TransmitPowerW>
+    <TransmitLossesdB>2</TransmitLossesdB>
+    <TransmitGaindB>20</TransmitGaindB>
+    <ReceiveGaindB>45</ReceiveGaindB>
+    <ReceiveLossesdB>3</ReceiveLossesdB>
+    <ReceiveTempK>200</ReceiveTempK>
+    <PExceedPerc>0.5</PExceedPerc>                    <!-- ITU-R attenuation exceedance probability in % -->
+    <IncludeGas>True</IncludeGas>                     <!-- ITU-R atmospheric contributions -->
+    <IncludeRain>True</IncludeRain>
+    <IncludeScintillation>False</IncludeScintillation>
+    <IncludeClouds>False</IncludeClouds>
+    <ModulationType>QPSK</ModulationType>             <!-- For the required C/N0 line -->
+    <BitErrorRate>1e-5</BitErrorRate>
+    <DataRateBitPerSec>300e6</DataRateBitPerSec>
+</Analysis>

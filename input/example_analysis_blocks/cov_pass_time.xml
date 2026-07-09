@@ -1,0 +1,6 @@
+<Analysis>
+    <Type>cov_pass_time</Type>              <!-- Needs a user segment of Type Grid -->
+    <ConstellationID>1</ConstellationID>
+    <Statistic>Mean</Statistic>             <!-- Min / Mean / Max / Std / Median -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

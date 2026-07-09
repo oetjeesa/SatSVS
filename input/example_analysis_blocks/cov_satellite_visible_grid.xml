@@ -1,0 +1,5 @@
+<Analysis>
+    <Type>cov_satellite_visible_grid</Type> <!-- Satellites-in-view statistic on a map; needs a Grid user segment -->
+    <Statistic>Min</Statistic>              <!-- Min / Mean / Max / Std / Median -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

@@ -1,7 +1,8 @@
 # SatSVS analysis test suite
 
-One folder per analysis type from `readme.md` (25 analyses incl. orb_semi_major_axis),
-plus the HPOP propagator benchmark. Each folder contains:
+One folder per analysis type from `readme.md` (25 analyses incl. orb_kepler_elements),
+plus the HPOP propagator benchmark and a multi-analysis run (several `<Analysis>`
+blocks evaluated in one simulation). Each folder contains:
 
 - `Config.xml` — the test scenario (self-contained; TLE files referenced by the
   config are copied into the folder as well)
@@ -35,7 +36,8 @@ regenerates all test configs from scratch.
 | pow_battery_depth_discharge | 700 km SSO satellite defined via LTAN (exercises the SSO/LTAN orbit path), payload latitude limit 60 deg |
 | pow_eclipse_duration | 700 km SSO satellite, RAAN 140 deg → beta ~0 for max eclipses, 2 days at 30 s steps |
 | dat_storage, dat_latency | 700 km SSO satellite, Svalbard + Inuvik downlink stations, 60 Mbps instrument / 1070 Mbps downlink |
-| orb_semi_major_axis | 250 km LEO, HPOP propagator with full force model (NRLMSISE00 drag), 3 days — semi-major axis decay |
+| orb_kepler_elements | 250 km LEO, HPOP propagator with full force model (NRLMSISE00 drag), 3 days — evolution of all osculating Kepler elements |
+| multi_analysis | GPS constellation, static users (Delft, Singapore): cov_satellite_visible plus cov_satellite_sky_angles for SV1 and SV7, all three in a single run (the repeated type writes cov_satellite_sky_angles_2.png) |
 | hpop_benchmark | TerraSAR-X TLE propagated with HPOP through cov_satellite_pvt; benchmarked by benchmark_hpop.py against a two-body analytic orbit and the SGP4 reference trajectory (reference_orbit_sgp4.txt, regenerated with Config_sgp4_reference.xml) |
 
 ## Results — all 24 analyses PASS
@@ -52,8 +54,8 @@ regenerates all test configs from scratch.
 | cov_satellite_highest | Mean max-elevation map, symmetric bands |
 | cov_depth_of_coverage | 0–2 stations in view along TerraSAR-X track |
 | cov_pass_time | Mean pass 14000–27000 s, equatorial maximum |
-| obs_swath_conical (+revisit) | Classic conical swath coverage/revisit diamonds; 3D swath ribbon render (Plot3D) in obs_swath_conical_3d.png |
-| obs_swath_push_broom (+revisit) | 400 km strips; NetCDF export works; 3D swath ribbon render (Plot3D) in obs_swath_push_broom_3d.png |
+| obs_swath_conical (+revisit) | Smooth semi-transparent conical swath ribbons (overlaps darker) + revisit diamonds; 3D swath ribbon render (Plot3D) in obs_swath_conical_3d.png |
+| obs_swath_push_broom (+revisit) | Smooth 400 km semi-transparent ribbon strips; NetCDF export works; 3D swath ribbon render (Plot3D) in obs_swath_push_broom_3d.png |
 | obs_sza_push_broom | Mean SZA in swath, N–S gradient |
 | obs_sza_subsat (+lat, +lat_year) | Dawn-dusk daylight SZA, plots labelled |
 | com_gr2sp_budget | C/N0 95–110 dBHz vs required, ITU-R attenuations |
@@ -66,7 +68,8 @@ regenerates all test configs from scratch.
 | pow_eclipse_duration | ~35 min eclipse per orbit (beta~0, 700 km) |
 | dat_storage | SSR sawtooth 0–250 Gbit, downlink windows shaded |
 | dat_latency | Mean 0.95 h, 95% 1.57 h, 100% < 2 h |
-| orb_semi_major_axis | HPOP + drag: 18.1 km secular SMA decay over 3 days at ~250 km |
+| orb_kepler_elements | HPOP + drag: 6-panel Kepler element evolution — J2 SMA oscillation over a 15.4 km secular drag decay in 3 days at ~250 km, +0.97 deg/day RAAN drift |
+| multi_analysis | Three analyses in one run: cov_satellite_visible plus sky angles for SV1 and SV7 with independent metric memory (different pass patterns per satellite); repeated type numbered as cov_satellite_sky_angles_2.png |
 | hpop_benchmark | Two-body HPOP vs analytic Kepler: max 0.024 m/day (PASS); full-force HPOP vs SGP4 reference: RMS 6.7 km, max 10.8 km/day (PASS) |
 
 ## 3D plots

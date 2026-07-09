@@ -36,7 +36,7 @@ class AppConfig:
         self.usr2sp = []
         self.sp2sp = []
 
-        self.analysis = None
+        self.analyses = []  # One analysis instance per <Analysis> block, each with its own metric memory
         self.file_name = file_name
 
         self.start_time = 0  # MJD start time simulation
@@ -462,57 +462,71 @@ class AppConfig:
 
             ls.logger.info(f'Loaded simulation, start MJD: {self.start_time}, stop MJD: {self.stop_time},' +
                            f' size time steps in sec: {self.time_step}')
-            for analysis_node in root.iter('Analysis'):  # Only one analysis can be performed at a time
-                if analysis_node.find('Type').text == 'cov_ground_track':
-                    self.analysis = AnalysisCovGroundTrack()
-                if analysis_node.find('Type').text == 'cov_depth_of_coverage':
-                    self.analysis = AnalysisCovDepthOfCoverage()
-                if analysis_node.find('Type').text == 'cov_pass_time':
-                    self.analysis = AnalysisCovPassTime()
-                if analysis_node.find('Type').text == 'cov_satellite_contour':
-                    self.analysis = AnalysisCovSatelliteContour()
-                if analysis_node.find('Type').text == 'cov_satellite_highest':
-                    self.analysis = AnalysisCovSatelliteHighest()
-                if analysis_node.find('Type').text == 'cov_satellite_pvt':
-                    self.analysis = AnalysisCovSatellitePvt()
-                if analysis_node.find('Type').text == 'cov_satellite_sky_angles':
-                    self.analysis = AnalysisCovSatelliteSkyAngles()
-                if analysis_node.find('Type').text == 'cov_satellite_visible':
-                    self.analysis = AnalysisCovSatelliteVisible()
-                if analysis_node.find('Type').text == 'cov_satellite_visible_grid':
-                    self.analysis = AnalysisCovSatelliteVisibleGrid()
-                if analysis_node.find('Type').text == 'cov_satellite_visible_id':
-                    self.analysis = AnalysisCovSatelliteVisibleId()
-                if analysis_node.find('Type').text == 'obs_swath_conical':
-                    self.analysis = AnalysisObsSwathConical()
-                if analysis_node.find('Type').text == 'obs_swath_push_broom':
-                    self.analysis = AnalysisObsSwathPushBroom()
-                if analysis_node.find('Type').text == 'obs_sza_push_broom':
-                    self.analysis = AnalysisObsSzaPushBroom()
-                if analysis_node.find('Type').text == 'obs_sza_subsat':
-                    self.analysis = AnalysisObsSzaSubSat()
-                if analysis_node.find('Type').text == 'com_gr2sp_budget':
-                    self.analysis = AnalysisComGr2SpBudget()
-                if analysis_node.find('Type').text == 'com_sp2sp_budget':
-                    self.analysis = AnalysisComSp2SpBudget()
-                if analysis_node.find('Type').text == 'com_doppler':
-                    self.analysis = AnalysisComDoppler()
-                if analysis_node.find('Type').text == 'com_gr2sp_budget_interference':
-                    self.analysis = AnalysisComGr2SpBudgetInterference()
-                if analysis_node.find('Type').text == 'nav_dilution_of_precision':
-                    self.analysis = AnalysisNavDOP()
-                if analysis_node.find('Type').text == 'nav_accuracy':
-                    self.analysis = AnalysisNavAccuracy()
-                if analysis_node.find('Type').text == 'pow_battery_depth_discharge':
-                    self.analysis = AnalysisPowDepthDischarge()
-                if analysis_node.find('Type').text == 'pow_eclipse_duration':
-                    self.analysis = AnalysisPowEclipseDuration()
-                if analysis_node.find('Type').text == 'dat_storage':
-                    self.analysis = AnalysisSatDataStorage()
-                if analysis_node.find('Type').text == 'dat_latency':
-                    self.analysis = AnalysisSatDataLatency()
-                if analysis_node.find('Type').text == 'orb_semi_major_axis':
-                    self.analysis = AnalysisOrbSemiMajorAxis()
-                self.analysis.type = analysis_node.find('Type').text
-                self.analysis.read_config(analysis_node)  # Read the configuration for the specific analysis
+            type_counts = {}  # Occurrences per analysis type, to keep output file names unique
+            for analysis_node in root.iter('Analysis'):  # One or more analyses can be performed per run
+                type_str = analysis_node.find('Type').text
+                analysis = None
+                if type_str == 'cov_ground_track':
+                    analysis = AnalysisCovGroundTrack()
+                if type_str == 'cov_depth_of_coverage':
+                    analysis = AnalysisCovDepthOfCoverage()
+                if type_str == 'cov_pass_time':
+                    analysis = AnalysisCovPassTime()
+                if type_str == 'cov_satellite_contour':
+                    analysis = AnalysisCovSatelliteContour()
+                if type_str == 'cov_satellite_highest':
+                    analysis = AnalysisCovSatelliteHighest()
+                if type_str == 'cov_satellite_pvt':
+                    analysis = AnalysisCovSatellitePvt()
+                if type_str == 'cov_satellite_sky_angles':
+                    analysis = AnalysisCovSatelliteSkyAngles()
+                if type_str == 'cov_satellite_visible':
+                    analysis = AnalysisCovSatelliteVisible()
+                if type_str == 'cov_satellite_visible_grid':
+                    analysis = AnalysisCovSatelliteVisibleGrid()
+                if type_str == 'cov_satellite_visible_id':
+                    analysis = AnalysisCovSatelliteVisibleId()
+                if type_str == 'obs_swath_conical':
+                    analysis = AnalysisObsSwathConical()
+                if type_str == 'obs_swath_push_broom':
+                    analysis = AnalysisObsSwathPushBroom()
+                if type_str == 'obs_sza_push_broom':
+                    analysis = AnalysisObsSzaPushBroom()
+                if type_str == 'obs_sza_subsat':
+                    analysis = AnalysisObsSzaSubSat()
+                if type_str == 'com_gr2sp_budget':
+                    analysis = AnalysisComGr2SpBudget()
+                if type_str == 'com_sp2sp_budget':
+                    analysis = AnalysisComSp2SpBudget()
+                if type_str == 'com_doppler':
+                    analysis = AnalysisComDoppler()
+                if type_str == 'com_gr2sp_budget_interference':
+                    analysis = AnalysisComGr2SpBudgetInterference()
+                if type_str == 'nav_dilution_of_precision':
+                    analysis = AnalysisNavDOP()
+                if type_str == 'nav_accuracy':
+                    analysis = AnalysisNavAccuracy()
+                if type_str == 'pow_battery_depth_discharge':
+                    analysis = AnalysisPowDepthDischarge()
+                if type_str == 'pow_eclipse_duration':
+                    analysis = AnalysisPowEclipseDuration()
+                if type_str == 'dat_storage':
+                    analysis = AnalysisSatDataStorage()
+                if type_str == 'dat_latency':
+                    analysis = AnalysisSatDataLatency()
+                if type_str == 'orb_kepler_elements':
+                    analysis = AnalysisOrbKeplerElements()
+                if analysis is None:
+                    ls.logger.error(f'Unknown analysis type: {type_str}. '
+                                    f'See readme.md for the available analyses.')
+                    exit()
+                # Output files are named after the analysis type; number repeats so a
+                # second analysis of the same type writes e.g. cov_ground_track_2.png
+                type_counts[type_str] = type_counts.get(type_str, 0) + 1
+                analysis.type = type_str if type_counts[type_str] == 1 else \
+                    f'{type_str}_{type_counts[type_str]}'
+                analysis.read_config(analysis_node)  # Read the configuration for the specific analysis
+                self.analyses.append(analysis)
+            if not self.analyses:
+                ls.logger.warning('No <Analysis> block found; the run will only propagate the orbits')
 

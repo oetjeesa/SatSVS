@@ -1,0 +1,9 @@
+<!-- Needs an elevation dependent <UERE> list (m, one value per elevation bin) in the
+     <Constellation> block, e.g.:
+     <UERE>1.72,1.72,1.17,1.02,0.92,0.92,0.85,0.85,0.81,0.81,0.80,0.80,0.79,0.79,0.79,0.79,0.79,0.79</UERE> -->
+<Analysis>
+    <Type>nav_accuracy</Type>               <!-- Navigation accuracy (95%) on a map; needs a Grid user segment -->
+    <Direction>Hor</Direction>              <!-- Pos / Hor / Ver -->
+    <Statistic>Mean</Statistic>             <!-- Min / Mean / Max / Std / Median -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

@@ -1,0 +1,5 @@
+<Analysis>
+    <Type>cov_satellite_pvt</Type>          <!-- ECI position/velocity plot + dump to output/orbits.txt -->
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>            <!-- 0 records every satellite of the constellation -->
+</Analysis>

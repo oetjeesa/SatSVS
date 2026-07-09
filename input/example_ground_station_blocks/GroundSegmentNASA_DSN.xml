@@ -1,0 +1,42 @@
+<!-- NASA Deep Space Network: three complexes ~120 deg apart in longitude for
+     continuous deep-space coverage. 10 deg elevation mask typical for the
+     large apertures. -->
+<GroundSegment>
+    <Network>
+      <NumStation>3</NumStation>
+      <NetworkName>NASA_DSN</NetworkName>
+    <GroundStation>
+      <Type>Downlink</Type>
+      <ConstellationID>1</ConstellationID>
+      <GroundStationID>1</GroundStationID>
+      <GroundStationName>Goldstone</GroundStationName>
+      <Latitude>35.4267</Latitude>
+      <Longitude>-116.8900</Longitude>
+      <Height>1002</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>10</ElevationMask>
+    </GroundStation>
+    <GroundStation>
+      <Type>Downlink</Type>
+      <ConstellationID>1</ConstellationID>
+      <GroundStationID>2</GroundStationID>
+      <GroundStationName>Madrid</GroundStationName>
+      <Latitude>40.4312</Latitude>
+      <Longitude>-4.2480</Longitude>
+      <Height>834</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>10</ElevationMask>
+    </GroundStation>
+    <GroundStation>
+      <Type>Downlink</Type>
+      <ConstellationID>1</ConstellationID>
+      <GroundStationID>3</GroundStationID>
+      <GroundStationName>Canberra</GroundStationName>
+      <Latitude>-35.4014</Latitude>
+      <Longitude>148.9817</Longitude>
+      <Height>692</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>10</ElevationMask>
+    </GroundStation>
+    </Network>
+</GroundSegment>

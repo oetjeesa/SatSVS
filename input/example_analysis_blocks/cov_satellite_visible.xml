@@ -1,0 +1,3 @@
+<Analysis>
+    <Type>cov_satellite_visible</Type>      <!-- Number of satellites in view over time, one line per user -->
+</Analysis>

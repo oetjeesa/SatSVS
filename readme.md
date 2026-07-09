@@ -31,7 +31,11 @@ It will also automatically compute links between stations and satellites, users 
 ### Configuration of the tool
 
 Configuration of the tool can be done in the config.xml file where satellites, ground stations, users, simulation
-parameters and analysis are defined. Analysis can be added as wished, the baseline of analysis available are below 
+parameters and analysis are defined. Reusable configuration fragments to copy from are available in
+__input/example_conf_blocks__ (constellations and user segments), __input/example_analysis_blocks__
+(one example per analysis type below) and __input/example_ground_station_blocks__ (typical ground station
+networks: ESA ESTRACK, NASA DSN and NASA NEN).
+Analysis can be added as wished, the baseline of analysis available are below 
 (and explained further below):
 
 ### Coverage
@@ -70,8 +74,9 @@ parameters and analysis are defined. Analysis can be added as wished, the baseli
 - __dat_latency__: Data latency statistics from acquisition to ground reception
 
 ### Orbit
-- __orb_semi_major_axis__: Osculating semi-major axis over time, e.g. the orbital decay
-  under atmospheric drag with the HPOP propagator
+- __orb_kepler_elements__: Evolution of the osculating Kepler elements over time
+  (semi-major axis, eccentricity, inclination, RAAN, argument of perigee, mean
+  anomaly), e.g. the orbital decay under atmospheric drag with the HPOP propagator
 
 _To be implemented at a later stage:_
 
@@ -252,8 +257,11 @@ The following xml is used to setup the simulation parameters:
     <OrbitPropagator>SGP4</OrbitPropagator>
 
     <Analysis>
-          <Type>9</Type>
+          <Type>cov_ground_track</Type>
           <ConstellationID>1</ConstellationID>
+    </Analysis>
+    <Analysis>
+          <Type>cov_satellite_visible</Type>
     </Analysis>
 </SimulationManager>
 ```
@@ -263,6 +271,14 @@ The following explanations apply for the parameters:
 be saved by disabling some. 
 - The OrbitsFromPreviousRun flag (True/False) reuses the satellite ECI orbits cached in 'output/orbits_internal.txt' from a previous run instead of re-propagating, to save time when only the analysis changes.
 - The OrbitPropagator determines which propagator to take: 'Keplerian', 'SGP4' or 'HPOP'.
+- One or more Analysis blocks can be given. All analyses run in the same simulation
+  over the same propagated orbits, each keeping its own metric memory for the
+  post-processing/plots in its own output files (named after the analysis Type).
+  When the same Type appears more than once (e.g. the same analysis for two
+  different satellites), the output files of the repeats are numbered
+  __<type>_2.png__, __<type>_3.png__, ... Note that fixed-name data dumps
+  (e.g. orbits.txt of cov_satellite_pvt, user_cov_swath.nc of the obs analyses)
+  keep their name, so repeats of those analyses overwrite each other's dump.
 
 ### HPOP orbit propagator
 'HPOP' selects the High Precision Orbit Propagation based on the Orekit library
@@ -533,8 +549,11 @@ the constellation (see the 3D plots section for all parameters):
 <img src="/docs/cov_satellite_highest_3d.png" alt="cov_satellite_highest_3d"/>
 
 ### obs_swath_conical
-Plots the swath coverage for a conical scanner on one or more satellites defined in the space segment. 
-The user segment is used to define the grid of analysis and defines the granularity of the result.
+Plots the swath coverage for a conical scanner on one or more satellites defined in the space segment.
+The swath is drawn as smooth semi-transparent ribbons built from the swath edge points of every pass
+(overlapping passes show darker), matching the 3D globe render.
+The user segment grid defines the granularity of the revisit statistics and the SaveOutput data
+(not of the swath coverage map itself).
 Typically a grid of 1x1 deg is sufficient otherwise for a complete globe the simulation will take lots of time.
 
 The following parameters are needed:
@@ -574,8 +593,11 @@ what kind of statistic is displayed per user location.
 <img src="/docs/obs_swath_conical_3d.png" alt="obs_swath_conical_3d"/>
 
 ### obs_swath_push_broom
-Plots the swath coverage for a push broom scanner on one or more satellites defined in the space segment. 
-The user segment is used to define the grid of analysis and defines the granularity of the result.
+Plots the swath coverage for a push broom scanner on one or more satellites defined in the space segment.
+The swath is drawn as smooth semi-transparent ribbons built from the swath edge points of every pass
+(overlapping passes show darker), matching the 3D globe render.
+The user segment grid defines the granularity of the revisit statistics and the SaveOutput data
+(not of the swath coverage map itself).
 Typically a grid of 1x1 deg is sufficient otherwise for a complete globe the simulation will take lots of time.
 
 The following parameters are needed:
@@ -1044,19 +1066,21 @@ Optional in the analysis part are:
 <img src="/docs/dat_latency_stats.png" alt="dat_latency"/>
 
 
-### orb_semi_major_axis
-Plots the osculating semi-major axis of the satellite(s) over the simulation time,
-computed from the ECI state vector with the vis-viva equation. Run with the HPOP
-propagator and drag enabled this shows the orbital decay (the legend reports the
-secular change, i.e. the difference of the mean semi-major axis at the start and
-the end of the simulation, averaging out the J2 short-period oscillation). It also
-works with the other propagators: constant semi-major axis for Keplerian,
-mean-element variations for SGP4.
+### orb_kepler_elements
+Plots the evolution of all osculating Kepler elements of the satellite(s) over the
+simulation time, computed each epoch from the ECI state vector: semi-major axis,
+eccentricity, inclination, RAAN, argument of perigee and mean anomaly (one panel
+each). Run with the HPOP propagator this shows the perturbation effects — e.g. the
+drag decay of the semi-major axis (the log reports the secular change, averaging
+out the J2 short-period oscillation) and the J2 RAAN drift. It also works with the
+other propagators: constant elements for Keplerian, mean-element variations for
+SGP4. For near-circular orbits the argument of perigee and mean anomaly are noisy
+by nature (the perigee direction is poorly defined at low eccentricity).
 
 The following parameters are needed:
 ```
 <Analysis>
-    <Type>orb_semi_major_axis</Type>
+    <Type>orb_kepler_elements</Type>
 </Analysis>
 ```
 Optional are, to select one constellation or one satellite:
@@ -1064,7 +1088,7 @@ Optional are, to select one constellation or one satellite:
     <ConstellationID>1</ConstellationID>
     <SatelliteID>1</SatelliteID>
 ```
-<img src="/docs/orb_semi_major_axis.png" alt="semi_major_axis"/>
+<img src="/docs/orb_kepler_elements.png" alt="orb_kepler_elements"/>
 
 
 

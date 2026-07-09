@@ -1,0 +1,7 @@
+<!-- Most interesting with <OrbitPropagator>HPOP</OrbitPropagator> (drag decay, J2 drift);
+     also works with Keplerian and SGP4 -->
+<Analysis>
+    <Type>orb_kepler_elements</Type>        <!-- Evolution of the osculating Kepler elements -->
+    <ConstellationID>1</ConstellationID>    <!-- Optional selection; omit for all satellites -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional selection; omit for all satellites -->
+</Analysis>

@@ -1,0 +1,7 @@
+<Analysis>
+    <Type>cov_satellite_contour</Type>      <!-- Visibility contour at the final epoch -->
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>            <!-- 0 plots the contour of every satellite of the constellation -->
+    <ElevationMask>10</ElevationMask>       <!-- Contour elevation in deg -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

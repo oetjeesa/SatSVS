@@ -15,6 +15,7 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
         super().__init__()
         self.direction = None  # Mandatory
         self.statistic = None  # Mandatory
+        self.user_metric = None  # Per-user metric memory (num_user, num_epoch)
         self.init_3d()
 
     def read_config(self, node):
@@ -25,8 +26,7 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
         self.read_config_3d(node)
 
     def before_loop(self, sm):
-        for user in sm.users:
-            user.metric = np.zeros(sm.num_epoch)
+        self.user_metric = np.zeros((sm.num_user, sm.num_epoch))
         self.before_loop_3d(sm)
 
     def in_loop(self, sm):
@@ -44,9 +44,9 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
                     dop = np.sqrt(q[0, 0] + q[1, 1])
                 elif self.direction == "Ver":
                     dop = np.sqrt(q[2, 2])
-                user.metric[sm.cnt_epoch] = dop
+                self.user_metric[user_idx, sm.cnt_epoch] = dop
             else:
-                user.metric[sm.cnt_epoch] = np.nan
+                self.user_metric[user_idx, sm.cnt_epoch] = np.nan
         self.in_loop_3d(sm)
 
     def after_loop(self, sm):
@@ -54,15 +54,15 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
         metric = np.zeros(len(sm.users))
         for idx_usr, user in enumerate(sm.users):
             if self.statistic == "Min":
-                metric[idx_usr] = np.nanmin(user.metric)
+                metric[idx_usr] = np.nanmin(self.user_metric[idx_usr])
             if self.statistic == "Mean":
-                metric[idx_usr] = np.nanmean(user.metric)
+                metric[idx_usr] = np.nanmean(self.user_metric[idx_usr])
             if self.statistic == "Max":
-                metric[idx_usr] = np.nanmax(user.metric)
+                metric[idx_usr] = np.nanmax(self.user_metric[idx_usr])
             if self.statistic == "Std":
-                metric[idx_usr] = np.nanstd(user.metric)
+                metric[idx_usr] = np.nanstd(self.user_metric[idx_usr])
             if self.statistic == "Median":
-                metric[idx_usr] = np.nanmedian(user.metric)
+                metric[idx_usr] = np.nanmedian(self.user_metric[idx_usr])
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 
@@ -90,6 +90,7 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
         super().__init__()
         self.direction = None  # Mandatory
         self.statistic = None  # Mandatory
+        self.user_metric = None  # Per-user metric memory (num_user, num_epoch)
         self.init_3d()
 
     def read_config(self, node):
@@ -100,8 +101,7 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
         self.read_config_3d(node)
 
     def before_loop(self, sm):
-        for user in sm.users:
-            user.metric = np.zeros(sm.num_epoch)
+        self.user_metric = np.zeros((sm.num_user, sm.num_epoch))
         self.before_loop_3d(sm)
 
     def in_loop(self, sm):
@@ -126,9 +126,9 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
                     acc = error * np.sqrt(q[0, 0] + q[1, 1])
                 elif self.direction == "Ver":
                     acc = error * np.sqrt(q[2, 2])
-                user.metric[sm.cnt_epoch] = acc
+                self.user_metric[user_idx, sm.cnt_epoch] = acc
             else:
-                user.metric[sm.cnt_epoch] = np.nan
+                self.user_metric[user_idx, sm.cnt_epoch] = np.nan
         self.in_loop_3d(sm)
 
     def after_loop(self, sm):
@@ -136,15 +136,15 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
         metric = np.zeros(len(sm.users))
         for idx_usr, user in enumerate(sm.users):
             if self.statistic == "Min":
-                metric[idx_usr] = np.nanmin(user.metric)
+                metric[idx_usr] = np.nanmin(self.user_metric[idx_usr])
             if self.statistic == "Mean":
-                metric[idx_usr] = np.nanmean(user.metric)
+                metric[idx_usr] = np.nanmean(self.user_metric[idx_usr])
             if self.statistic == "Max":
-                metric[idx_usr] = np.nanmax(user.metric)
+                metric[idx_usr] = np.nanmax(self.user_metric[idx_usr])
             if self.statistic == "Std":
-                metric[idx_usr] = np.nanstd(user.metric)
+                metric[idx_usr] = np.nanstd(self.user_metric[idx_usr])
             if self.statistic == "Median":
-                metric[idx_usr] = np.nanmedian(user.metric)
+                metric[idx_usr] = np.nanmedian(self.user_metric[idx_usr])
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 

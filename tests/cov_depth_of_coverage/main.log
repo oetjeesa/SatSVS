@@ -1,28 +1,28 @@
-2026-07-08 17:36:06,042 - main - INFO - {'constellation_id': 1, 'constellation_name': 'TerraSAR-X', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/cov_depth_of_coverage/terrasarx.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
-2026-07-08 17:36:06,043 - main - INFO - ['Found satellite:', '31698', 'Kepler Elements', "{'epoch_mjd': 61068.089894, 'semi_major_axis': 6886575.424946125, 'eccentricity': 0.000195, 'inclination': 1.7007360896058743, 'right_ascension': 0.6596297374987369, 'arg_perigee': 1.4079920141688655, 'mean_anomaly': 4.877706567133592}"]
-2026-07-08 17:36:06,239 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-08 17:36:06,240 - main - INFO - {'constellation_id': 1, 'station_id': 2, 'station_name': 'Kiruna', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([2262086.29894541,  842161.29705744, 5883964.06989648]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.18385683, 0.35639623, 0.        ]), 'idx_sat_in_view': []}
-2026-07-08 17:36:06,241 - main - INFO - {'constellation_id': 1, 'station_id': 3, 'station_name': 'Inuvik', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-1629028.65957982, -1723251.87620672,  5901068.82681463]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([ 1.19101268, -2.32809469,  0.        ]), 'idx_sat_in_view': []}
-2026-07-08 17:36:06,243 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x00000150B2882350>, 'metric': []}
-2026-07-08 17:36:06,244 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
-2026-07-08 17:36:06,244 - main - INFO - Loaded 3 number of Station to Spacecraft links
-2026-07-08 17:36:06,244 - main - INFO - Loaded 1 number of User to Spacecraft links
-2026-07-08 17:36:06,245 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-08 17:36:06,245 - main - INFO - Finished reading configuration file
-2026-07-08 17:36:06,258 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
-2026-07-08 17:36:06,299 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
-2026-07-08 17:36:06,303 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
-2026-07-08 17:36:06,306 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
-2026-07-08 17:36:06,309 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
-2026-07-08 17:36:06,312 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
-2026-07-08 17:36:06,316 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
-2026-07-08 17:36:06,319 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
-2026-07-08 17:36:06,322 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
-2026-07-08 17:36:06,325 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
-2026-07-08 17:36:06,328 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
-2026-07-08 17:36:06,332 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
-2026-07-08 17:36:06,335 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
-2026-07-08 17:36:06,338 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
-2026-07-08 17:36:06,345 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
-2026-07-08 17:36:06,348 - main - INFO - Plotting analysis cov_depth_of_coverage
-2026-07-08 17:36:08,247 - main - INFO - Saved 3D plot to ../output/cov_depth_of_coverage_3d.png
+2026-07-09 10:33:42,848 - main - INFO - {'constellation_id': 1, 'constellation_name': 'TerraSAR-X', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/cov_depth_of_coverage/terrasarx.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-09 10:33:42,849 - main - INFO - ['Found satellite:', '31698', 'Kepler Elements', "{'epoch_mjd': 61068.089894, 'semi_major_axis': 6886575.424946125, 'eccentricity': 0.000195, 'inclination': 1.7007360896058743, 'right_ascension': 0.6596297374987369, 'arg_perigee': 1.4079920141688655, 'mean_anomaly': 4.877706567133592}"]
+2026-07-09 10:33:43,025 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-09 10:33:43,025 - main - INFO - {'constellation_id': 1, 'station_id': 2, 'station_name': 'Kiruna', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([2262086.29894541,  842161.29705744, 5883964.06989648]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.18385683, 0.35639623, 0.        ]), 'idx_sat_in_view': []}
+2026-07-09 10:33:43,026 - main - INFO - {'constellation_id': 1, 'station_id': 3, 'station_name': 'Inuvik', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-1629028.65957982, -1723251.87620672,  5901068.82681463]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([ 1.19101268, -2.32809469,  0.        ]), 'idx_sat_in_view': []}
+2026-07-09 10:33:43,027 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x0000024932542350>}
+2026-07-09 10:33:43,028 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
+2026-07-09 10:33:43,028 - main - INFO - Loaded 3 number of Station to Spacecraft links
+2026-07-09 10:33:43,028 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-09 10:33:43,028 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-09 10:33:43,028 - main - INFO - Finished reading configuration file
+2026-07-09 10:33:43,042 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-09 10:33:43,084 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
+2026-07-09 10:33:43,087 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
+2026-07-09 10:33:43,089 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
+2026-07-09 10:33:43,092 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
+2026-07-09 10:33:43,095 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
+2026-07-09 10:33:43,098 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
+2026-07-09 10:33:43,101 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
+2026-07-09 10:33:43,104 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
+2026-07-09 10:33:43,106 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
+2026-07-09 10:33:43,109 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
+2026-07-09 10:33:43,111 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
+2026-07-09 10:33:43,115 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
+2026-07-09 10:33:43,117 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
+2026-07-09 10:33:43,120 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
+2026-07-09 10:33:43,122 - main - INFO - Plotting analysis cov_depth_of_coverage
+2026-07-09 10:33:44,273 - main - INFO - Saved 3D plot to ../output/cov_depth_of_coverage_3d.png

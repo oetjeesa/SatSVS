@@ -1,0 +1,6 @@
+<Analysis>
+    <Type>cov_ground_track</Type>
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>            <!-- Optional: omit to plot all satellites of the constellation -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>

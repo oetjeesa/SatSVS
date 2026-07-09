@@ -94,7 +94,6 @@ class Satellite:
         self.idx_stat_in_view = []  # Indices of station which are in view
         self.idx_sat_in_view = []  # Indices of other satellites which are in view
 
-        self.metric = []  # For analysis purposes
 
         self.obs_inci_angle_start = None  # If satellite contains instrument
         self.obs_inci_angle_stop = None
@@ -194,7 +193,6 @@ class User:
         self.tle_file_name = ''  # In case user is a spacecraft
         self.kepler = KeplerSet()  # In case user is a spacecraft
 
-        self.metric = []  # For analysis purposes
 
     def det_posvel_ecf(self):
         self.pos_ecf = misc_fn.lla2xyz(self.lla)
@@ -232,7 +230,6 @@ class Ground2SpaceLink:
         self.gr2sp_ecf = np.zeros(3)  # m
         self.distance = 0.0  # m
 
-        self.metric = []  # For analysis purposes
 
     def compute_link(self, station, satellite):
         # For reasons of speed this function is coded inline, since this function is done for every time step,
@@ -278,7 +275,6 @@ class User2SpaceLink:
         self.usr2sp_ecf = np.zeros(3)  # m
         self.distance = 0.0  # m
 
-        self.metric = []  # For analysis purposes
 
     def compute_link(self, user, satellite):
 
@@ -324,7 +320,6 @@ class Space2SpaceLink:
         self.sp2sp_ecf = np.zeros(3)
         self.distance = 0  # m
 
-        self.metric = []  # For analysis purposes
 
     def compute_link(self, sat_1, sat_2):
         # Compute distance, vector and if Earth is in between...

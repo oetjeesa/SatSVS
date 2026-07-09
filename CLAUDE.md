@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Satellite Service Volume Simulator (SatSVS) — a Python tool for satellite mission
 analysis. It propagates satellite orbits, rotates ground stations and users in
-ECI/ECF, computes visibility links between them, and runs one analysis per run
-(coverage, Earth observation, communication link budget, or navigation DOP/accuracy).
+ECI/ECF, computes visibility links between them, and runs one or more analyses per
+run (coverage, Earth observation, communication link budget, navigation
+DOP/accuracy, power, data handling, orbit elements).
 
 See `readme.md` for the full catalogue of analyses and the complete `Config.xml`
 schema — it is the authoritative user-facing reference for every analysis type and
@@ -38,9 +39,15 @@ models, used only by `com_*` analyses). The HPOP propagator additionally needs
 
 A single `input/Config.xml` (capital C) defines the whole simulation: space segment
 (constellations/satellites), ground segment (stations), user segment, simulation
-window, and **exactly one** `<Analysis>` block. The `projects/` and
-`input/example_conf_blocks/` directories hold reusable config fragments and full
-example configs to copy from. Logs are written to `output/main.log`.
+window, and one or more `<Analysis>` blocks — all analyses run in the same time
+loop over the same propagated orbits, each instance keeping its own metric memory
+(`self.user_metric`/`self.sat_metric`/`self.metric`); a repeated analysis type gets
+its output files suffixed `_2`, `_3`, ... The `projects/` directory and the
+`input/example_conf_blocks/` (constellations, user segments),
+`input/example_analysis_blocks/` (one per analysis type) and
+`input/example_ground_station_blocks/` (ESTRACK, NASA DSN/NEN networks)
+directories hold reusable config fragments and full example configs to copy from.
+Logs are written to `output/main.log`.
 
 ## Architecture
 
@@ -52,9 +59,10 @@ current loop time.
 
 **Startup (`main.load_configuration`)** parses `Config.xml` four times — once each for
 `load_satellites`, `load_stations`, `load_users`, `load_simulation` — then
-`setup_links`. `load_simulation` is also where the analysis type string is mapped to a
-concrete analysis class instance (a long `if` chain); **adding a new analysis requires
-adding a branch here** plus instantiating the class.
+`setup_links`. `load_simulation` is also where each `<Analysis>` block's type string
+is mapped to a concrete analysis class instance (a long `if` chain) and appended to
+`sm.analyses`; **adding a new analysis requires adding a branch here** plus
+instantiating the class.
 
 **Segments (`segments.py`)** define the domain objects: `Satellite`, `Station`,
 `User`, `Constellation`, and three link classes `Ground2SpaceLink`, `User2SpaceLink`,
@@ -72,7 +80,8 @@ MJD→GMST, propagate every satellite (Keplerian, SGP4 or HPOP, selected by
 `<OrbitPropagator>`; HPOP is the Orekit-based numerical propagator in
 `propagation_hpop.py`, configured by the `<HPOP>` block and sampling per-satellite
 dense ephemerides generated at load time), update stations/users, recompute in-view
-lists (`idx_sat_in_view`, etc.), then call `sm.analysis.in_loop(sm)`. Setting
+lists (`idx_sat_in_view`, etc.), then call `in_loop(sm)` on every analysis in
+`sm.analyses`. Setting
 `OrbitsFromPreviousRun` reads cached ECI orbits from `output/orbits_internal.txt`
 instead of re-propagating.
 

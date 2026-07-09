@@ -1,0 +1,21 @@
+<!-- Ka-band downlink budget with the co-constellation satellites as interferers -->
+<Analysis>
+    <Type>com_gr2sp_budget_interference</Type>
+    <GroundStationID>1</GroundStationID>
+    <TransmitterObject>Satellite</TransmitterObject>
+    <CarrierFrequency>26.25e9</CarrierFrequency>      <!-- Hz -->
+    <BandWidth>675e6</BandWidth>                      <!-- Hz -->
+    <TransmitPowerW>50</TransmitPowerW>
+    <TransmitLossesdB>5</TransmitLossesdB>
+    <TransmitGaindB>33</TransmitGaindB>
+    <TransmitAntennaDiameter>0.25</TransmitAntennaDiameter>  <!-- m, for the antenna pattern -->
+    <ReceiveGaindB>64</ReceiveGaindB>
+    <ReceiveAntennaDiameter>6.8</ReceiveAntennaDiameter>     <!-- m, for the antenna pattern -->
+    <ReceiveLossesdB>3</ReceiveLossesdB>
+    <ReceiveTempK>290</ReceiveTempK>
+    <PExceedPerc>0.5</PExceedPerc>                    <!-- ITU-R attenuation exceedance probability in % -->
+    <IncludeGas>True</IncludeGas>
+    <IncludeRain>True</IncludeRain>
+    <IncludeScintillation>False</IncludeScintillation>
+    <IncludeClouds>False</IncludeClouds>
+</Analysis>

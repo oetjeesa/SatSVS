@@ -1,0 +1,5 @@
+<Analysis>
+    <Type>com_doppler</Type>                <!-- Doppler shift and elevation over time for one ground station -->
+    <StationID>1</StationID>
+    <CarrierFrequency>8.025e9</CarrierFrequency>      <!-- Hz -->
+</Analysis>

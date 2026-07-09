@@ -1,0 +1,4 @@
+<Analysis>
+    <Type>cov_satellite_visible_id</Type>   <!-- Pass arcs of the satellite IDs in view from the first user -->
+    <ConstellationID>1</ConstellationID>
+</Analysis>

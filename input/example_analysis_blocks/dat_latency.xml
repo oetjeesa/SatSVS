@@ -1,0 +1,9 @@
+<Analysis>
+    <Type>dat_latency</Type>                <!-- Data latency from acquisition to ground delivery -->
+    <SSRCapacityGbits>2000</SSRCapacityGbits>
+    <InitialFillGbits>100</InitialFillGbits>
+    <InstrumentRateMbps>60</InstrumentRateMbps>
+    <DownlinkRateMbps>1070</DownlinkRateMbps>
+    <PayloadLatitudeLimit>60</PayloadLatitudeLimit>  <!-- Instrument recording below this |latitude| in deg -->
+    <GroundProcessingMin>15</GroundProcessingMin>    <!-- Added ground segment processing time in minutes -->
+</Analysis>

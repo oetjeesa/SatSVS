@@ -83,7 +83,7 @@ class AnalysisPowDepthDischarge(AnalysisBase):
         self.current_soc += energy_balance_wh / self.battery_capacity_wh
         self.current_soc = np.clip(self.current_soc, 0, 1) # Keep between 0% and 100%
 
-        self.metric[sm.cnt_epoch, :] = [sm.analysis.times_f_doy[-1], self.current_soc, p_gen, p_draw]
+        self.metric[sm.cnt_epoch, :] = [self.times_f_doy[-1], self.current_soc, p_gen, p_draw]
 
     def after_loop(self, sm):
         dod = (1.0 - self.metric[:, 1]) * 100
@@ -144,7 +144,7 @@ class AnalysisPowEclipseDuration(AnalysisBase):
         elif not in_eclipse_now and self.in_eclipse_prev:
             duration_days = sm.time_mjd - self.eclipse_start_time
             duration_minutes = duration_days * 24 * 60
-            self.eclipse_durations.append([sm.analysis.times_f_doy[-1], duration_minutes])
+            self.eclipse_durations.append([self.times_f_doy[-1], duration_minutes])
 
         self.in_eclipse_prev = in_eclipse_now
 

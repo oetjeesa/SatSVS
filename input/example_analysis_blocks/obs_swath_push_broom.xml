@@ -1,0 +1,11 @@
+<!-- Instrument in the <Constellation> block: <ObsSwathStart>250000.0</ObsSwathStart> and
+     <ObsSwathStop>650000.0</ObsSwathStop> (swath edges in m, positive = right looking) or
+     <ObsIncidenceAngleStart>20.0</ObsIncidenceAngleStart> / <ObsIncidenceAngleStop>52.0</ObsIncidenceAngleStop> (deg) -->
+<Analysis>
+    <Type>obs_swath_push_broom</Type>
+    <Revisit>True</Revisit>                 <!-- Optional: revisit interval map (needs a Grid user segment) -->
+    <Statistic>Mean</Statistic>             <!-- min / mean / max / std / median (revisit statistic) -->
+    <SaveOutput>NetCDF</SaveOutput>         <!-- Optional: Numpy or NetCDF dump of the per-epoch grid coverage -->
+    <PolarView>60</PolarView>               <!-- Optional: polar stereographic view bounded at this latitude -->
+    <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+</Analysis>
