@@ -186,6 +186,8 @@ class HpopPropagation:
         self.moon = CelestialBodyFactory.getMoon()
         self.gravity_provider = GravityFieldFactory.getNormalizedProvider(
             cfg.geopotential_degree, cfg.geopotential_order)
+        self._atm = None  # Atmosphere model, built on demand (air_density)
+        self._eop = None  # EOP history, loaded on demand (pole_correction)
 
         # Dense-output ephemeris per satellite over the whole simulation window
         pad = 2 * sm.time_step
@@ -247,21 +249,36 @@ class HpopPropagation:
         propagator = NumericalPropagator(integrator)
         propagator.setOrbitType(OrbitType.CARTESIAN)
         propagator.setInitialState(SpacecraftState(orbit0).withMass(cfg.mass))
-        for force in self._force_models():
+        for name, force in self._force_models():
             propagator.addForceModel(force)
         return propagator
 
+    def _atmosphere(self):
+        """Atmosphere model per the configured DragModel."""
+        from org.orekit.models.earth.atmosphere import NRLMSISE00, DTM2000, HarrisPriester
+        from org.orekit.models.earth.atmosphere.data import CssiSpaceWeatherData
+        model = self.cfg.drag_model.lower()
+        if model == 'harrispriester':
+            return HarrisPriester(self.sun, self.earth)
+        space_weather = CssiSpaceWeatherData(CssiSpaceWeatherData.DEFAULT_SUPPORTED_NAMES)
+        if model == 'dtm2000':
+            return DTM2000(space_weather, self.sun, self.earth)
+        if model == 'nrlmsise00':
+            return NRLMSISE00(space_weather, self.sun, self.earth)
+        ls.logger.error(f'HPOP: unknown DragModel {self.cfg.drag_model} '
+                        f'(use NRLMSISE00, DTM2000 or HarrisPriester)')
+        exit()
+
     def _force_models(self):
-        """The perturbation set selected in the <HPOP> block. Note the Newtonian
-        central attraction is always added by NumericalPropagator itself."""
+        """(name, force) pairs of the perturbation set selected in the <HPOP>
+        block. Note the Newtonian central attraction is always added by
+        NumericalPropagator itself."""
         from org.orekit.forces.gravity import (HolmesFeatherstoneAttractionModel,
                                                ThirdBodyAttraction, SolidTides, OceanTides,
                                                Relativity)
         from org.orekit.forces.drag import DragForce, IsotropicDrag
         from org.orekit.forces.radiation import (SolarRadiationPressure,
                                                  IsotropicRadiationSingleCoefficient)
-        from org.orekit.models.earth.atmosphere import NRLMSISE00, DTM2000, HarrisPriester
-        from org.orekit.models.earth.atmosphere.data import CssiSpaceWeatherData
         from org.orekit.bodies import CelestialBodyFactory
         from org.orekit.utils import IERSConventions
         from org.orekit.time import TimeScalesFactory
@@ -270,53 +287,76 @@ class HpopPropagation:
         forces = []
 
         if cfg.geopotential:
-            forces.append(HolmesFeatherstoneAttractionModel(self.itrf, self.gravity_provider))
+            forces.append(('Geopotential harmonics',
+                           HolmesFeatherstoneAttractionModel(self.itrf, self.gravity_provider)))
 
         if cfg.drag:
-            model = cfg.drag_model.lower()
-            if model == 'harrispriester':
-                atmosphere = HarrisPriester(self.sun, self.earth)
-            else:
-                space_weather = CssiSpaceWeatherData(CssiSpaceWeatherData.DEFAULT_SUPPORTED_NAMES)
-                if model == 'dtm2000':
-                    atmosphere = DTM2000(space_weather, self.sun, self.earth)
-                elif model == 'nrlmsise00':
-                    atmosphere = NRLMSISE00(space_weather, self.sun, self.earth)
-                else:
-                    ls.logger.error(f'HPOP: unknown DragModel {cfg.drag_model} '
-                                    f'(use NRLMSISE00, DTM2000 or HarrisPriester)')
-                    exit()
-            forces.append(DragForce(atmosphere, IsotropicDrag(cfg.drag_area, cfg.drag_cd)))
+            forces.append(('Drag', DragForce(self._atmosphere(),
+                                             IsotropicDrag(cfg.drag_area, cfg.drag_cd))))
 
         if cfg.solar_radiation_pressure:
-            forces.append(SolarRadiationPressure(
+            forces.append(('Solar radiation pressure', SolarRadiationPressure(
                 self.sun, self.earth,
-                IsotropicRadiationSingleCoefficient(cfg.srp_area, cfg.srp_cr)))
+                IsotropicRadiationSingleCoefficient(cfg.srp_area, cfg.srp_cr))))
 
         if cfg.third_body_sun:
-            forces.append(ThirdBodyAttraction(self.sun))
+            forces.append(('Third body Sun', ThirdBodyAttraction(self.sun)))
         if cfg.third_body_moon:
-            forces.append(ThirdBodyAttraction(self.moon))
+            forces.append(('Third body Moon', ThirdBodyAttraction(self.moon)))
         if cfg.third_body_planets:
             for body in ('VENUS', 'MARS', 'JUPITER'):
-                forces.append(ThirdBodyAttraction(getattr(CelestialBodyFactory, 'get' + body.capitalize())()))
+                forces.append((f'Third body {body.capitalize()}', ThirdBodyAttraction(
+                    getattr(CelestialBodyFactory, 'get' + body.capitalize())())))
 
         if cfg.solid_tides or cfg.ocean_tides:
             conventions = IERSConventions.IERS_2010
             ut1 = TimeScalesFactory.getUT1(conventions, not cfg.earth_pole_rotation)
             gp = self.gravity_provider
             if cfg.solid_tides:
-                forces.append(SolidTides(self.itrf, gp.getAe(), gp.getMu(), gp.getTideSystem(),
-                                         conventions, ut1, [self.sun, self.moon]))
+                forces.append(('Solid tides',
+                               SolidTides(self.itrf, gp.getAe(), gp.getMu(), gp.getTideSystem(),
+                                          conventions, ut1, [self.sun, self.moon])))
             if cfg.ocean_tides:
-                forces.append(OceanTides(self.itrf, gp.getAe(), gp.getMu(),
-                                         cfg.ocean_tides_degree, cfg.ocean_tides_order,
-                                         conventions, ut1))
+                forces.append(('Ocean tides',
+                               OceanTides(self.itrf, gp.getAe(), gp.getMu(),
+                                          cfg.ocean_tides_degree, cfg.ocean_tides_order,
+                                          conventions, ut1)))
 
         if cfg.relativity:
-            forces.append(Relativity(self.mu))
+            forces.append(('Relativity', Relativity(self.mu)))
 
         return forces
+
+    # ------------------------------------------- environment sampling (orb_*)
+    def named_forces(self):
+        """Fresh (name, ForceModel) pairs of the configured perturbations, for
+        the per-epoch force evaluation of the orb_disturbance_forces analysis."""
+        return self._force_models()
+
+    def sample_state(self, idx_sat, mjd):
+        """Interpolated Orekit SpacecraftState (GCRF) at the requested epoch."""
+        return self.ephemerides[idx_sat].propagate(self._mjd2date(mjd))
+
+    def air_density(self, pos_itrf, mjd):
+        """Atmospheric density [kg/m3] of the configured DragModel at an ITRF
+        position, for the orb_air_density analysis."""
+        from org.hipparchus.geometry.euclidean.threed import Vector3D
+        if self._atm is None:
+            self._atm = self._atmosphere()
+        return float(self._atm.getDensity(
+            self._mjd2date(mjd),
+            Vector3D(float(pos_itrf[0]), float(pos_itrf[1]), float(pos_itrf[2])),
+            self.itrf))
+
+    def pole_correction(self, mjd):
+        """IERS polar motion (xp, yp) [rad] at the requested epoch, from the
+        EOP data of the Orekit archive (orb_pole_wobble analysis)."""
+        from org.orekit.frames import FramesFactory
+        from org.orekit.utils import IERSConventions
+        if self._eop is None:
+            self._eop = FramesFactory.getEOPHistory(IERSConventions.IERS_2010, False)
+        pole = self._eop.getPoleCorrection(self._mjd2date(mjd))
+        return float(pole.getXp()), float(pole.getYp())
 
     def _build_ephemeris(self, satellite, date_end):
         propagator = self._build_propagator(satellite)

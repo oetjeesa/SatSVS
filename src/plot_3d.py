@@ -29,12 +29,16 @@ from constants import R_EARTH
 import logging_svs as ls
 
 EARTH_TEXTURE = '../input/earth_texture.jpg'
+STAR_TEXTURE = '../input/starmap.jpg'  # Milky Way panorama (ESO/S. Brunier, CC BY 4.0)
+CLOUD_TEXTURE = '../input/earth_clouds.jpg'  # NASA Visible Earth cloud composite
 
 
-def _make_earth(radius):
-    """Textured Earth sphere from a lat/lon structured grid. The seam column is
-    duplicated (lon -180 and +180) so the equirectangular texture wraps cleanly,
-    with texture coordinates assigned in the grid's own point order."""
+def _sphere_grid(radius, inside=False):
+    """Lat/lon structured sphere grid with equirectangular texture coordinates.
+    The seam column is duplicated (lon -180 and +180) so the texture wraps
+    cleanly, with the coordinates assigned in the grid's own (Fortran) point
+    order. inside=True mirrors the horizontal texture direction so a texture
+    reads correctly when the sphere is seen from the inside (sky sphere)."""
     import pyvista as pv
     lon = np.radians(np.linspace(-180.0, 180.0, 361))
     lat = np.radians(np.linspace(-90.0, 90.0, 181))
@@ -44,13 +48,58 @@ def _make_earth(radius):
     z = radius * np.sin(lat2)
     grid = pv.StructuredGrid(x, y, z)
     u = (np.degrees(lon2) + 180.0) / 360.0
+    if inside:
+        u = 1.0 - u
     v = (np.degrees(lat2) + 90.0) / 180.0
-    # StructuredGrid flattens the input arrays in Fortran order; use the same
-    # order so every texture coordinate belongs to its own grid point
     grid.active_texture_coordinates = np.column_stack((u.ravel(order='F'),
                                                        v.ravel(order='F')))
-    texture = pv.read_texture(EARTH_TEXTURE)
-    return grid, texture
+    return grid
+
+
+def _make_earth(radius):
+    """Textured Earth sphere (NASA Blue Marble, oceans and land)."""
+    import pyvista as pv
+    return _sphere_grid(radius), pv.read_texture(EARTH_TEXTURE)
+
+
+def _add_sky(plotter):
+    """Starry background: the Milky Way panorama on a huge inward-facing
+    unlit sphere. Falls back to the plain black background when the texture
+    file is missing."""
+    import pyvista as pv
+    if not os.path.isfile(STAR_TEXTURE):
+        ls.logger.info(f'No star map at {STAR_TEXTURE}; plain black background used')
+        return
+    sky = _sphere_grid(R_EARTH * 60.0, inside=True)
+    plotter.add_mesh(sky, texture=pv.read_texture(STAR_TEXTURE), lighting=False)
+
+
+def _add_clouds(plotter):
+    """Semi-transparent cloud layer just above the surface (below the drawn
+    analysis layers): the grayscale NASA cloud composite becomes the alpha
+    channel of a white texture, so only the clouded areas cover the map."""
+    import pyvista as pv
+    from matplotlib.image import imread
+    if not os.path.isfile(CLOUD_TEXTURE):
+        ls.logger.error(f'EarthClouds requested but {CLOUD_TEXTURE} is missing. '
+                        f'Cloud layer skipped.')
+        return
+    img = np.asarray(imread(CLOUD_TEXTURE), dtype=float)
+    if img.ndim == 3:
+        img = img.mean(axis=2)
+    if img.max() <= 1.0:
+        img = img * 255.0
+    rgba = np.empty(img.shape + (4,), dtype=np.uint8)
+    rgba[..., 0:3] = 255
+    rgba[..., 3] = img.astype(np.uint8)
+    # Image row 0 is north; VTK texture row 0 sits at texture coordinate v=0
+    # (south), so flip vertically
+    rgba = np.ascontiguousarray(rgba[::-1])
+    clouds = _sphere_grid(R_EARTH * 1.0015)
+    # opacity < 1 forces the translucent rendering path so the texture's alpha
+    # channel is blended instead of drawn opaque
+    plotter.add_mesh(clouds, texture=pv.Texture(rgba), smooth_shading=True,
+                     ambient=0.3, opacity=0.99)
 
 
 def _make_satellite_meshes(model_file=None):
@@ -92,17 +141,22 @@ def _track_points(lats_deg, lons_deg, radius):
                             radius * np.sin(lats)))
 
 
-def _open_scene(sm):
-    """Plotter with black background and the textured Earth already added."""
+def _open_scene(sm, clouds=False, off_screen=None, window_size=(1600, 1200)):
+    """Plotter with the starry sky and the textured Earth already added,
+    optionally with the semi-transparent cloud layer on top."""
     import pyvista as pv
-    off_screen = os.environ.get('MPLBACKEND', '').lower() == 'agg'
-    plotter = pv.Plotter(off_screen=off_screen, window_size=(1600, 1200))
+    if off_screen is None:
+        off_screen = os.environ.get('MPLBACKEND', '').lower() == 'agg'
+    plotter = pv.Plotter(off_screen=off_screen, window_size=list(window_size))
     plotter.set_background('black')
+    _add_sky(plotter)
     earth, texture = _make_earth(R_EARTH)
     # Ambient light keeps the dark oceans of the texture visibly distinct from
-    # the black space background, so the full Earth disk and its limb stay
+    # the space background, so the full Earth disk and its limb stay
     # readable (otherwise geometry on the surface can appear to float in space)
     plotter.add_mesh(earth, texture=texture, smooth_shading=True, ambient=0.3)
+    if clouds:
+        _add_clouds(plotter)
     return plotter, off_screen
 
 
@@ -193,14 +247,14 @@ SCALAR_BAR_ARGS = dict(color='white', title_font_size=22, label_font_size=17,
 
 def plot_ground_track_3d(sm, satellites, metrics, file_name,
                          model_file=None, model_scale=200e3,
-                         show_satellite=True, show_orbit=True):
+                         show_satellite=True, show_orbit=True, clouds=False):
     """Render ground track(s), ECF orbit path(s), stations and a 3D satellite
     model on a textured Earth. satellites: list of Satellite objects; metrics:
     matching list of (num_epoch, 5) arrays holding per-epoch
     [lat_deg, lon_deg, x_eci, y_eci, z_eci]."""
     import pyvista as pv
 
-    plotter, off_screen = _open_scene(sm)
+    plotter, off_screen = _open_scene(sm, clouds=clouds)
     r_content = 0.0
     for satellite, metric in zip(satellites, metrics):
         used = ~np.all(metric == 0, axis=1)  # Skip never-filled epochs
@@ -246,7 +300,7 @@ def _slerp_across(edges, n_across):
 
 def plot_swath_3d(sm, satellites, sat_pos_hist, swath_edges, file_name,
                   model_file=None, model_scale=200e3,
-                  show_satellite=True, show_orbit=True):
+                  show_satellite=True, show_orbit=True, clouds=False):
     """Render the swath coverage as a semi-transparent ribbon on the textured
     Earth, plus orbit path(s), stations and the 3D satellite model.
 
@@ -259,7 +313,7 @@ def plot_swath_3d(sm, satellites, sat_pos_hist, swath_edges, file_name,
 
     N_ACROSS = 9  # Cross-track samples of the ribbon (follows Earth curvature)
 
-    plotter, off_screen = _open_scene(sm)
+    plotter, off_screen = _open_scene(sm, clouds=clouds)
     # Proper per-fragment ordering of the overlapping translucent ribbons;
     # without it the crossing ascending/descending strips render blotchy
     plotter.enable_depth_peeling(number_of_peels=8)
@@ -311,13 +365,13 @@ def _add_orbits_and_models(plotter, gmst, satellites, sat_pos_hist,
 def plot_points_3d(sm, satellites, sat_pos_hist, points_llv, scalar_label,
                    file_name, cmap='jet', clim=None, point_size=7.0,
                    model_file=None, model_scale=200e3,
-                   show_satellite=True, show_orbit=True):
+                   show_satellite=True, show_orbit=True, clouds=False):
     """Render a value-coloured point cloud on the textured Earth (3D version of
     the scatter world maps). points_llv: (n, 3) array of longitude [deg],
     latitude [deg], value."""
     import pyvista as pv
 
-    plotter, off_screen = _open_scene(sm)
+    plotter, off_screen = _open_scene(sm, clouds=clouds)
     if len(points_llv):
         cloud = pv.PolyData(_track_points(points_llv[:, 1], points_llv[:, 0],
                                           R_EARTH * 1.003))
@@ -331,19 +385,14 @@ def plot_points_3d(sm, satellites, sat_pos_hist, points_llv, scalar_label,
     _finish_scene(plotter, satellites, off_screen, file_name, r_content)
 
 
-def plot_grid_3d(sm, satellites, sat_pos_hist, lats_deg, lons_deg, values,
-                 scalar_label, file_name, cmap='jet', clim=None,
-                 model_file=None, model_scale=200e3,
-                 show_satellite=True, show_orbit=True):
-    """Render a lat/lon grid statistic as a coloured, slightly transparent layer
-    draped over the textured Earth (3D version of the pcolormesh world maps).
-    values: (num_lat, num_lon) array matching lats_deg/lons_deg."""
+def _add_grid_field(plotter, lats_deg, lons_deg, values, scalar_label,
+                    cmap='jet', clim=None):
+    """Coloured, slightly transparent lat/lon statistic field draped over the
+    globe. Subdivides the (typically coarse) user grid to <= 2 deg mesh cells
+    with nearest-cell scalar sampling: flat quads between 10 deg grid points
+    would sag below the globe surface, leaving only patches around the
+    vertices."""
     import pyvista as pv
-
-    plotter, off_screen = _open_scene(sm)
-    # Subdivide the (typically coarse) user grid to <= 2 deg mesh cells with
-    # nearest-cell scalar sampling: flat quads between 10 deg grid points would
-    # sag below the globe surface, leaving only patches around the vertices
     lats_deg = np.asarray(lats_deg, dtype=float)
     lons_deg = np.asarray(lons_deg, dtype=float)
     values = np.asarray(values, dtype=float)
@@ -363,15 +412,159 @@ def plot_grid_3d(sm, satellites, sat_pos_hist, lats_deg, lons_deg, values,
     plotter.add_mesh(grid, scalars=scalar_label, cmap=cmap, clim=clim,
                      opacity=0.75, nan_opacity=0.0,
                      scalar_bar_args=dict(title=scalar_label, **SCALAR_BAR_ARGS))
+
+
+def plot_grid_3d(sm, satellites, sat_pos_hist, lats_deg, lons_deg, values,
+                 scalar_label, file_name, cmap='jet', clim=None,
+                 model_file=None, model_scale=200e3,
+                 show_satellite=True, show_orbit=True, clouds=False):
+    """Render a lat/lon grid statistic as a coloured, slightly transparent layer
+    draped over the textured Earth (3D version of the pcolormesh world maps).
+    values: (num_lat, num_lon) array matching lats_deg/lons_deg."""
+    plotter, off_screen = _open_scene(sm, clouds=clouds)
+    _add_grid_field(plotter, lats_deg, lons_deg, values, scalar_label, cmap, clim)
     r_content = _add_orbits_and_models(plotter, sm.time_gmst, satellites, sat_pos_hist,
                                        model_file, model_scale, show_satellite, show_orbit)
     _add_stations(plotter, sm)
     _finish_scene(plotter, satellites, off_screen, file_name, r_content)
 
 
+def movie_3d(sm, satellites, sat_pos_hist_eci, file_name, fps=20,
+             track_latlon=None, swath_edges=None, grid=None,
+             model_file=None, model_scale=200e3, show_orbit=True, clouds=False):
+    """Fly-along MP4 of the 3D scene (<MP4>True</MP4>): the camera circles once
+    around the first satellite while the satellites move along their orbits
+    over the simulation time, with the Earth in view and the analysis content
+    growing or draped on the globe:
+
+    track_latlon: (num_sat, num_epoch, 2) [lat_deg, lon_deg] growing ground track
+    swath_edges:  (num_sat, num_epoch, 2, 3) ECF edges of a growing swath ribbon
+    grid:         (lats_deg, lons_deg, values, label, cmap, clim) static field
+    sat_pos_hist_eci: (num_sat, num_epoch, 3) ECI positions of `satellites`
+    """
+    import pyvista as pv
+    from plot_movie import open_writer, frame_epochs
+
+    N_ACROSS = 9  # Cross-track samples of the swath ribbon
+
+    writer = open_writer(file_name, fps)
+    if writer is None:
+        return
+    plotter, _ = _open_scene(sm, clouds=clouds, off_screen=True,
+                             window_size=(1280, 720))
+    if swath_edges is not None:
+        plotter.enable_depth_peeling(number_of_peels=8)
+    _add_stations(plotter, sm)
+    if grid is not None:
+        _add_grid_field(plotter, *grid)
+
+    num_epoch = sat_pos_hist_eci.shape[1]
+    gmst = np.asarray(sm.times_gmst_pre[:num_epoch])
+    # Per-epoch ECF (scene frame) positions of every satellite
+    cos_g, sin_g = np.cos(gmst), np.sin(gmst)
+    pos_ecf = np.empty_like(sat_pos_hist_eci)
+    pos_ecf[..., 0] = cos_g * sat_pos_hist_eci[..., 0] + sin_g * sat_pos_hist_eci[..., 1]
+    pos_ecf[..., 1] = -sin_g * sat_pos_hist_eci[..., 0] + cos_g * sat_pos_hist_eci[..., 1]
+    pos_ecf[..., 2] = sat_pos_hist_eci[..., 2]
+
+    # Satellite models (points moved every frame)
+    models = []
+    for satellite in satellites:
+        parts = []
+        for mesh, color in _make_satellite_meshes(model_file):
+            mesh = mesh.copy()
+            base = np.asarray(mesh.points, dtype=float) * model_scale
+            plotter.add_mesh(mesh, color=color, smooth_shading=False)
+            parts.append((mesh, base))
+        models.append(parts)
+
+    # Inertial orbit paths, re-oriented to the frame epoch's GMST every frame
+    orbit_meshes = []
+    if show_orbit:
+        for idx_sat in range(len(satellites)):
+            mesh = pv.lines_from_points(
+                _orbit_scene_points(sat_pos_hist_eci[idx_sat], gmst[0]))
+            plotter.add_mesh(mesh, color='cyan', line_width=1)
+            orbit_meshes.append(mesh)
+
+    # Growing ground tracks: full polyline with the future points collapsed
+    # onto the current one (constant connectivity, cheap per-frame update)
+    track_meshes = []
+    if track_latlon is not None:
+        for idx_sat in range(len(satellites)):
+            base = _track_points(track_latlon[idx_sat, :, 0],
+                                 track_latlon[idx_sat, :, 1], R_EARTH * 1.003)
+            mesh = pv.lines_from_points(base)
+            plotter.add_mesh(mesh, color='red', line_width=3)
+            track_meshes.append((mesh, base))
+
+    # Growing swath ribbons, same collapse trick on the epoch point blocks
+    ribbon_meshes = []
+    if swath_edges is not None:
+        ramp = 1.004 + 0.004 * np.linspace(0.0, 1.0, num_epoch)
+        for idx_sat in range(len(satellites)):
+            strip = _slerp_across(swath_edges[idx_sat], N_ACROSS) * ramp[:, None, None]
+            mesh = pv.StructuredGrid(
+                np.ascontiguousarray(strip[:, :, 0].T.reshape(N_ACROSS, -1, 1)),
+                np.ascontiguousarray(strip[:, :, 1].T.reshape(N_ACROSS, -1, 1)),
+                np.ascontiguousarray(strip[:, :, 2].T.reshape(N_ACROSS, -1, 1)))
+            base = np.array(mesh.points)  # Epoch blocks of N_ACROSS points each
+            plotter.add_mesh(mesh, color='orangered', opacity=0.5)
+            ribbon_meshes.append((mesh, base))
+
+    epochs = frame_epochs(num_epoch)
+    n_frames = len(epochs)
+    for i_frame, k in enumerate(epochs):
+        for idx_sat, parts in enumerate(models):
+            pos = pos_ecf[idx_sat, k]
+            vel = pos_ecf[idx_sat, min(k + 1, num_epoch - 1)] - \
+                pos_ecf[idx_sat, max(k - 1, 0)]
+            rot = _body_to_ecf(pos, vel)
+            for mesh, base in parts:
+                mesh.points = (rot @ base.T).T + pos
+        for idx_sat, mesh in enumerate(orbit_meshes):
+            mesh.points = _orbit_scene_points(sat_pos_hist_eci[idx_sat], gmst[k])
+        for mesh, base in track_meshes:
+            pts = base.copy()
+            pts[k + 1:] = base[k]
+            mesh.points = pts
+        for mesh, base in ribbon_meshes:
+            pts = base.copy().reshape(num_epoch, N_ACROSS, 3)
+            pts[k + 1:] = pts[k]
+            mesh.points = pts.reshape(-1, 3)
+
+        # Camera above the first satellite, circling once around it over the
+        # movie. The view axis bisects the directions to the satellite and to
+        # the Earth centre, so satellite and Earth stay in frame at every
+        # altitude (a satellite-centred view loses the Earth at MEO/GEO)
+        pos0 = pos_ecf[0, k]
+        vel0 = pos_ecf[0, min(k + 1, num_epoch - 1)] - pos_ecf[0, max(k - 1, 0)]
+        r_hat = pos0 / np.linalg.norm(pos0)
+        t_hat = vel0 - np.dot(vel0, r_hat) * r_hat
+        t_hat = t_hat / max(np.linalg.norm(t_hat), 1e-9)
+        c_hat = np.cross(r_hat, t_hat)
+        theta = 2.0 * np.pi * i_frame / max(n_frames - 1, 1)
+        dist = max(8.0 * model_scale, 0.3 * (np.linalg.norm(pos0) - R_EARTH))
+        cam = pos0 + dist * (np.cos(theta) * t_hat + np.sin(theta) * c_hat) \
+            + 0.6 * dist * r_hat
+        v_sat = pos0 - cam
+        v_sat = v_sat / np.linalg.norm(v_sat)
+        v_earth = -cam / np.linalg.norm(cam)
+        axis = v_sat + v_earth
+        axis = axis / np.linalg.norm(axis)
+        focal = cam + axis * np.linalg.norm(pos0 - cam)
+        plotter.camera_position = [cam.tolist(), focal.tolist(), r_hat.tolist()]
+        plotter.camera.view_angle = 70.0  # Wide: satellite plus the Earth below
+        plotter.render()  # Off-screen: screenshot alone may reuse a stale render
+        writer.append_data(plotter.screenshot(return_img=True))
+    writer.close()
+    plotter.close()
+    ls.logger.info(f'Saved 3D movie to {file_name}')
+
+
 def plot_contours_3d(sm, satellites, sat_pos_hist, contours, file_name,
                      model_file=None, model_scale=200e3,
-                     show_satellite=True, show_orbit=True):
+                     show_satellite=True, show_orbit=True, clouds=False):
     """Render satellite visibility contours on the textured Earth as filled,
     semi-transparent spherical caps with a bold outline, so the covered region
     reads unambiguously as lying on the surface. contours: list of (n, 2)
@@ -382,7 +575,7 @@ def plot_contours_3d(sm, satellites, sat_pos_hist, contours, file_name,
 
     N_RADIAL = 24  # Radial samples of the cap fill (follows Earth curvature)
 
-    plotter, off_screen = _open_scene(sm)
+    plotter, off_screen = _open_scene(sm, clouds=clouds)
     plotter.enable_depth_peeling(number_of_peels=8)  # Overlapping translucent caps
     colors = cm.tab10(np.linspace(0.0, 0.9, 10))
     for idx, contour in enumerate(contours):

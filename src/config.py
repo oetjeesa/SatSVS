@@ -516,6 +516,14 @@ class AppConfig:
                     analysis = AnalysisSatDataLatency()
                 if type_str == 'orb_kepler_elements':
                     analysis = AnalysisOrbKeplerElements()
+                if type_str == 'orb_air_density':
+                    analysis = AnalysisOrbAirDensity()
+                if type_str == 'orb_disturbance_forces':
+                    analysis = AnalysisOrbDisturbanceForces()
+                if type_str == 'orb_pole_wobble':
+                    analysis = AnalysisOrbPoleWobble()
+                if type_str == 'orb_deltav_element':
+                    analysis = AnalysisOrbDeltaVElement()
                 if analysis is None:
                     ls.logger.error(f'Unknown analysis type: {type_str}. '
                                     f'See readme.md for the available analyses.')

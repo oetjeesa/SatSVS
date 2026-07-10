@@ -1,43 +1,43 @@
-2026-07-10 00:27:07,765 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_swath_push_broom/sentinel-1.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': 250000.0, 'obs_swath_stop': 650000.0, 'frontal_area': None, 'mass': None}
-2026-07-10 00:27:07,766 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 58945.03033, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001402, 'inclination': 1.7135991661930727, 'right_ascension': 1.8332065798322439, 'arg_perigee': 1.4609802102594134, 'mean_anomaly': 4.824578744702885}"]
-2026-07-10 00:27:07,978 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-10 00:27:08,435 - main - INFO - {'type': 'Grid', 'user_id': 16470, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.0], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-3.91862092e-10,  4.79892657e-26,  6.35675231e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.57079633, 3.14159265, 0.        ]), 'num_lat': 91, 'num_lon': 181, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000002C06945B110>, 'UserName': 'Grid'}
-2026-07-10 00:27:08,437 - main - INFO - Loaded simulation, start MJD: 58946.0, stop MJD: 58947.0, size time steps in sec: 60.0
-2026-07-10 00:27:08,437 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-10 00:27:08,450 - main - INFO - Loaded 16471 number of User to Spacecraft links
-2026-07-10 00:27:08,450 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-10 00:27:08,466 - main - INFO - Finished reading configuration file
-2026-07-10 00:27:08,480 - main - INFO - Simulation time: 2020-04-07 00:00:00, time step: 0
-2026-07-10 00:27:08,794 - main - INFO - Simulation time: 2020-04-07 01:40:00, time step: 100
-2026-07-10 00:27:08,833 - main - INFO - Simulation time: 2020-04-07 03:20:00, time step: 200
-2026-07-10 00:27:08,873 - main - INFO - Simulation time: 2020-04-07 05:00:00, time step: 300
-2026-07-10 00:27:08,920 - main - INFO - Simulation time: 2020-04-07 06:40:00, time step: 400
-2026-07-10 00:27:08,957 - main - INFO - Simulation time: 2020-04-07 08:20:00, time step: 500
-2026-07-10 00:27:09,000 - main - INFO - Simulation time: 2020-04-07 10:00:00, time step: 600
-2026-07-10 00:27:09,051 - main - INFO - Simulation time: 2020-04-07 11:40:00, time step: 700
-2026-07-10 00:27:09,089 - main - INFO - Simulation time: 2020-04-07 13:20:00, time step: 800
-2026-07-10 00:27:09,135 - main - INFO - Simulation time: 2020-04-07 15:00:00, time step: 900
-2026-07-10 00:27:09,185 - main - INFO - Simulation time: 2020-04-07 16:40:00, time step: 1000
-2026-07-10 00:27:09,228 - main - INFO - Simulation time: 2020-04-07 18:20:00, time step: 1100
-2026-07-10 00:27:09,270 - main - INFO - Simulation time: 2020-04-07 20:00:00, time step: 1200
-2026-07-10 00:27:09,316 - main - INFO - Simulation time: 2020-04-07 21:40:00, time step: 1300
-2026-07-10 00:27:09,366 - main - INFO - Simulation time: 2020-04-07 23:20:00, time step: 1400
-2026-07-10 00:27:09,382 - main - INFO - Plotting analysis obs_swath_push_broom
-2026-07-10 00:27:10,777 - main - INFO - User revisit 0 of 16471
-2026-07-10 00:27:10,784 - main - INFO - User revisit 1000 of 16471
-2026-07-10 00:27:10,803 - main - INFO - User revisit 2000 of 16471
-2026-07-10 00:27:10,813 - main - INFO - User revisit 3000 of 16471
-2026-07-10 00:27:10,821 - main - INFO - User revisit 4000 of 16471
-2026-07-10 00:27:10,829 - main - INFO - User revisit 5000 of 16471
-2026-07-10 00:27:10,837 - main - INFO - User revisit 6000 of 16471
-2026-07-10 00:27:10,845 - main - INFO - User revisit 7000 of 16471
-2026-07-10 00:27:10,852 - main - INFO - User revisit 8000 of 16471
-2026-07-10 00:27:10,860 - main - INFO - User revisit 9000 of 16471
-2026-07-10 00:27:10,867 - main - INFO - User revisit 10000 of 16471
-2026-07-10 00:27:10,875 - main - INFO - User revisit 11000 of 16471
-2026-07-10 00:27:10,883 - main - INFO - User revisit 12000 of 16471
-2026-07-10 00:27:10,890 - main - INFO - User revisit 13000 of 16471
-2026-07-10 00:27:10,899 - main - INFO - User revisit 14000 of 16471
-2026-07-10 00:27:10,910 - main - INFO - User revisit 15000 of 16471
-2026-07-10 00:27:10,935 - main - INFO - User revisit 16000 of 16471
-2026-07-10 00:27:12,342 - main - INFO - Saved 3D plot to ../output/obs_swath_push_broom_3d.png
+2026-07-10 00:37:58,802 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_swath_push_broom/sentinel-1.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': 250000.0, 'obs_swath_stop': 650000.0, 'frontal_area': None, 'mass': None}
+2026-07-10 00:37:58,803 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 58945.03033, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001402, 'inclination': 1.7135991661930727, 'right_ascension': 1.8332065798322439, 'arg_perigee': 1.4609802102594134, 'mean_anomaly': 4.824578744702885}"]
+2026-07-10 00:37:58,993 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-10 00:37:59,429 - main - INFO - {'type': 'Grid', 'user_id': 16470, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.0], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-3.91862092e-10,  4.79892657e-26,  6.35675231e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.57079633, 3.14159265, 0.        ]), 'num_lat': 91, 'num_lon': 181, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x0000022872407250>, 'UserName': 'Grid'}
+2026-07-10 00:37:59,431 - main - INFO - Loaded simulation, start MJD: 58946.0, stop MJD: 58947.0, size time steps in sec: 60.0
+2026-07-10 00:37:59,431 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-10 00:37:59,444 - main - INFO - Loaded 16471 number of User to Spacecraft links
+2026-07-10 00:37:59,444 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-10 00:37:59,460 - main - INFO - Finished reading configuration file
+2026-07-10 00:37:59,477 - main - INFO - Simulation time: 2020-04-07 00:00:00, time step: 0
+2026-07-10 00:37:59,775 - main - INFO - Simulation time: 2020-04-07 01:40:00, time step: 100
+2026-07-10 00:37:59,809 - main - INFO - Simulation time: 2020-04-07 03:20:00, time step: 200
+2026-07-10 00:37:59,854 - main - INFO - Simulation time: 2020-04-07 05:00:00, time step: 300
+2026-07-10 00:37:59,892 - main - INFO - Simulation time: 2020-04-07 06:40:00, time step: 400
+2026-07-10 00:37:59,930 - main - INFO - Simulation time: 2020-04-07 08:20:00, time step: 500
+2026-07-10 00:37:59,971 - main - INFO - Simulation time: 2020-04-07 10:00:00, time step: 600
+2026-07-10 00:38:00,013 - main - INFO - Simulation time: 2020-04-07 11:40:00, time step: 700
+2026-07-10 00:38:00,064 - main - INFO - Simulation time: 2020-04-07 13:20:00, time step: 800
+2026-07-10 00:38:00,106 - main - INFO - Simulation time: 2020-04-07 15:00:00, time step: 900
+2026-07-10 00:38:00,143 - main - INFO - Simulation time: 2020-04-07 16:40:00, time step: 1000
+2026-07-10 00:38:00,180 - main - INFO - Simulation time: 2020-04-07 18:20:00, time step: 1100
+2026-07-10 00:38:00,223 - main - INFO - Simulation time: 2020-04-07 20:00:00, time step: 1200
+2026-07-10 00:38:00,273 - main - INFO - Simulation time: 2020-04-07 21:40:00, time step: 1300
+2026-07-10 00:38:00,321 - main - INFO - Simulation time: 2020-04-07 23:20:00, time step: 1400
+2026-07-10 00:38:00,343 - main - INFO - Plotting analysis obs_swath_push_broom
+2026-07-10 00:38:02,148 - main - INFO - User revisit 0 of 16471
+2026-07-10 00:38:02,149 - main - INFO - User revisit 1000 of 16471
+2026-07-10 00:38:02,155 - main - INFO - User revisit 2000 of 16471
+2026-07-10 00:38:02,157 - main - INFO - User revisit 3000 of 16471
+2026-07-10 00:38:02,158 - main - INFO - User revisit 4000 of 16471
+2026-07-10 00:38:02,159 - main - INFO - User revisit 5000 of 16471
+2026-07-10 00:38:02,159 - main - INFO - User revisit 6000 of 16471
+2026-07-10 00:38:02,160 - main - INFO - User revisit 7000 of 16471
+2026-07-10 00:38:02,160 - main - INFO - User revisit 8000 of 16471
+2026-07-10 00:38:02,160 - main - INFO - User revisit 9000 of 16471
+2026-07-10 00:38:02,161 - main - INFO - User revisit 10000 of 16471
+2026-07-10 00:38:02,161 - main - INFO - User revisit 11000 of 16471
+2026-07-10 00:38:02,162 - main - INFO - User revisit 12000 of 16471
+2026-07-10 00:38:02,162 - main - INFO - User revisit 13000 of 16471
+2026-07-10 00:38:02,163 - main - INFO - User revisit 14000 of 16471
+2026-07-10 00:38:02,165 - main - INFO - User revisit 15000 of 16471
+2026-07-10 00:38:02,174 - main - INFO - User revisit 16000 of 16471
+2026-07-10 00:38:03,623 - main - INFO - Saved 3D plot to ../output/obs_swath_push_broom_3d.png

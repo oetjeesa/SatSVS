@@ -7,4 +7,6 @@
     <SaveOutput>Numpy</SaveOutput>          <!-- Optional: Numpy or NetCDF dump of the per-epoch grid coverage -->
     <PolarView>90</PolarView>               <!-- Optional: polar stereographic view bounded at this latitude -->
     <Plot3D>False</Plot3D>                  <!-- Optional: 3D globe render (needs pyvista) -->
+    <EarthClouds>False</EarthClouds>        <!-- Optional: cloud layer on the 3D globe -->
+    <MP4>False</MP4>                        <!-- Optional: 2D + 3D world-map movies (needs imageio + imageio-ffmpeg) -->
 </Analysis>

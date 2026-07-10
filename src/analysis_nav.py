@@ -83,6 +83,16 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
             self.render_3d_grid(sm, sm.user_latitudes, sm.user_longitudes, z_new,
                                 self.statistic + ' ' + self.direction + ' DOP [-]')
 
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
+                                     self.direction + ' Dilution of Precision [-]',
+                                     '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
+                                 grid=(sm.user_latitudes, sm.user_longitudes, z_new,
+                                       self.statistic + ' ' + self.direction + ' DOP [-]',
+                                       'jet', None))
+
 
 class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
 
@@ -164,6 +174,16 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
         if self.plot_3d:
             self.render_3d_grid(sm, sm.user_latitudes, sm.user_longitudes, z_new,
                                 self.statistic + ' ' + self.direction + ' Nav Accuracy 95% [m]')
+
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
+                                     self.direction + ' Navigation Accuracy 95% [m]',
+                                     '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
+                                 grid=(sm.user_latitudes, sm.user_longitudes, z_new,
+                                       self.statistic + ' ' + self.direction + ' Nav Accuracy 95% [m]',
+                                       'jet', None))
 
 
 

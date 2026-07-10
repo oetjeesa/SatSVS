@@ -52,6 +52,8 @@
       <ConstellationID>1</ConstellationID>
       <SatelliteID>31698</SatelliteID>
       <Plot3D>True</Plot3D>
+      <EarthClouds>True</EarthClouds>
+      <MP4>True</MP4>
     </Analysis>
   </SimulationManager>
 </Scenario>

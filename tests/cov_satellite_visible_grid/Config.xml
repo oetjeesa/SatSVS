@@ -320,6 +320,7 @@
       <Plot3D>True</Plot3D>
       <ShowOrbit>False</ShowOrbit>
       <SatelliteModelScale>500000</SatelliteModelScale>
+      <MP4>True</MP4>
     </Analysis>
   </SimulationManager>
 </Scenario>

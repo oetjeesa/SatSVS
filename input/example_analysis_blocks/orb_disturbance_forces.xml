@@ -1,0 +1,7 @@
+<!-- Needs <OrbitPropagator>HPOP</OrbitPropagator>; plots every perturbation
+     enabled in the <HPOP> block, evaluated on the propagated state -->
+<Analysis>
+    <Type>orb_disturbance_forces</Type>     <!-- Perturbation accelerations over time -->
+    <ConstellationID>1</ConstellationID>    <!-- Optional: first matching satellite is evaluated -->
+    <SatelliteID>1</SatelliteID>
+</Analysis>

@@ -1,26 +1,28 @@
-2026-07-09 10:33:30,807 - main - INFO - {'constellation_id': 1, 'constellation_name': 'TerraSAR-X', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/cov_ground_track/terrasarx.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
-2026-07-09 10:33:30,807 - main - INFO - ['Found satellite:', '31698', 'Kepler Elements', "{'epoch_mjd': 61068.089894, 'semi_major_axis': 6886575.424946125, 'eccentricity': 0.000195, 'inclination': 1.7007360896058743, 'right_ascension': 0.6596297374987369, 'arg_perigee': 1.4079920141688655, 'mean_anomaly': 4.877706567133592}"]
-2026-07-09 10:33:30,989 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Kiruna', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([2262086.29894541,  842161.29705744, 5883964.06989648]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.18385683, 0.35639623, 0.        ]), 'idx_sat_in_view': []}
-2026-07-09 10:33:30,991 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x00000231DFB12FD0>}
-2026-07-09 10:33:30,992 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
-2026-07-09 10:33:30,992 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-09 10:33:30,992 - main - INFO - Loaded 1 number of User to Spacecraft links
-2026-07-09 10:33:30,992 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-09 10:33:30,992 - main - INFO - Finished reading configuration file
-2026-07-09 10:33:31,005 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
-2026-07-09 10:33:31,132 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
-2026-07-09 10:33:31,134 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
-2026-07-09 10:33:31,136 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
-2026-07-09 10:33:31,138 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
-2026-07-09 10:33:31,140 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
-2026-07-09 10:33:31,142 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
-2026-07-09 10:33:31,144 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
-2026-07-09 10:33:31,146 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
-2026-07-09 10:33:31,148 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
-2026-07-09 10:33:31,150 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
-2026-07-09 10:33:31,153 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
-2026-07-09 10:33:31,155 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
-2026-07-09 10:33:31,157 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
-2026-07-09 10:33:31,159 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
-2026-07-09 10:33:31,160 - main - INFO - Plotting analysis cov_ground_track
-2026-07-09 10:33:39,724 - main - INFO - Saved 3D plot to ../output/cov_ground_track_3d.png
+2026-07-10 01:07:05,779 - main - INFO - {'constellation_id': 1, 'constellation_name': 'TerraSAR-X', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/cov_ground_track/terrasarx.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-10 01:07:05,780 - main - INFO - ['Found satellite:', '31698', 'Kepler Elements', "{'epoch_mjd': 61068.089894, 'semi_major_axis': 6886575.424946125, 'eccentricity': 0.000195, 'inclination': 1.7007360896058743, 'right_ascension': 0.6596297374987369, 'arg_perigee': 1.4079920141688655, 'mean_anomaly': 4.877706567133592}"]
+2026-07-10 01:07:05,970 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Kiruna', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([2262086.29894541,  842161.29705744, 5883964.06989648]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.18385683, 0.35639623, 0.        ]), 'idx_sat_in_view': []}
+2026-07-10 01:07:05,971 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001AFE179B250>}
+2026-07-10 01:07:05,973 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
+2026-07-10 01:07:05,973 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-10 01:07:05,973 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-10 01:07:05,973 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-10 01:07:05,973 - main - INFO - Finished reading configuration file
+2026-07-10 01:07:05,986 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-10 01:07:06,029 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
+2026-07-10 01:07:06,031 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
+2026-07-10 01:07:06,033 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
+2026-07-10 01:07:06,035 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
+2026-07-10 01:07:06,038 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
+2026-07-10 01:07:06,040 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
+2026-07-10 01:07:06,042 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
+2026-07-10 01:07:06,044 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
+2026-07-10 01:07:06,046 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
+2026-07-10 01:07:06,048 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
+2026-07-10 01:07:06,050 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
+2026-07-10 01:07:06,052 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
+2026-07-10 01:07:06,054 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
+2026-07-10 01:07:06,056 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
+2026-07-10 01:07:06,058 - main - INFO - Plotting analysis cov_ground_track
+2026-07-10 01:07:38,523 - main - INFO - Saved 2D movie to ../output/cov_ground_track_2d.mp4
+2026-07-10 01:07:49,370 - main - INFO - Saved 3D movie to ../output/cov_ground_track_3d.mp4
+2026-07-10 01:07:50,072 - main - INFO - Saved 3D plot to ../output/cov_ground_track_3d.png

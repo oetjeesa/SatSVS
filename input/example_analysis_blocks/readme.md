@@ -15,5 +15,7 @@ that some analyses need specific segments:
   in the `<Constellation>` block; a user grid for the revisit statistics
 - `com_sp2sp_budget`: `<IncludeSpace2SpaceLinks>True</IncludeSpace2SpaceLinks>`
 - `nav_accuracy`: `<UERE>` list in the `<Constellation>` block
-- World-map analyses additionally accept the `<Plot3D>` parameters (see the
-  3D plots section of the main readme)
+- `orb_air_density`, `orb_disturbance_forces`, `orb_pole_wobble`:
+  `<OrbitPropagator>HPOP</OrbitPropagator>`
+- World-map analyses additionally accept the `<Plot3D>` parameters and the
+  `<EarthClouds>`/`<MP4>` flags (see the 3D plots section of the main readme)

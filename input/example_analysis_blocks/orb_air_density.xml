@@ -1,0 +1,7 @@
+<!-- Needs <OrbitPropagator>HPOP</OrbitPropagator>; the density comes from the
+     atmosphere model configured as <DragModel> in the <HPOP> block -->
+<Analysis>
+    <Type>orb_air_density</Type>            <!-- Air density at satellite altitude over time -->
+    <ConstellationID>1</ConstellationID>    <!-- Optional selection; omit for all satellites -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional selection; omit for all satellites -->
+</Analysis>

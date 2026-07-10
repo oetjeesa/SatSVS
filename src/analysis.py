@@ -126,6 +126,8 @@ class AnalysisPlot3D:
         self.show_orbit = True  # Draw the orbital track(s)
         self.model_file = None  # Optional satellite mesh (STL/OBJ/PLY/VTK)
         self.model_scale = 200e3  # Satellite model size in m (exaggerated)
+        self.mp4 = False  # Optional MP4 movies of the 2D and 3D world maps
+        self.earth_clouds = False  # Cloud layer on the 3D globe
         # (num_sat, num_epoch, 3) ECI positions: the orbit is drawn as the
         # inertial path oriented at the final epoch (plot_3d rotates it by the
         # final GMST), which reads as the familiar orbit ellipse instead of the
@@ -143,9 +145,14 @@ class AnalysisPlot3D:
             self.model_file = node.find('SatelliteModelFile').text
         if node.find('SatelliteModelScale') is not None:
             self.model_scale = float(node.find('SatelliteModelScale').text)
+        if node.find('MP4') is not None:
+            self.mp4 = misc_fn.str2bool(node.find('MP4').text)
+        if node.find('EarthClouds') is not None:
+            self.earth_clouds = misc_fn.str2bool(node.find('EarthClouds').text)
 
     def before_loop_3d(self, sm):
-        if self.plot_3d and self.show_orbit:
+        # The 3D movie needs the ECI position history even without ShowOrbit
+        if (self.plot_3d and self.show_orbit) or self.mp4:
             self.sat_pos_hist_3d = np.zeros((len(sm.satellites), sm.num_epoch, 3))
 
     def in_loop_3d(self, sm):
@@ -164,7 +171,21 @@ class AnalysisPlot3D:
 
     def _kwargs_3d(self):
         return dict(model_file=self.model_file, model_scale=self.model_scale,
-                    show_satellite=self.show_satellite, show_orbit=self.show_orbit)
+                    show_satellite=self.show_satellite, show_orbit=self.show_orbit,
+                    clouds=self.earth_clouds)
+
+    def render_movie_3d(self, sm, satellites, pos_hist_eci, track_latlon=None,
+                        swath_edges=None, grid=None):
+        """MP4 of the 3D scene: camera circling the first satellite while the
+        satellites fly and the analysis content grows (see plot_3d.movie_3d)."""
+        p3d = self._plot_3d_module()
+        if p3d is None:
+            return
+        p3d.movie_3d(sm, satellites, pos_hist_eci,
+                     '../output/' + self.type + '_3d.mp4',
+                     track_latlon=track_latlon, swath_edges=swath_edges, grid=grid,
+                     model_file=self.model_file, model_scale=self.model_scale,
+                     show_orbit=self.show_orbit, clouds=self.earth_clouds)
 
     def _sats_and_hist(self, sm, satellites):
         """Satellite subset with the matching rows of the position history."""
@@ -293,15 +314,29 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
 
+    def revisit_gaps_hours(self, user_metric, time_step):
+        """Per-user revisit gap arrays in hours from the (num_user, num_epoch)
+        in-swath flag history: intervals between successive coverage
+        transitions, dropping the one-epoch intervals (the pass itself)."""
+        gaps_list = []
+        for idx_user in range(user_metric.shape[0]):
+            gaps = np.diff(np.where(np.diff(user_metric[idx_user, :]) != 0)).flatten()
+            if len(gaps) > 1:
+                gaps = np.delete(gaps, np.where(gaps == 1), axis=0) * time_step / 3600.0
+            else:
+                gaps = np.array([])
+            gaps_list.append(gaps)
+        return gaps_list
+
     def plot_swath_revisit(self, sm, user_metric, statistic, polar_view):
+        gaps_list = self.revisit_gaps_hours(user_metric, sm.time_step)
         plot_points = np.zeros((len(sm.users), 3))
         metric = 0
         for idx_user, user in enumerate(sm.users):
             if idx_user % 1000 == 0:
                 ls.logger.info(f'User revisit {user.user_id} of {len(sm.users)}')
-            gaps = np.diff(np.where(np.diff(user_metric[idx_user,:]) != 0)).flatten()
-            if len(gaps) > 1:
-                gaps = np.delete(gaps, np.where(gaps == 1), axis=0) * sm.time_step / 3600.0
+            gaps = gaps_list[idx_user]
+            if len(gaps) > 0:
                 if statistic == "min":
                     metric = (np.nanmin(gaps))
                 if statistic == "mean":
@@ -332,4 +367,34 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
             cb.set_label(statistic.capitalize() + ' Revisit Interval [hours]', fontsize=10)
             plt.savefig(f'../output/{self.type}_revisit.png')
             plt.show()
+
+    def plot_swath_revisit_latitude(self, sm, user_metric):
+        """Longitude-averaged max and mean revisit time versus latitude in
+        days: per user grid point the max/mean revisit gap, averaged over all
+        grid points sharing the same latitude."""
+        gaps_list = self.revisit_gaps_hours(user_metric, sm.time_step)
+        lat_max, lat_mean = {}, {}
+        for idx_user, user in enumerate(sm.users):
+            gaps = gaps_list[idx_user]
+            if len(gaps) == 0:
+                continue
+            lat = round(degrees(user.lla[0]), 6)
+            lat_max.setdefault(lat, []).append(np.max(gaps) / 24.0)
+            lat_mean.setdefault(lat, []).append(np.mean(gaps) / 24.0)
+        if not lat_max:
+            ls.logger.warning('No revisit data found for the latitude profile. No plot produced.')
+            return
+        lats = np.array(sorted(lat_max))
+        max_avg = np.array([np.mean(lat_max[lat]) for lat in lats])
+        mean_avg = np.array([np.mean(lat_mean[lat]) for lat in lats])
+        fig = plt.figure(figsize=(10, 6))
+        plt.plot(lats, max_avg, 'r-', label='Max Revisit Time')
+        plt.plot(lats, mean_avg, 'b-', label='Mean Revisit Time')
+        plt.title('Longitude-averaged Max and Mean Revisit Time')
+        plt.xlabel('Latitude [deg]'); plt.ylabel('Revisit Time [days]')
+        plt.xticks(np.arange(-90, 91, 15))
+        plt.ylim(bottom=0)
+        plt.grid(); plt.legend()
+        plt.savefig(f'../output/{self.type}_revisit_lat.png')
+        plt.show()
 

@@ -131,9 +131,17 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
 
         if self.revisit:
             self.plot_swath_revisit(sm, self.user_metric, self.statistic, self.polar_view)
+            self.plot_swath_revisit_latitude(sm, self.user_metric)
 
         if self.plot_3d:
             plot_swath_3d_from_analysis(self, sm)
+
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_ribbons_2d(sm, self.swath_edges,
+                                        '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist,
+                                 swath_edges=self.swath_edges)
 
 
 def plot_swath_3d_from_analysis(analysis, sm):
@@ -284,9 +292,17 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
 
         if self.revisit:
             self.plot_swath_revisit(sm, self.user_metric, self.statistic, self.polar_view)
+            self.plot_swath_revisit_latitude(sm, self.user_metric)
 
         if self.plot_3d:
             plot_swath_3d_from_analysis(self, sm)
+
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_ribbons_2d(sm, self.swath_edges,
+                                        '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist,
+                                 swath_edges=self.swath_edges)
 
 
 class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early stages, runs but very slow

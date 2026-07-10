@@ -16,7 +16,13 @@ Download from github, and install the following libraries:
   (download from https://gitlab.orekit.org/orekit/orekit-data)
 - For the 3D plots only: pyvista, plus an equirectangular Earth texture saved as
   __input/earth_texture.jpg__ (e.g. the public domain NASA Blue Marble image
-  https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57752/land_shallow_topo_2048.jpg)
+  https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57752/land_shallow_topo_2048.jpg).
+  The starry background uses __input/starmap.jpg__ (Milky Way panorama, ESO/S. Brunier,
+  CC BY 4.0, https://www.eso.org/public/images/eso0932a/ — plain black background if
+  absent) and the optional cloud layer (EarthClouds) uses __input/earth_clouds.jpg__
+  (e.g. the NASA cloud composite
+  https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57747/cloud_combined_2048.jpg)
+- For the MP4 movies only (MP4 flag): imageio and imageio-ffmpeg
 
 To run, edit the config.xml file and run: python main.py
 
@@ -75,6 +81,10 @@ Analysis can be added as wished, the baseline of analysis available are below
 
 ### Orbit
 - __orb_kepler_elements__: Evolution of the osculating Kepler elements over time
+- __orb_air_density__: Atmospheric density at the satellite altitude over time (HPOP)
+- __orb_disturbance_forces__: Magnitude of the perturbation accelerations over time (HPOP)
+- __orb_pole_wobble__: Polar motion (wobble of the Earth rotation axis) over time (HPOP)
+- __orb_deltav_element__: Station-keeping delta-v to hold one orbit element in a deadband
   (semi-major axis, eccentricity, inclination, RAAN, argument of perigee, mean
   anomaly), e.g. the orbital decay under atmospheric drag with the HPOP propagator
 
@@ -378,6 +388,8 @@ on closing it. The following parameters in the Analysis block control it:
 <ShowOrbit>True</ShowOrbit>
 <SatelliteModelFile>../input/my_satellite.stl</SatelliteModelFile>
 <SatelliteModelScale>200000</SatelliteModelScale>
+<EarthClouds>False</EarthClouds>
+<MP4>False</MP4>
 ```
 - Plot3D: enables the 3D plot (default False).
 - ShowSatellite: draw a 3D satellite model at the last simulated epoch of every
@@ -393,6 +405,20 @@ on closing it. The following parameters in the Analysis block control it:
 - SatelliteModelScale: size of the (hugely exaggerated) satellite model in
   metres, default 200000, so that it is visible at globe scale. For MEO
   constellations like GPS a larger value (e.g. 500000) is recommended.
+- EarthClouds: adds a semi-transparent cloud layer (input/earth_clouds.jpg) on
+  top of the Blue Marble globe (default False). The 3D scene always shows the
+  starry Milky Way background when input/starmap.jpg is present.
+- MP4: writes movies of the world maps (default False, needs imageio +
+  imageio-ffmpeg). __output/<analysis_type>_2d.mp4__ shows the 2D map filling
+  up over the simulation time (growing ground track, growing swath ribbons, or
+  the instantaneous metric field per epoch on the user grid);
+  __output/<analysis_type>_3d.mp4__ is a fly-along of the 3D scene: the camera
+  circles once around the (first) satellite while it moves along its orbit,
+  with the Earth in view and the analysis data growing on the globe. Supported
+  by cov_ground_track, cov_depth_of_coverage, cov_pass_time,
+  cov_satellite_visible_grid, cov_satellite_highest, nav_dilution_of_precision,
+  nav_accuracy, obs_swath_conical and obs_swath_push_broom. Movies are capped
+  at 360 frames (longer simulations are subsampled) at 20 frames per second.
 Ground stations are always drawn as magenta markers. Near-Earth scenes use a
 perspective camera above the (last) satellite; scenes whose orbits reach far
 above the Earth (MEO/GEO, e.g. GNSS constellations) are rendered with a fitted
@@ -582,7 +608,8 @@ Optional in the analysis part are:
 ```
 - PolarView angle: This parameter can be given to see one part of the globe in an stereographic view, eg.  for the polar region.
 - Revisit flag: This flag will enable revisit computation after the swath coverage. The statistic will determine
-what kind of statistic is displayed per user location.
+what kind of statistic is displayed per user location. Besides the revisit map, a longitude-averaged
+max/mean revisit time versus latitude profile is saved as __output/<analysis_type>_revisit_lat.png__.
 - SaveOutput: NetCDF or Numpy This flag will enable saving user swath coverage for every timestep.
 - Plot3D flag: additionally renders the swath as a semi-transparent ribbon on a
   textured 3D Earth, saved as output/obs_swath_conical_3d.png (see the 3D plots
@@ -590,6 +617,7 @@ what kind of statistic is displayed per user location.
 
 <img src="/docs/obs_swath_conical.png" alt="obs_swath_conical"/>
 <img src="/docs/obs_swath_conical_revisit.png" alt="obs_swath_conical_revisit"/>
+<img src="/docs/obs_swath_conical_revisit_lat.png" alt="obs_swath_conical_revisit_lat"/>
 <img src="/docs/obs_swath_conical_3d.png" alt="obs_swath_conical_3d"/>
 
 ### obs_swath_push_broom
@@ -631,7 +659,8 @@ Optional in the analysis part are:
 - PolarView angle: This parameter can be given to see one part of the globe in an stereographic view, eg.  for the polar region.
   The value describes the minimum bounding latitude visible. When negative the area on the South Pole will be visible.
 - Revisit flag: This flag will enable revisit computation after the swath coverage. The statistic will determine
-what kind of statistic is displayed per user location.
+what kind of statistic is displayed per user location. Besides the revisit map, a longitude-averaged
+max/mean revisit time versus latitude profile is saved as __output/<analysis_type>_revisit_lat.png__.
 - SaveOutput: NetCDF or Numpy This flag will enable saving user swath coverage for every timestep.
 - Plot3D flag: additionally renders the swath as a semi-transparent ribbon on a
   textured 3D Earth, saved as output/obs_swath_push_broom_3d.png (see the 3D plots
@@ -639,6 +668,7 @@ what kind of statistic is displayed per user location.
 
 <img src="/docs/obs_swath_push_broom.png" alt="cov_satellite_push_broom"/>
 <img src="/docs/obs_swath_push_broom_revisit.png" alt="cov_satellite_push_broom_revisit"/>
+<img src="/docs/obs_swath_push_broom_revisit_lat.png" alt="cov_satellite_push_broom_revisit_lat"/>
 <img src="/docs/obs_swath_push_broom_3d.png" alt="obs_swath_push_broom_3d"/>
 
 
@@ -1089,6 +1119,115 @@ Optional are, to select one constellation or one satellite:
     <SatelliteID>1</SatelliteID>
 ```
 <img src="/docs/orb_kepler_elements.png" alt="orb_kepler_elements"/>
+
+
+### orb_air_density
+Plots the atmospheric density at the satellite altitude over the simulation time
+(logarithmic scale), together with the altitude itself on a second axis. The
+density is sampled every epoch from the atmosphere model configured as HPOP
+DragModel (NRLMSISE00 or DTM2000 driven by the CSSI space weather data, or the
+static HarrisPriester model), at the actual satellite position — so the day/night
+bulge and the density increase while the orbit decays are visible. Requires
+`<OrbitPropagator>HPOP</OrbitPropagator>`.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_air_density</Type>
+</Analysis>
+```
+Optional are, to select one constellation or one satellite:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
+<img src="/docs/orb_air_density.png" alt="orb_air_density"/>
+
+
+### orb_disturbance_forces
+Plots the magnitude of every perturbation acceleration enabled in the HPOP force
+model over the simulation time (logarithmic scale), evaluated each epoch on the
+propagated state of the first selected satellite: geopotential harmonics,
+atmospheric drag, solar radiation pressure, third-body Sun/Moon/planets, solid
+and ocean tides and relativity, with the central gravity term as dashed
+reference. This shows which perturbations dominate at the mission altitude and
+how they vary along the orbit (e.g. drag peaks at perigee/day side, SRP dropping
+to zero in eclipse). Requires `<OrbitPropagator>HPOP</OrbitPropagator>`.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_disturbance_forces</Type>
+</Analysis>
+```
+Optional are, to select the satellite that is evaluated (the first match):
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
+<img src="/docs/orb_disturbance_forces.png" alt="orb_disturbance_forces"/>
+
+
+### orb_pole_wobble
+Plots the wobble of the Earth rotation axis (the IERS polar motion xp/yp from
+the EOP data of the Orekit archive) over the simulation time: the xp/yp time
+series and the trace of the pole on the Earth surface. The Chandler and annual
+wobble circle the mean pole by roughly 0.1–0.3 arcsec (several metres on the
+ground) in about a year, so longer simulation windows (weeks to months) show a
+larger arc of the circle. Requires `<OrbitPropagator>HPOP</OrbitPropagator>`
+(for the Orekit EOP data).
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_pole_wobble</Type>
+</Analysis>
+```
+<img src="/docs/orb_pole_wobble.png" alt="orb_pole_wobble"/>
+
+
+### orb_deltav_element
+Estimates the station-keeping delta-v required to hold one orbit element within a
+deadband around a target value over the simulation time. The element is the mean
+element (the osculating value averaged over one orbital period); it drifts under
+the modelled perturbations and whenever the controlled value leaves the deadband
+an impulsive correction resets it to the target, costed with the standard
+impulsive-maneuver formulas (tangential burn for Altitude/SemiMajorAxis/
+Eccentricity, plane change at the node for Inclination/RAAN, apsidal rotation for
+ArgOfPerigee). The plot shows the uncontrolled drift, the controlled element
+bouncing inside the deadband with the maneuver epochs marked, and the cumulative
+delta-v; the log reports the total and the extrapolated m/s per year. Works with
+any propagator, but only the HPOP (and to a lesser degree SGP4) propagation
+actually drifts — with Keplerian propagation or drift-free elements over short
+windows the answer is simply zero, as it should be.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_deltav_element</Type>
+    <TargetType>Altitude</TargetType>
+    <DeadBand>1000</DeadBand>
+</Analysis>
+```
+- TargetType: Altitude, SemiMajorAxis, Eccentricity, Inclination, RAAN or
+  ArgOfPerigee.
+- DeadBand: half width of the deadband around the target, in meters for
+  Altitude/SemiMajorAxis, degrees for the angles, [-] for Eccentricity.
+
+Optional are:
+```
+    <TargetValue>240000</TargetValue>
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
+- TargetValue: the target for the mean element (same units as DeadBand). When
+  omitted, the element value at the simulation start is held. Note the mean
+  value can differ noticeably from the configured osculating element (e.g. the
+  mean semi-major axis of a J2-perturbed LEO lies ~10 km below the initial
+  osculating value).
+- ConstellationID/SatelliteID: select the satellite (the first match is analysed).
+
+<img src="/docs/orb_deltav_element.png" alt="orb_deltav_element"/>
 
 
 

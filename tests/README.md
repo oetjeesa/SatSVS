@@ -1,6 +1,6 @@
 # SatSVS analysis test suite
 
-One folder per analysis type from `readme.md` (25 analyses incl. orb_kepler_elements),
+One folder per analysis type from `readme.md` (29 analyses incl. the orb_ series),
 plus the HPOP propagator benchmark and a multi-analysis run (several `<Analysis>`
 blocks evaluated in one simulation). Each folder contains:
 
@@ -37,6 +37,10 @@ regenerates all test configs from scratch.
 | pow_eclipse_duration | 700 km SSO satellite, RAAN 140 deg → beta ~0 for max eclipses, 2 days at 30 s steps |
 | dat_storage, dat_latency | 700 km SSO satellite, Svalbard + Inuvik downlink stations, 60 Mbps instrument / 1070 Mbps downlink |
 | orb_kepler_elements | 250 km LEO, HPOP propagator with full force model (NRLMSISE00 drag), 3 days — evolution of all osculating Kepler elements |
+| orb_air_density | Same 250 km LEO/HPOP scenario, 1 day — NRLMSISE00 density at the satellite altitude |
+| orb_disturbance_forces | Same 250 km LEO/HPOP scenario, 1 day — per-epoch magnitude of every enabled perturbation |
+| orb_pole_wobble | 700 km SSO, light HPOP force model, 60 days at 1800 s — IERS polar motion |
+| orb_deltav_element | 250 km LEO/HPOP with drag, 2 days — altitude kept at 240 km mean +/- 1 km deadband |
 | multi_analysis | GPS constellation, static users (Delft, Singapore): cov_satellite_visible plus cov_satellite_sky_angles for SV1 and SV7, all three in a single run (the repeated type writes cov_satellite_sky_angles_2.png) |
 | hpop_benchmark | TerraSAR-X TLE propagated with HPOP through cov_satellite_pvt; benchmarked by benchmark_hpop.py against a two-body analytic orbit and the SGP4 reference trajectory (reference_orbit_sgp4.txt, regenerated with Config_sgp4_reference.xml) |
 
@@ -44,18 +48,18 @@ regenerates all test configs from scratch.
 
 | Test | Outcome (visually verified) |
 |---|---|
-| cov_ground_track | SSO ground track over one day, correct pattern; also the 3D globe render (Plot3D with pyvista): textured Earth, track, ECF orbit and satellite model in cov_ground_track_3d.png |
+| cov_ground_track | SSO ground track over one day, correct pattern; also the 3D globe render (Plot3D with pyvista): textured Earth with cloud layer (EarthClouds), starry Milky Way background, track, orbit and satellite model in cov_ground_track_3d.png; MP4 movies (2D map filling up + 3D fly-along with the camera circling the satellite) |
 | cov_satellite_pvt | ECI pos/vel sinusoids, 12 h GPS period, orbits.txt written |
 | cov_satellite_visible | 6–10 GPS satellites in view per user |
-| cov_satellite_visible_grid | Min 5–7 satellites in view worldwide |
+| cov_satellite_visible_grid | Min 5–7 satellites in view worldwide; MP4 movies (2D instantaneous field per epoch + 3D fly-along of the GPS constellation with the statistic field on the globe) |
 | cov_satellite_visible_id | Pass arcs of SV IDs 1–24 |
 | cov_satellite_contour | MEO visibility contour at 10 deg mask |
 | cov_satellite_sky_angles | Az/el passes for SV1 from Delft |
 | cov_satellite_highest | Mean max-elevation map, symmetric bands |
 | cov_depth_of_coverage | 0–2 stations in view along TerraSAR-X track |
 | cov_pass_time | Mean pass 14000–27000 s, equatorial maximum |
-| obs_swath_conical (+revisit) | Smooth semi-transparent conical swath ribbons (overlaps darker) + revisit diamonds; 3D swath ribbon render (Plot3D) in obs_swath_conical_3d.png |
-| obs_swath_push_broom (+revisit) | Smooth 400 km semi-transparent ribbon strips; NetCDF export works; 3D swath ribbon render (Plot3D) in obs_swath_push_broom_3d.png |
+| obs_swath_conical (+revisit) | Smooth semi-transparent conical swath ribbons (overlaps darker) + revisit diamonds + longitude-averaged max/mean revisit vs latitude profile (_revisit_lat.png); 3D swath ribbon render (Plot3D) in obs_swath_conical_3d.png; MP4 movies (2D ribbons filling up + 3D fly-along with the growing ribbon) |
+| obs_swath_push_broom (+revisit) | Smooth 400 km semi-transparent ribbon strips + revisit latitude profile (max=mean after 1 day: single gap per point); NetCDF export works; 3D swath ribbon render (Plot3D) in obs_swath_push_broom_3d.png |
 | obs_sza_push_broom | Mean SZA in swath, N–S gradient |
 | obs_sza_subsat (+lat, +lat_year) | Dawn-dusk daylight SZA, plots labelled |
 | com_gr2sp_budget | C/N0 95–110 dBHz vs required, ITU-R attenuations |
@@ -69,6 +73,10 @@ regenerates all test configs from scratch.
 | dat_storage | SSR sawtooth 0–250 Gbit, downlink windows shaded |
 | dat_latency | Mean 0.95 h, 95% 1.57 h, 100% < 2 h |
 | orb_kepler_elements | HPOP + drag: 6-panel Kepler element evolution — J2 SMA oscillation over a 15.4 km secular drag decay in 3 days at ~250 km, +0.97 deg/day RAAN drift |
+| orb_air_density | Density 4–8e-11 kg/m3 oscillating anti-phase with the 240–265 km altitude oscillation (perigee peaks) |
+| orb_disturbance_forces | Textbook hierarchy at 250 km: J2 ~2e-2, drag ~2e-5, Moon > Sun > solid tides ~1e-6..5e-7, SRP square wave dropping to zero in eclipse, central gravity 9 m/s2 reference |
+| orb_pole_wobble | xp 0.09→0.13, yp 0.36→0.41 arcsec over 60 days — arc of the annual/Chandler circle with sub-daily EOP loops |
+| orb_deltav_element | Controlled altitude saw-tooths inside the deadband (8 boost maneuvers of 0.59 m/s = v·da/2a) while the uncontrolled orbit decays to 231 km; 4.7 m/s in 2 days = 887 m/s/year, consistent with the drag makeup rate |
 | multi_analysis | Three analyses in one run: cov_satellite_visible plus sky angles for SV1 and SV7 with independent metric memory (different pass patterns per satellite); repeated type numbered as cov_satellite_sky_angles_2.png |
 | hpop_benchmark | Two-body HPOP vs analytic Kepler: max 0.024 m/day (PASS); full-force HPOP vs SGP4 reference: RMS 6.7 km, max 10.8 km/day (PASS) |
 

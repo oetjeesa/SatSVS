@@ -1,0 +1,11 @@
+<!-- Station-keeping delta-v to hold one mean orbit element in a deadband.
+     Meaningful with <OrbitPropagator>HPOP</OrbitPropagator> (perturbation
+     drift); zero with drift-free propagation, as it should be. -->
+<Analysis>
+    <Type>orb_deltav_element</Type>
+    <TargetType>Altitude</TargetType>       <!-- Altitude / SemiMajorAxis / Eccentricity / Inclination / RAAN / ArgOfPerigee -->
+    <TargetValue>240000</TargetValue>       <!-- Optional: mean-element target (m / - / deg); omit to hold the initial value -->
+    <DeadBand>1000</DeadBand>               <!-- Half width around the target (m / - / deg) -->
+    <ConstellationID>1</ConstellationID>    <!-- Optional: first matching satellite is analysed -->
+    <SatelliteID>1</SatelliteID>
+</Analysis>

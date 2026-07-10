@@ -58,6 +58,7 @@
       <Statistic>Mean</Statistic>
       <SaveOutput>Numpy</SaveOutput>
       <Plot3D>True</Plot3D>
+      <MP4>True</MP4>
     </Analysis>
   </SimulationManager>
 </Scenario>

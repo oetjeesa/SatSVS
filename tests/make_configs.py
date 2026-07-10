@@ -195,7 +195,9 @@ write_test('cov_ground_track', config(
     '      <Type>cov_ground_track</Type>\n'
     '      <ConstellationID>1</ConstellationID>\n'
     '      <SatelliteID>31698</SatelliteID>\n'
-    '      <Plot3D>True</Plot3D>',
+    '      <Plot3D>True</Plot3D>\n'
+    '      <EarthClouds>True</EarthClouds>\n'
+    '      <MP4>True</MP4>',
     propagator='SGP4'), tle='terrasarx.txt')
 
 write_test('cov_satellite_pvt', config(
@@ -215,7 +217,8 @@ write_test('cov_satellite_visible_grid', config(
     '      <Statistic>Min</Statistic>\n'
     '      <Plot3D>True</Plot3D>\n'
     '      <ShowOrbit>False</ShowOrbit>\n'
-    '      <SatelliteModelScale>500000</SatelliteModelScale>'))
+    '      <SatelliteModelScale>500000</SatelliteModelScale>\n'
+    '      <MP4>True</MP4>'))
 
 write_test('cov_satellite_visible_id', config(
     gps_constellation(), ground_segment(['Kourou']), static_users(DELFT), *FEB26, 120,
@@ -268,7 +271,8 @@ write_test('obs_swath_conical', config(
     '      <Revisit>True</Revisit>\n'
     '      <Statistic>Mean</Statistic>\n'
     '      <SaveOutput>Numpy</SaveOutput>\n'
-    '      <Plot3D>True</Plot3D>',
+    '      <Plot3D>True</Plot3D>\n'
+    '      <MP4>True</MP4>',
     propagator='SGP4', usr2sp=False), tle='metop_a.txt')
 
 write_test('obs_swath_push_broom', config(
@@ -443,6 +447,63 @@ def hpop_block(mass, area):
     </HPOP>
 """
 
+
+write_test('orb_air_density', config(
+    # 250 km LEO: day/night density variation and decay clearly visible
+    sso_constellation(sma=6628137, incl=96.5, raan=140.0),
+    ground_segment(['Svalbard']), static_users(DELFT), *FEB26, 60,
+    '      <Type>orb_air_density</Type>\n'
+    '      <ConstellationID>1</ConstellationID>',
+    propagator='HPOP', gr2sp=False, usr2sp=False,
+    extra_sim=hpop_block(mass=500.0, area=3.2)))
+
+write_test('orb_disturbance_forces', config(
+    sso_constellation(sma=6628137, incl=96.5, raan=140.0),
+    ground_segment(['Svalbard']), static_users(DELFT), *FEB26, 60,
+    '      <Type>orb_disturbance_forces</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>',
+    propagator='HPOP', gr2sp=False, usr2sp=False,
+    extra_sim=hpop_block(mass=500.0, area=3.2)))
+
+write_test('orb_deltav_element', config(
+    # 250 km LEO with strong drag: several altitude-keeping maneuvers in 2 days
+    sso_constellation(sma=6628137, incl=96.5, raan=140.0),
+    ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-02-01 00:00:00', '2026-02-03 00:00:00', 60,
+    '      <Type>orb_deltav_element</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <TargetType>Altitude</TargetType>\n'
+    '      <TargetValue>240000</TargetValue>\n'  # Mean altitude (below osculating 250 km)
+    '      <DeadBand>1000</DeadBand>',
+    propagator='HPOP', gr2sp=False, usr2sp=False,
+    extra_sim=hpop_block(mass=500.0, area=3.2)))
+
+# Pole wobble: 60 days so a visible arc of the Chandler+annual circle is
+# traced; light force model to keep the long HPOP integration fast
+HPOP_LIGHT = """    <HPOP>
+      <IntegratorMaxStep>900</IntegratorMaxStep>
+      <IntegratorPositionTolerance>10.0</IntegratorPositionTolerance>
+      <Mass>500.0</Mass>
+      <Geopotential>True</Geopotential>
+      <GeopotentialDegree>8</GeopotentialDegree>
+      <GeopotentialOrder>8</GeopotentialOrder>
+      <EarthPoleRotation>True</EarthPoleRotation>
+      <Drag>False</Drag>
+      <SolarRadiationPressure>False</SolarRadiationPressure>
+      <ThirdBodySun>False</ThirdBodySun>
+      <ThirdBodyMoon>False</ThirdBodyMoon>
+      <SolidTides>False</SolidTides>
+      <OceanTides>False</OceanTides>
+      <Relativity>False</Relativity>
+    </HPOP>
+"""
+write_test('orb_pole_wobble', config(
+    sso_constellation(), ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-02-01 00:00:00', '2026-04-02 00:00:00', 1800,
+    '      <Type>orb_pole_wobble</Type>',
+    propagator='HPOP', gr2sp=False, usr2sp=False, extra_sim=HPOP_LIGHT))
 
 write_test('orb_kepler_elements', config(
     # 250 km LEO: strong drag makes the semi-major axis decay clearly visible

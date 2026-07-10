@@ -1,0 +1,6 @@
+<!-- Needs <OrbitPropagator>HPOP</OrbitPropagator> (Orekit EOP data). The pole
+     circles ~0.1-0.3 arcsec in about a year: use a simulation window of weeks
+     to months to see a good arc of the wobble -->
+<Analysis>
+    <Type>orb_pole_wobble</Type>            <!-- IERS polar motion xp/yp over time -->
+</Analysis>

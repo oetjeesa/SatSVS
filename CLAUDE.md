@@ -33,7 +33,10 @@ models, used only by `com_*` analyses). The HPOP propagator additionally needs
 `orekit_jpype` + `jdk4py` and the Orekit data archive at `input/orekit-data.zip`.
 3D plots (`<Plot3D>` on every world-map analysis via the `AnalysisPlot3D` mixin in
 `analysis.py`, rendered by `plot_3d.py`) need `pyvista` and the Earth texture at
-`input/earth_texture.jpg`.
+`input/earth_texture.jpg`; the starry background uses `input/starmap.jpg` and the
+optional `<EarthClouds>` layer `input/earth_clouds.jpg`. MP4 movies (`<MP4>` on the
+world-map analyses; 2D fill-up movies in `plot_movie.py`, 3D fly-along in
+`plot_3d.movie_3d`) additionally need `imageio` + `imageio-ffmpeg`.
 
 ## Configuration drives everything
 

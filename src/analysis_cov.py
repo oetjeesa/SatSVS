@@ -56,6 +56,15 @@ class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
             self.render_3d_points(sm, points, 'Number of stations in view [-]',
                                   cmap='RdYlBu', clim=(0, len(sm.stations)))
 
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_track_2d(sm, self.sat_metric,
+                                      '../output/' + self.type + '_2d.mp4',
+                                      color_index=2, clim=(0, len(sm.stations)),
+                                      label='Number of stations in view [-]')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
+                                 track_latlon=self.sat_metric[:, :, 0:2])
+
 
 class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
 
@@ -106,6 +115,15 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
             ax.legend(fontsize=8)
         plt.savefig('../output/'+self.type+'.png')
         plt.show()
+
+        if self.mp4:
+            import plot_movie
+            idx_selected = [i for i, s in enumerate(sm.satellites) if self._selected(s)]
+            plot_movie.movie_track_2d(sm, self.sat_metric[idx_selected],
+                                      '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, [sm.satellites[i] for i in idx_selected],
+                                 self.sat_metric[idx_selected][:, :, 2:5],
+                                 track_latlon=self.sat_metric[idx_selected][:, :, 0:2])
 
         if self.plot_3d:
             p3d = self._plot_3d_module()
@@ -198,6 +216,16 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
         if self.plot_3d:
             self.render_3d_grid(sm, sm.user_latitudes, sm.user_longitudes, z_new,
                                 self.statistic + ' Pass Time Interval [s]')
+
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_grid_2d(sm, self.user_metric.sum(axis=2).astype(float),
+                                     self.type, 'Satellites of constellation in view [-]',
+                                     '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
+                                 grid=(sm.user_latitudes, sm.user_longitudes, z_new,
+                                       self.statistic + ' Pass Time Interval [s]',
+                                       'jet', None))
 
 
 class AnalysisCovSatelliteContour(AnalysisBase, AnalysisPlot3D):
@@ -327,6 +355,16 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
         if self.plot_3d:
             self.render_3d_grid(sm, sm.user_latitudes, sm.user_longitudes, z_new,
                                 self.statistic + ' Max Elevation in view [deg]')
+
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
+                                     'Max elevation in view [deg]',
+                                     '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
+                                 grid=(sm.user_latitudes, sm.user_longitudes, z_new,
+                                       self.statistic + ' Max Elevation in view [deg]',
+                                       'jet', None))
 
 
 class AnalysisCovSatellitePvt(AnalysisBase):
@@ -522,6 +560,16 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
         if self.plot_3d:
             self.render_3d_grid(sm, sm.user_latitudes, sm.user_longitudes, z_new,
                                 self.statistic + ' Satellites in view [-]')
+
+        if self.mp4:
+            import plot_movie
+            plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
+                                     'Number of satellites in view [-]',
+                                     '../output/' + self.type + '_2d.mp4')
+            self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
+                                 grid=(sm.user_latitudes, sm.user_longitudes, z_new,
+                                       self.statistic + ' Satellites in view [-]',
+                                       'jet', None))
 
 
 class AnalysisCovSatelliteVisibleId(AnalysisBase):
