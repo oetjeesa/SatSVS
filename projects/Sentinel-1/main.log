@@ -1,0 +1,77 @@
+2026-07-13 13:11:16,633 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 2, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': 0.4537856055185257, 'obs_inci_angle_stop': 0.7155849933176751, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-13 13:11:16,633 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': 18.0, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000001CDDF559010>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-13 13:11:16,645 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'sat_id': 2, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': 18.0, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000001CDDF42EE90>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-13 13:11:16,821 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1258510.20963674,  346840.52633098, 6222642.71559272]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.36535362e+00, 2.68920331e-01, 4.50000000e+02]), 'idx_sat_in_view': []}
+2026-07-13 13:11:16,821 - main - INFO - {'constellation_id': 1, 'station_id': 2, 'station_name': 'Matera', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([4641945.79097722, 1393092.03734022, 4133276.5968843 ]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([7.09458888e-01, 2.91557252e-01, 5.36000000e+02]), 'idx_sat_in_view': []}
+2026-07-13 13:11:16,822 - main - INFO - {'constellation_id': 1, 'station_id': 3, 'station_name': 'Maspalomas', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([ 5439216.51769629, -1522136.42853725,  2953385.81274799]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([  0.48455576,  -0.27286478, 205.        ]), 'idx_sat_in_view': []}
+2026-07-13 13:11:16,879 - main - INFO - {'type': 'Grid', 'user_id': 2554, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-5.57747059e+05,  6.83043151e-11,  6.33240086e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.48352986, 3.14159265, 0.        ]), 'num_lat': 35, 'num_lon': 73, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001CDE0D72AD0>, 'UserName': 'Grid'}
+2026-07-13 13:11:16,882 - main - INFO - HPOP configuration: {'integrator_min_step': 0.001, 'integrator_max_step': 300.0, 'integrator_position_tolerance': 1.0, 'mass': 2300.0, 'geopotential': True, 'geopotential_degree': 21, 'geopotential_order': 21, 'earth_pole_rotation': True, 'drag': True, 'drag_area': 10.0, 'drag_cd': 2.2, 'drag_model': 'NRLMSISE00', 'solar_radiation_pressure': True, 'srp_area': 40.0, 'srp_cr': 1.5, 'third_body_sun': True, 'third_body_moon': True, 'third_body_planets': False, 'solid_tides': True, 'ocean_tides': False, 'ocean_tides_degree': 4, 'ocean_tides_order': 4, 'relativity': False}
+2026-07-13 13:11:16,882 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61078.0, size time steps in sec: 120.0
+2026-07-13 13:11:16,882 - main - INFO - Loaded 6 number of Station to Spacecraft links
+2026-07-13 13:11:16,886 - main - INFO - Loaded 5110 number of User to Spacecraft links
+2026-07-13 13:11:16,886 - main - INFO - Loaded 4 number of Spacecraft to Spacecraft links
+2026-07-13 13:11:17,784 - main - INFO - HPOP: Orekit JVM started and physical data loaded
+2026-07-13 13:11:39,758 - main - INFO - HPOP: generated dense ephemerides for 2 satellite(s) from MJD 61072.0 to 61078.0
+2026-07-13 13:11:39,763 - main - INFO - Power Analysis Initialized
+2026-07-13 13:11:39,763 - main - INFO - Eclipse Duration Analysis Initialized
+2026-07-13 13:11:39,763 - main - INFO - Data Storage Analysis Initialized
+2026-07-13 13:11:39,763 - main - INFO - Data Analysis Initialized with 15.0min ground delay
+2026-07-13 13:11:39,763 - main - INFO - Finished reading configuration file
+2026-07-13 13:11:39,802 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-13 13:11:43,050 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 100
+2026-07-13 13:11:46,278 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 200
+2026-07-13 13:11:49,519 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 300
+2026-07-13 13:11:53,059 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 400
+2026-07-13 13:11:56,603 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 500
+2026-07-13 13:12:00,782 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 600
+2026-07-13 13:12:04,579 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 700
+2026-07-13 13:12:08,166 - main - INFO - Simulation time: 2026-02-02 02:40:00, time step: 800
+2026-07-13 13:12:12,785 - main - INFO - Simulation time: 2026-02-02 06:00:00, time step: 900
+2026-07-13 13:12:16,372 - main - INFO - Simulation time: 2026-02-02 09:20:00, time step: 1000
+2026-07-13 13:12:19,822 - main - INFO - Simulation time: 2026-02-02 12:40:00, time step: 1100
+2026-07-13 13:12:23,281 - main - INFO - Simulation time: 2026-02-02 16:00:00, time step: 1200
+2026-07-13 13:12:26,998 - main - INFO - Simulation time: 2026-02-02 19:20:00, time step: 1300
+2026-07-13 13:12:30,606 - main - INFO - Simulation time: 2026-02-02 22:40:00, time step: 1400
+2026-07-13 13:12:34,512 - main - INFO - Simulation time: 2026-02-03 02:00:00, time step: 1500
+2026-07-13 13:12:38,590 - main - INFO - Simulation time: 2026-02-03 05:20:00, time step: 1600
+2026-07-13 13:12:42,311 - main - INFO - Simulation time: 2026-02-03 08:40:00, time step: 1700
+2026-07-13 13:12:46,037 - main - INFO - Simulation time: 2026-02-03 12:00:00, time step: 1800
+2026-07-13 13:12:49,693 - main - INFO - Simulation time: 2026-02-03 15:20:00, time step: 1900
+2026-07-13 13:12:53,461 - main - INFO - Simulation time: 2026-02-03 18:40:00, time step: 2000
+2026-07-13 13:12:57,427 - main - INFO - Simulation time: 2026-02-03 22:00:00, time step: 2100
+2026-07-13 13:13:02,066 - main - INFO - Simulation time: 2026-02-04 01:20:00, time step: 2200
+2026-07-13 13:13:05,893 - main - INFO - Simulation time: 2026-02-04 04:40:00, time step: 2300
+2026-07-13 13:13:10,709 - main - INFO - Simulation time: 2026-02-04 08:00:00, time step: 2400
+2026-07-13 13:13:14,394 - main - INFO - Simulation time: 2026-02-04 11:20:00, time step: 2500
+2026-07-13 13:13:18,134 - main - INFO - Simulation time: 2026-02-04 14:40:00, time step: 2600
+2026-07-13 13:13:21,473 - main - INFO - Simulation time: 2026-02-04 18:00:00, time step: 2700
+2026-07-13 13:13:25,057 - main - INFO - Simulation time: 2026-02-04 21:20:00, time step: 2800
+2026-07-13 13:13:28,676 - main - INFO - Simulation time: 2026-02-05 00:40:00, time step: 2900
+2026-07-13 13:13:32,379 - main - INFO - Simulation time: 2026-02-05 04:00:00, time step: 3000
+2026-07-13 13:13:35,915 - main - INFO - Simulation time: 2026-02-05 07:20:00, time step: 3100
+2026-07-13 13:13:39,910 - main - INFO - Simulation time: 2026-02-05 10:40:00, time step: 3200
+2026-07-13 13:13:43,552 - main - INFO - Simulation time: 2026-02-05 14:00:00, time step: 3300
+2026-07-13 13:13:47,689 - main - INFO - Simulation time: 2026-02-05 17:20:00, time step: 3400
+2026-07-13 13:13:51,219 - main - INFO - Simulation time: 2026-02-05 20:40:00, time step: 3500
+2026-07-13 13:13:55,329 - main - INFO - Simulation time: 2026-02-06 00:00:00, time step: 3600
+2026-07-13 13:13:58,914 - main - INFO - Simulation time: 2026-02-06 03:20:00, time step: 3700
+2026-07-13 13:14:02,451 - main - INFO - Simulation time: 2026-02-06 06:40:00, time step: 3800
+2026-07-13 13:14:06,548 - main - INFO - Simulation time: 2026-02-06 10:00:00, time step: 3900
+2026-07-13 13:14:10,635 - main - INFO - Simulation time: 2026-02-06 13:20:00, time step: 4000
+2026-07-13 13:14:14,795 - main - INFO - Simulation time: 2026-02-06 16:40:00, time step: 4100
+2026-07-13 13:14:18,256 - main - INFO - Simulation time: 2026-02-06 20:00:00, time step: 4200
+2026-07-13 13:14:22,512 - main - INFO - Simulation time: 2026-02-06 23:20:00, time step: 4300
+2026-07-13 13:14:23,216 - main - INFO - Plotting analysis cov_ground_track
+2026-07-13 13:14:23,658 - main - INFO - Plotting analysis cov_satellite_contour
+2026-07-13 13:14:23,879 - main - INFO - Plotting analysis cov_pass_time
+2026-07-13 13:14:24,333 - main - INFO - Plotting analysis obs_swath_push_broom
+2026-07-13 13:14:25,452 - main - INFO - User revisit 0 of 2555
+2026-07-13 13:14:25,462 - main - INFO - User revisit 1000 of 2555
+2026-07-13 13:14:25,472 - main - INFO - User revisit 2000 of 2555
+2026-07-13 13:14:25,917 - main - INFO - Plotting analysis pow_battery_depth_discharge
+2026-07-13 13:14:26,064 - main - INFO - Plotting analysis pow_eclipse_duration
+2026-07-13 13:14:26,125 - main - INFO - Plotting analysis dat_storage
+2026-07-13 13:14:26,272 - main - INFO - Plotting analysis dat_latency
+2026-07-13 13:14:26,491 - main - INFO - Plotting analysis orb_deltav_element
+2026-07-13 13:14:26,493 - main - INFO - orb_deltav_element: no TargetValue given, using the initial Altitude of the simulation
+2026-07-13 13:14:26,494 - main - INFO - orb_deltav_element: Altitude kept within +/- 500.0 of 683780 with 0 maneuver(s), total delta-v 0.000 m/s (0.0 m/s/year)

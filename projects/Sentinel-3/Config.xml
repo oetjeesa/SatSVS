@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Mission: Copernicus Sentinel-3 (OLCI/SLSTR, 2 satellites 140 deg apart,
+    10:00 LTDN SSO, 27-day repeat). OLCI 1270 km swath (modelled nadir-symmetric).
+    Representative public orbit and instrument values; reduce the user grid or
+    the simulation window for quick looks.-->
+<!--Copernicus Sentinel mission analysis run: cov_ground_track, cov_satellite_contour,
+    cov_pass_time, obs_swath_push_broom, pow_battery_depth_discharge,
+    pow_eclipse_duration, dat_storage, dat_latency, orb_deltav_element.
+    HPOP propagation so the station-keeping delta-v analysis shows real drift.
+    Data/power values are representative; assumptions:
+      - SSR 384 Gbit and X-band 2x260=520 Mbps are public Sentinel-3 values
+      - Instrument rate 35 Mbps is an effective average of the OLCI/SLSTR/SRAL suite
+      - OLCI/SLSTR swath modelled nadir-symmetric 1270 km
+      - Station-keeping deadband 500 m on the mean altitude: sits above the ~0.1 km
+        mean-element estimation noise; near-zero burns over a days-long window is
+        the physically expected result at this altitude
+      - Ground stations: Svalbard, Kiruna (5 deg mask)
+      - 15 min ground processing added to the data latency-->
+<Scenario>
+  <SpaceSegment>
+    <Constellation>
+      <ConstellationID>1</ConstellationID>
+      <NumOfSatellites>2</NumOfSatellites>
+      <NumOfPlanes>1</NumOfPlanes>
+      <ConstellationName>Sentinel-3</ConstellationName>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ObsSwathStart>-635000.0</ObsSwathStart>
+      <ObsSwathStop>635000.0</ObsSwathStop>
+      <Satellite>
+        <SatelliteID>1</SatelliteID>
+        <Plane>1</Plane>
+        <EpochMJD>61072.0</EpochMJD>
+        <Altitude>814500</Altitude>
+        <Eccentricity>0.001</Eccentricity>
+        <LTAN>22.0</LTAN>
+        <ArgOfPerigee>0.0</ArgOfPerigee>
+        <MeanAnomaly>0.0</MeanAnomaly>
+      </Satellite>
+      <Satellite>
+        <SatelliteID>2</SatelliteID>
+        <Plane>1</Plane>
+        <EpochMJD>61072.0</EpochMJD>
+        <Altitude>814500</Altitude>
+        <Eccentricity>0.001</Eccentricity>
+        <LTAN>22.0</LTAN>
+        <ArgOfPerigee>0.0</ArgOfPerigee>
+        <MeanAnomaly>140.0</MeanAnomaly>
+      </Satellite>
+    </Constellation>
+  </SpaceSegment>
+  <GroundSegment>
+    <Network>
+      <NumStation>2</NumStation>
+      <NetworkName>Downlink</NetworkName>
+      <GroundStation>
+        <Type>Downlink</Type>
+        <ConstellationID>1</ConstellationID>
+        <GroundStationID>1</GroundStationID>
+        <GroundStationName>Svalbard</GroundStationName>
+        <Latitude>78.229</Latitude>
+        <Longitude>15.408</Longitude>
+        <Height>450</Height>
+        <ReceiverConstellation>1</ReceiverConstellation>
+        <ElevationMask>5</ElevationMask>
+      </GroundStation>
+      <GroundStation>
+        <Type>Downlink</Type>
+        <ConstellationID>1</ConstellationID>
+        <GroundStationID>2</GroundStationID>
+        <GroundStationName>Kiruna</GroundStationName>
+        <Latitude>67.857</Latitude>
+        <Longitude>20.964</Longitude>
+        <Height>402</Height>
+        <ReceiverConstellation>1</ReceiverConstellation>
+        <ElevationMask>5</ElevationMask>
+      </GroundStation>
+    </Network>
+  </GroundSegment>
+  <UserSegment>
+    <User>
+      <Type>Grid</Type>
+      <LatMin>-85</LatMin>
+      <LatMax>85</LatMax>
+      <LonMin>-180</LonMin>
+      <LonMax>180</LonMax>
+      <LatStep>5</LatStep>
+      <LonStep>5</LonStep>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>5</ElevationMask>
+    </User>
+  </UserSegment>
+  <SimulationManager>
+    <StartDate>2026-02-01 00:00:00</StartDate>
+    <StopDate>2026-02-04 00:00:00</StopDate>
+    <TimeStep>60</TimeStep>
+    <IncludeStation2SpaceLinks>True</IncludeStation2SpaceLinks>
+    <IncludeUser2SpaceLinks>True</IncludeUser2SpaceLinks>
+    <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
+    <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
+    <OrbitPropagator>HPOP</OrbitPropagator>
+    <HPOP>
+      <IntegratorMinStep>0.001</IntegratorMinStep>
+      <IntegratorMaxStep>300</IntegratorMaxStep>
+      <IntegratorPositionTolerance>1.0</IntegratorPositionTolerance>
+      <Mass>1250</Mass>
+      <Geopotential>True</Geopotential>
+      <GeopotentialDegree>21</GeopotentialDegree>
+      <GeopotentialOrder>21</GeopotentialOrder>
+      <EarthPoleRotation>True</EarthPoleRotation>
+      <Drag>True</Drag>
+      <DragArea>6.0</DragArea>
+      <DragCd>2.2</DragCd>
+      <DragModel>NRLMSISE00</DragModel>
+      <SolarRadiationPressure>True</SolarRadiationPressure>
+      <SRPArea>20.0</SRPArea>
+      <SRPCr>1.5</SRPCr>
+      <ThirdBodySun>True</ThirdBodySun>
+      <ThirdBodyMoon>True</ThirdBodyMoon>
+      <ThirdBodyPlanets>False</ThirdBodyPlanets>
+      <SolidTides>True</SolidTides>
+      <OceanTides>False</OceanTides>
+      <Relativity>False</Relativity>
+    </HPOP>
+    <Analysis>
+      <Type>cov_ground_track</Type>
+      <ConstellationID>1</ConstellationID>
+    </Analysis>
+    <Analysis>
+      <Type>cov_satellite_contour</Type>
+      <ConstellationID>1</ConstellationID>
+      <SatelliteID>1</SatelliteID>
+      <ElevationMask>5</ElevationMask>
+    </Analysis>
+    <Analysis>
+      <Type>cov_pass_time</Type>
+      <ConstellationID>1</ConstellationID>
+      <Statistic>Mean</Statistic>
+    </Analysis>
+    <Analysis>
+      <Type>obs_swath_push_broom</Type>
+      <Revisit>True</Revisit>
+      <Statistic>Mean</Statistic>
+    </Analysis>
+    <Analysis>
+      <Type>pow_battery_depth_discharge</Type>
+      <BatteryCapacityWh>2500</BatteryCapacityWh>
+      <InitialSoC>1.0</InitialSoC>
+      <SolarPanelArea>6.5</SolarPanelArea>
+      <PanelEfficiency>0.26</PanelEfficiency>
+      <BasePowerDrawW>1100</BasePowerDrawW>
+      <InstrumentPowerDrawW>350</InstrumentPowerDrawW>
+      <PayloadLatitudeLimit>90</PayloadLatitudeLimit>
+    </Analysis>
+    <Analysis>
+      <Type>pow_eclipse_duration</Type>
+    </Analysis>
+    <Analysis>
+      <Type>dat_storage</Type>
+      <SSRCapacityGbits>384</SSRCapacityGbits>
+      <InitialFillGbits>0</InitialFillGbits>
+      <InstrumentRateMbps>35</InstrumentRateMbps>
+      <DownlinkRateMbps>520</DownlinkRateMbps>
+      <PayloadLatitudeLimit>90</PayloadLatitudeLimit>
+    </Analysis>
+    <Analysis>
+      <Type>dat_latency</Type>
+      <SSRCapacityGbits>384</SSRCapacityGbits>
+      <InitialFillGbits>0</InitialFillGbits>
+      <InstrumentRateMbps>35</InstrumentRateMbps>
+      <DownlinkRateMbps>520</DownlinkRateMbps>
+      <PayloadLatitudeLimit>90</PayloadLatitudeLimit>
+      <GroundProcessingMin>15</GroundProcessingMin>
+    </Analysis>
+    <Analysis>
+      <Type>orb_deltav_element</Type>
+      <TargetType>Altitude</TargetType>
+      <DeadBand>500</DeadBand>
+      <ConstellationID>1</ConstellationID>
+      <SatelliteID>1</SatelliteID>
+    </Analysis>
+  </SimulationManager>
+</Scenario>
