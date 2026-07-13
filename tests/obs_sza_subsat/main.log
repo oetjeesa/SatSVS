@@ -1,40 +1,43 @@
-2026-07-08 17:36:38,985 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_sza_subsat/sentinel-1.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
-2026-07-08 17:36:38,986 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 58945.03033, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001402, 'inclination': 1.7135991661930727, 'right_ascension': 1.8332065798322439, 'arg_perigee': 1.4609802102594134, 'mean_anomaly': 4.824578744702885}"]
-2026-07-08 17:36:39,213 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-08 17:36:39,215 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x0000027FC5A2EE90>, 'metric': []}
-2026-07-08 17:36:39,218 - main - INFO - Loaded simulation, start MJD: 58946.0, stop MJD: 58948.0, size time steps in sec: 60.0
-2026-07-08 17:36:39,218 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-08 17:36:39,218 - main - INFO - Loaded 1 number of User to Spacecraft links
-2026-07-08 17:36:39,219 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-08 17:36:39,219 - main - INFO - Finished reading configuration file
-2026-07-08 17:36:39,276 - main - INFO - Simulation time: 2020-04-07 00:00:00, time step: 0
-2026-07-08 17:36:40,546 - main - INFO - Simulation time: 2020-04-07 01:40:00, time step: 100
-2026-07-08 17:36:41,173 - main - INFO - Simulation time: 2020-04-07 03:20:00, time step: 200
-2026-07-08 17:36:41,665 - main - INFO - Simulation time: 2020-04-07 05:00:00, time step: 300
-2026-07-08 17:36:42,184 - main - INFO - Simulation time: 2020-04-07 06:40:00, time step: 400
-2026-07-08 17:36:42,755 - main - INFO - Simulation time: 2020-04-07 08:20:00, time step: 500
-2026-07-08 17:36:43,222 - main - INFO - Simulation time: 2020-04-07 10:00:00, time step: 600
-2026-07-08 17:36:43,724 - main - INFO - Simulation time: 2020-04-07 11:40:00, time step: 700
-2026-07-08 17:36:44,239 - main - INFO - Simulation time: 2020-04-07 13:20:00, time step: 800
-2026-07-08 17:36:44,766 - main - INFO - Simulation time: 2020-04-07 15:00:00, time step: 900
-2026-07-08 17:36:45,290 - main - INFO - Simulation time: 2020-04-07 16:40:00, time step: 1000
-2026-07-08 17:36:45,835 - main - INFO - Simulation time: 2020-04-07 18:20:00, time step: 1100
-2026-07-08 17:36:46,402 - main - INFO - Simulation time: 2020-04-07 20:00:00, time step: 1200
-2026-07-08 17:36:47,007 - main - INFO - Simulation time: 2020-04-07 21:40:00, time step: 1300
-2026-07-08 17:36:47,552 - main - INFO - Simulation time: 2020-04-07 23:20:00, time step: 1400
-2026-07-08 17:36:48,114 - main - INFO - Simulation time: 2020-04-08 01:00:00, time step: 1500
-2026-07-08 17:36:48,650 - main - INFO - Simulation time: 2020-04-08 02:40:00, time step: 1600
-2026-07-08 17:36:49,411 - main - INFO - Simulation time: 2020-04-08 04:20:00, time step: 1700
-2026-07-08 17:36:50,242 - main - INFO - Simulation time: 2020-04-08 06:00:00, time step: 1800
-2026-07-08 17:36:51,158 - main - INFO - Simulation time: 2020-04-08 07:40:00, time step: 1900
-2026-07-08 17:36:51,854 - main - INFO - Simulation time: 2020-04-08 09:20:00, time step: 2000
-2026-07-08 17:36:52,818 - main - INFO - Simulation time: 2020-04-08 11:00:00, time step: 2100
-2026-07-08 17:36:53,579 - main - INFO - Simulation time: 2020-04-08 12:40:00, time step: 2200
-2026-07-08 17:36:54,156 - main - INFO - Simulation time: 2020-04-08 14:20:00, time step: 2300
-2026-07-08 17:36:54,835 - main - INFO - Simulation time: 2020-04-08 16:00:00, time step: 2400
-2026-07-08 17:36:55,412 - main - INFO - Simulation time: 2020-04-08 17:40:00, time step: 2500
-2026-07-08 17:36:55,985 - main - INFO - Simulation time: 2020-04-08 19:20:00, time step: 2600
-2026-07-08 17:36:56,490 - main - INFO - Simulation time: 2020-04-08 21:00:00, time step: 2700
-2026-07-08 17:36:56,997 - main - INFO - Simulation time: 2020-04-08 22:40:00, time step: 2800
-2026-07-08 17:36:57,396 - main - INFO - Plotting analysis obs_sza_subsat
-2026-07-08 17:36:58,663 - main - INFO - Saved 3D plot to ../output/obs_sza_subsat_3d.png
+2026-07-13 19:56:09,685 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\obs_sza_subsat\Config.xml validated: 0 warning(s), no errors
+2026-07-13 19:56:09,686 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_sza_subsat/sentinel-1.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-13 19:56:09,687 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 58945.03033, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001402, 'inclination': 1.7135991661930727, 'right_ascension': 1.8332065798322439, 'arg_perigee': 1.4609802102594134, 'mean_anomaly': 4.824578744702885}"]
+2026-07-13 19:56:09,866 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-13 19:56:09,867 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001B2C3970690>}
+2026-07-13 19:56:09,868 - main - INFO - Loaded simulation, start MJD: 58946.0, stop MJD: 58948.0, size time steps in sec: 60.0
+2026-07-13 19:56:09,868 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-13 19:56:09,868 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-13 19:56:09,868 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-13 19:56:09,869 - main - INFO - Finished reading configuration file
+2026-07-13 19:56:09,894 - main - INFO - Simulation time: 2020-04-07 00:00:00, time step: 0
+2026-07-13 19:56:10,738 - main - INFO - Simulation time: 2020-04-07 01:40:00, time step: 100
+2026-07-13 19:56:11,111 - main - INFO - Simulation time: 2020-04-07 03:20:00, time step: 200
+2026-07-13 19:56:11,507 - main - INFO - Simulation time: 2020-04-07 05:00:00, time step: 300
+2026-07-13 19:56:11,933 - main - INFO - Simulation time: 2020-04-07 06:40:00, time step: 400
+2026-07-13 19:56:12,309 - main - INFO - Simulation time: 2020-04-07 08:20:00, time step: 500
+2026-07-13 19:56:12,684 - main - INFO - Simulation time: 2020-04-07 10:00:00, time step: 600
+2026-07-13 19:56:13,107 - main - INFO - Simulation time: 2020-04-07 11:40:00, time step: 700
+2026-07-13 19:56:13,482 - main - INFO - Simulation time: 2020-04-07 13:20:00, time step: 800
+2026-07-13 19:56:13,860 - main - INFO - Simulation time: 2020-04-07 15:00:00, time step: 900
+2026-07-13 19:56:14,263 - main - INFO - Simulation time: 2020-04-07 16:40:00, time step: 1000
+2026-07-13 19:56:14,664 - main - INFO - Simulation time: 2020-04-07 18:20:00, time step: 1100
+2026-07-13 19:56:15,037 - main - INFO - Simulation time: 2020-04-07 20:00:00, time step: 1200
+2026-07-13 19:56:15,459 - main - INFO - Simulation time: 2020-04-07 21:40:00, time step: 1300
+2026-07-13 19:56:15,909 - main - INFO - Simulation time: 2020-04-07 23:20:00, time step: 1400
+2026-07-13 19:56:16,320 - main - INFO - Simulation time: 2020-04-08 01:00:00, time step: 1500
+2026-07-13 19:56:16,699 - main - INFO - Simulation time: 2020-04-08 02:40:00, time step: 1600
+2026-07-13 19:56:17,103 - main - INFO - Simulation time: 2020-04-08 04:20:00, time step: 1700
+2026-07-13 19:56:17,590 - main - INFO - Simulation time: 2020-04-08 06:00:00, time step: 1800
+2026-07-13 19:56:18,044 - main - INFO - Simulation time: 2020-04-08 07:40:00, time step: 1900
+2026-07-13 19:56:18,454 - main - INFO - Simulation time: 2020-04-08 09:20:00, time step: 2000
+2026-07-13 19:56:18,929 - main - INFO - Simulation time: 2020-04-08 11:00:00, time step: 2100
+2026-07-13 19:56:19,343 - main - INFO - Simulation time: 2020-04-08 12:40:00, time step: 2200
+2026-07-13 19:56:19,858 - main - INFO - Simulation time: 2020-04-08 14:20:00, time step: 2300
+2026-07-13 19:56:20,270 - main - INFO - Simulation time: 2020-04-08 16:00:00, time step: 2400
+2026-07-13 19:56:20,705 - main - INFO - Simulation time: 2020-04-08 17:40:00, time step: 2500
+2026-07-13 19:56:21,177 - main - INFO - Simulation time: 2020-04-08 19:20:00, time step: 2600
+2026-07-13 19:56:21,625 - main - INFO - Simulation time: 2020-04-08 21:00:00, time step: 2700
+2026-07-13 19:56:22,069 - main - INFO - Simulation time: 2020-04-08 22:40:00, time step: 2800
+2026-07-13 19:56:22,403 - main - INFO - Plotting analysis obs_sza_subsat
+2026-07-13 19:56:24,495 - main - INFO - Saved 3D plot to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_obs_sza_subsat_g0kgro9u\obs_sza_subsat_3d.png
+2026-07-13 19:56:24,502 - main - INFO - Written data dump obs_sza_subsat.csv (1447 rows)
+2026-07-13 19:56:24,952 - main - INFO - Written data dump obs_sza_subsat_lat.csv (16 rows)

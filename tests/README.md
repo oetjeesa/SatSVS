@@ -1,24 +1,43 @@
 # SatSVS analysis test suite
 
-One folder per analysis type from `readme.md` (29 analyses incl. the orb_ series),
-plus the HPOP propagator benchmark and a multi-analysis run (several `<Analysis>`
-blocks evaluated in one simulation). Each folder contains:
+One folder per analysis type from `readme.md` (31 analyses incl. the orb_ and
+sat_ series), plus the HPOP propagator benchmark and a multi-analysis run
+(several `<Analysis>` blocks evaluated in one simulation). Each folder contains:
 
 - `Config.xml` — the test scenario (self-contained; TLE files referenced by the
   config are copied into the folder as well)
-- the plots/data files the run produced (copied from `output/`)
+- the plots and CSV data dumps the run produced — the CSVs are the golden
+  reference data of the automated regression tests
 - `main.log` — the simulator log of the run
 
-## How to run
+## Automated regression tests (pytest)
+
+```
+py -m pytest tests                  # full suite (takes a while: MP4/HPOP tests)
+py -m pytest tests -m "not hpop"    # skip the Orekit-based tests
+py -m pytest tests -k sat_thermal   # a single test
+py -m pytest tests --update-golden  # refresh the golden CSVs from this run
+```
+
+Each test runs its `Config.xml` through the simulator (into a scratch output
+directory, via the `main.py <config> --output-dir <dir>` command line) and
+compares every produced CSV data dump against the golden copy in the test
+folder, number by number with tolerances (rtol 1e-6). Comparing the numeric
+dumps instead of the PNGs keeps the tests robust against matplotlib/cartopy
+version changes. A test folder without golden CSVs is skipped with a hint.
+
+## Refreshing the reference outputs
 
 ```
 py tests/run_test.py <test_name> [more names...]
+py tests/run_test.py --all
 ```
 
-The runner copies the test `Config.xml` to `input/Config.xml`, runs
-`python main.py` from `src/` headless (MPLBACKEND=Agg), and copies every output
-file the run touched back into the test folder. `tests/make_configs.py`
-regenerates all test configs from scratch.
+The runner executes `python main.py <config> --output-dir <scratch>` from
+`src/` headless (MPLBACKEND=Agg) and copies every produced output file (plots,
+CSV dumps, movies, main.log) into the test folder — i.e. it refreshes both the
+golden CSVs and the reference plots. `tests/make_configs.py` regenerates all
+test configs from scratch.
 
 ## Scenarios
 
@@ -41,6 +60,8 @@ regenerates all test configs from scratch.
 | orb_disturbance_forces | Same 250 km LEO/HPOP scenario, 1 day — per-epoch magnitude of every enabled perturbation |
 | orb_pole_wobble | 700 km SSO, light HPOP force model, 60 days at 1800 s — IERS polar motion |
 | orb_deltav_element | 250 km LEO/HPOP with drag, 2 days — altitude kept at 240 km mean +/- 1 km deadband |
+| sat_thermal | 700 km SSO satellite, RAAN 140 deg (beta ~0 for max eclipses), 1 day at 60 s — single-node thermal balance with per-orbit eclipse saw-tooth |
+| sat_aocs | Same 700 km SSO scenario — worst-case disturbance torques (magnetic dominant at 700 km) and momentum buildup |
 | multi_analysis | GPS constellation, static users (Delft, Singapore): cov_satellite_visible plus cov_satellite_sky_angles for SV1 and SV7, all three in a single run (the repeated type writes cov_satellite_sky_angles_2.png) |
 | hpop_benchmark | TerraSAR-X TLE propagated with HPOP through cov_satellite_pvt; benchmarked by benchmark_hpop.py against a two-body analytic orbit and the SGP4 reference trajectory (reference_orbit_sgp4.txt, regenerated with Config_sgp4_reference.xml) |
 
@@ -62,8 +83,8 @@ regenerates all test configs from scratch.
 | obs_swath_push_broom (+revisit) | Smooth 400 km semi-transparent ribbon strips + revisit latitude profile (max=mean after 1 day: single gap per point); NetCDF export works; 3D swath ribbon render (Plot3D) in obs_swath_push_broom_3d.png |
 | obs_sza_push_broom | Mean SZA in swath, N–S gradient |
 | obs_sza_subsat (+lat, +lat_year) | Dawn-dusk daylight SZA, plots labelled |
-| com_gr2sp_budget | C/N0 95–110 dBHz vs required, ITU-R attenuations |
-| com_gr2sp_budget_interference | C/N0 with/without interferer, antenna patterns |
+| com_gr2sp_budget | C/N0 vs required with the GRASP antenna patterns (isoflux Tx .cut, 3 m dish Rx .grd): realistic elevation-dependent margin crossings; pattern verification plot in _antenna.png |
+| com_gr2sp_budget_interference | C/N0 with/without interferer; nominal gains at the GRASP pattern peaks (34.5/63.2 dBi), interferer discriminated through the actual pattern sidelobes |
 | com_sp2sp_budget | Constant co-planar ISL geometry, FSL 202.5 dB |
 | com_doppler | ±180 kHz Doppler S-curves at 8.025 GHz |
 | nav_dilution_of_precision | Max VDOP 1.8–5.2 worldwide |
@@ -77,6 +98,8 @@ regenerates all test configs from scratch.
 | orb_disturbance_forces | Textbook hierarchy at 250 km: J2 ~2e-2, drag ~2e-5, Moon > Sun > solid tides ~1e-6..5e-7, SRP square wave dropping to zero in eclipse, central gravity 9 m/s2 reference |
 | orb_pole_wobble | xp 0.09→0.13, yp 0.36→0.41 arcsec over 60 days — arc of the annual/Chandler circle with sub-daily EOP loops |
 | orb_deltav_element | Controlled altitude saw-tooths inside the deadband (8 boost maneuvers of 0.59 m/s = v·da/2a) while the uncontrolled orbit decays to 231 km; 4.7 m/s in 2 days = 887 m/s/year, consistent with the drag makeup rate |
+| sat_thermal | Per-orbit temperature saw-tooth −63..−21 degC between the eclipse cooling and sunlit heating, converging to a limit cycle from the first-epoch equilibrium; hot/cold case equilibria −11/−63 degC match the (Q/εσA)^0.25 hand calculation |
+| sat_aocs | Textbook torque hierarchy at 700 km: magnetic ~4.6e-5 N m dominant (two peaks per orbit at the magnetic poles), SRP 3.7e-6 dropping to zero in eclipse, gravity gradient 2.4e-6 constant, aero 1.2e-6; momentum ramp 0.24 N m s/orbit |
 | multi_analysis | Three analyses in one run: cov_satellite_visible plus sky angles for SV1 and SV7 with independent metric memory (different pass patterns per satellite); repeated type numbered as cov_satellite_sky_angles_2.png |
 | hpop_benchmark | Two-body HPOP vs analytic Kepler: max 0.024 m/day (PASS); full-force HPOP vs SGP4 reference: RMS 6.7 km, max 10.8 km/day (PASS) |
 

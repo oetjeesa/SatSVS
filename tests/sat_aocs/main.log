@@ -1,0 +1,29 @@
+2026-07-13 19:58:15,982 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\sat_aocs\Config.xml validated: 0 warning(s), no errors
+2026-07-13 19:58:15,983 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-13 19:58:15,983 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000001E596CC9400>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-13 19:58:16,167 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-13 19:58:16,169 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001E5E5270690>}
+2026-07-13 19:58:16,170 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
+2026-07-13 19:58:16,170 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-13 19:58:16,170 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-13 19:58:16,170 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-13 19:58:16,170 - main - INFO - AOCS analysis: inertia [100. 120.  80.] kg m2, dipole 1.0 A m2, drag area 2.5 m2, CoP offset 0.2 m
+2026-07-13 19:58:16,170 - main - INFO - Finished reading configuration file
+2026-07-13 19:58:16,183 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-13 19:58:16,318 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
+2026-07-13 19:58:16,400 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
+2026-07-13 19:58:16,483 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
+2026-07-13 19:58:16,563 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
+2026-07-13 19:58:16,645 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
+2026-07-13 19:58:16,722 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
+2026-07-13 19:58:16,804 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
+2026-07-13 19:58:16,885 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
+2026-07-13 19:58:16,964 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
+2026-07-13 19:58:17,041 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
+2026-07-13 19:58:17,120 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
+2026-07-13 19:58:17,199 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
+2026-07-13 19:58:17,279 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
+2026-07-13 19:58:17,361 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
+2026-07-13 19:58:17,394 - main - INFO - Plotting analysis sat_aocs
+2026-07-13 19:58:17,394 - main - INFO - sat_aocs: worst-case torques [N m] gravity gradient 2.36e-06, aero 1.24e-06, SRP 3.65e-06, magnetic 4.57e-05; momentum buildup 0.240 N m s/orbit, 3.50 N m s/day
+2026-07-13 19:58:17,633 - main - INFO - Written data dump sat_aocs.csv (1440 rows)

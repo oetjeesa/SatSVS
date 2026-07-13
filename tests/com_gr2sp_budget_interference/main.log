@@ -1,26 +1,31 @@
-2026-07-05 11:23:53,650 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 2, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
-2026-07-05 11:23:53,650 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x00000228238BC2F0>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'metric': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
-2026-07-05 11:23:53,652 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 2, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000002282375F9D0>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'metric': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
-2026-07-05 11:23:53,824 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-05 11:23:53,825 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000002282375FC50>, 'metric': []}
-2026-07-05 11:23:53,826 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
-2026-07-05 11:23:53,826 - main - INFO - Loaded 2 number of Station to Spacecraft links
-2026-07-05 11:23:53,826 - main - INFO - Loaded 2 number of User to Spacecraft links
-2026-07-05 11:23:53,826 - main - INFO - Loaded 4 number of Spacecraft to Spacecraft links
-2026-07-05 11:23:53,827 - main - INFO - Finished reading configuration file
-2026-07-05 11:23:53,841 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
-2026-07-05 11:23:55,146 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
-2026-07-05 11:23:55,206 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
-2026-07-05 11:23:55,270 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
-2026-07-05 11:23:55,318 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
-2026-07-05 11:23:55,365 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
-2026-07-05 11:23:55,432 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
-2026-07-05 11:23:55,495 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
-2026-07-05 11:23:55,552 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
-2026-07-05 11:23:55,589 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
-2026-07-05 11:23:55,629 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
-2026-07-05 11:23:55,666 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
-2026-07-05 11:23:55,707 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
-2026-07-05 11:23:55,731 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
-2026-07-05 11:23:55,752 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
-2026-07-05 11:23:55,766 - main - INFO - Plotting analysis com_gr2sp_budget_interference
+2026-07-13 19:50:39,310 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\com_gr2sp_budget_interference\Config.xml validated: 0 warning(s), no errors
+2026-07-13 19:50:39,310 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 2, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-13 19:50:39,311 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000001F9C810D2B0>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-13 19:50:39,321 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 2, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000001F9C7FD2FD0>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-13 19:50:39,494 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-13 19:50:39,495 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001F99678C690>}
+2026-07-13 19:50:39,496 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
+2026-07-13 19:50:39,497 - main - INFO - Loaded 2 number of Station to Spacecraft links
+2026-07-13 19:50:39,497 - main - INFO - Loaded 2 number of User to Spacecraft links
+2026-07-13 19:50:39,497 - main - INFO - Loaded 4 number of Spacecraft to Spacecraft links
+2026-07-13 19:50:39,552 - main - INFO - Loaded antenna pattern dish_ka_band_25cm.cut: peak 34.5 dBi, theta 0.0..90.0 deg (1801 points)
+2026-07-13 19:50:39,591 - main - INFO - Loaded antenna pattern dish_ka_band_6_8m.cut: peak 63.2 dBi, theta 0.0..90.0 deg (9001 points)
+2026-07-13 19:50:39,675 - main - INFO - Saved antenna pattern plot to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_com_gr2sp_budget_interference_s7hggppw\com_gr2sp_budget_interference_antenna.png
+2026-07-13 19:50:39,675 - main - INFO - Finished reading configuration file
+2026-07-13 19:50:39,689 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-13 19:50:40,919 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
+2026-07-13 19:50:40,940 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
+2026-07-13 19:50:40,971 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
+2026-07-13 19:50:41,011 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
+2026-07-13 19:50:41,075 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
+2026-07-13 19:50:41,140 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
+2026-07-13 19:50:41,175 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
+2026-07-13 19:50:41,216 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
+2026-07-13 19:50:41,253 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
+2026-07-13 19:50:41,296 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
+2026-07-13 19:50:41,335 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
+2026-07-13 19:50:41,374 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
+2026-07-13 19:50:41,399 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
+2026-07-13 19:50:41,416 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
+2026-07-13 19:50:41,430 - main - INFO - Plotting analysis com_gr2sp_budget_interference
+2026-07-13 19:50:41,579 - main - INFO - Written data dump com_gr2sp_budget_interference.csv (139 rows)

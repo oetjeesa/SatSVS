@@ -1,29 +1,31 @@
-2026-07-10 01:14:51,553 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
-2026-07-10 01:14:51,553 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000001F5BEC54D70>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
-2026-07-10 01:14:51,739 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-10 01:14:51,740 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001F5BEB334D0>}
-2026-07-10 01:14:51,742 - main - INFO - HPOP configuration: {'integrator_min_step': 0.001, 'integrator_max_step': 300.0, 'integrator_position_tolerance': 1.0, 'mass': 500.0, 'geopotential': True, 'geopotential_degree': 21, 'geopotential_order': 21, 'earth_pole_rotation': True, 'drag': True, 'drag_area': 3.2, 'drag_cd': 2.2, 'drag_model': 'NRLMSISE00', 'solar_radiation_pressure': True, 'srp_area': 3.2, 'srp_cr': 1.5, 'third_body_sun': True, 'third_body_moon': True, 'third_body_planets': False, 'solid_tides': True, 'ocean_tides': False, 'ocean_tides_degree': 4, 'ocean_tides_order': 4, 'relativity': False}
-2026-07-10 01:14:51,742 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
-2026-07-10 01:14:51,742 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-10 01:14:51,743 - main - INFO - Loaded 1 number of User to Spacecraft links
-2026-07-10 01:14:51,743 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-10 01:14:52,503 - main - INFO - HPOP: Orekit JVM started and physical data loaded
-2026-07-10 01:15:06,983 - main - INFO - HPOP: generated dense ephemerides for 1 satellite(s) from MJD 61072.0 to 61073.0
-2026-07-10 01:15:07,307 - main - INFO - Disturbance forces evaluated for satellite 1: Central gravity, Geopotential harmonics, Drag, Solar radiation pressure, Third body Sun, Third body Moon, Solid tides
-2026-07-10 01:15:07,307 - main - INFO - Finished reading configuration file
-2026-07-10 01:15:07,322 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
-2026-07-10 01:15:07,451 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
-2026-07-10 01:15:07,473 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
-2026-07-10 01:15:07,569 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
-2026-07-10 01:15:07,591 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
-2026-07-10 01:15:07,614 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
-2026-07-10 01:15:07,637 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
-2026-07-10 01:15:07,660 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
-2026-07-10 01:15:07,683 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
-2026-07-10 01:15:07,707 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
-2026-07-10 01:15:07,728 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
-2026-07-10 01:15:07,750 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
-2026-07-10 01:15:07,775 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
-2026-07-10 01:15:07,955 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
-2026-07-10 01:15:07,978 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
-2026-07-10 01:15:07,987 - main - INFO - Plotting analysis orb_disturbance_forces
+2026-07-13 19:57:06,709 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\orb_disturbance_forces\Config.xml validated: 0 warning(s), no errors
+2026-07-13 19:57:06,709 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-13 19:57:06,709 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x0000017CED1DD2B0>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-13 19:57:06,897 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-13 19:57:06,898 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x0000017CBB7B0690>}
+2026-07-13 19:57:06,900 - main - INFO - HPOP configuration: {'integrator_min_step': 0.001, 'integrator_max_step': 300.0, 'integrator_position_tolerance': 1.0, 'mass': 500.0, 'geopotential': True, 'geopotential_degree': 21, 'geopotential_order': 21, 'earth_pole_rotation': True, 'drag': True, 'drag_area': 3.2, 'drag_cd': 2.2, 'drag_model': 'NRLMSISE00', 'solar_radiation_pressure': True, 'srp_area': 3.2, 'srp_cr': 1.5, 'third_body_sun': True, 'third_body_moon': True, 'third_body_planets': False, 'solid_tides': True, 'ocean_tides': False, 'ocean_tides_degree': 4, 'ocean_tides_order': 4, 'relativity': False}
+2026-07-13 19:57:06,900 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
+2026-07-13 19:57:06,900 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-13 19:57:06,900 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-13 19:57:06,900 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-13 19:57:07,682 - main - INFO - HPOP: Orekit JVM started and physical data loaded
+2026-07-13 19:57:21,483 - main - INFO - HPOP: generated dense ephemerides for 1 satellite(s) from MJD 61072.0 to 61073.0
+2026-07-13 19:57:21,845 - main - INFO - Disturbance forces evaluated for satellite 1: Central gravity, Geopotential harmonics, Drag, Solar radiation pressure, Third body Sun, Third body Moon, Solid tides
+2026-07-13 19:57:21,845 - main - INFO - Finished reading configuration file
+2026-07-13 19:57:21,860 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-13 19:57:21,984 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
+2026-07-13 19:57:22,013 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
+2026-07-13 19:57:22,040 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
+2026-07-13 19:57:22,062 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
+2026-07-13 19:57:22,083 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
+2026-07-13 19:57:22,103 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
+2026-07-13 19:57:22,253 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
+2026-07-13 19:57:22,273 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
+2026-07-13 19:57:22,297 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
+2026-07-13 19:57:22,318 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
+2026-07-13 19:57:22,402 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
+2026-07-13 19:57:22,421 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
+2026-07-13 19:57:22,440 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
+2026-07-13 19:57:22,460 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
+2026-07-13 19:57:22,536 - main - INFO - Plotting analysis orb_disturbance_forces
+2026-07-13 19:57:22,755 - main - INFO - Written data dump orb_disturbance_forces.csv (1440 rows)

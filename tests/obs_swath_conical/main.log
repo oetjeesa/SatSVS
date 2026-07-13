@@ -1,45 +1,49 @@
-2026-07-10 01:08:51,755 - main - INFO - {'constellation_id': 1, 'constellation_name': 'MetOp-A', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_swath_conical/metop_a.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': 650000.0, 'frontal_area': None, 'mass': None}
-2026-07-10 01:08:51,756 - main - INFO - ['Found satellite:', '29499', 'Kepler Elements', "{'epoch_mjd': 58378.6172223, 'semi_major_axis': 7198353.8526316015, 'eccentricity': 4.53e-05, 'inclination': 1.721191348439248, 'right_ascension': 5.514839010574122, 'arg_perigee': 0.844564825040056, 'mean_anomaly': 1.8728430071450353}"]
-2026-07-10 01:08:51,947 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-10 01:08:52,421 - main - INFO - {'type': 'Grid', 'user_id': 16470, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.0], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-3.91862092e-10,  4.79892657e-26,  6.35675231e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.57079633, 3.14159265, 0.        ]), 'num_lat': 91, 'num_lon': 181, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001A29D96F250>, 'UserName': 'Grid'}
-2026-07-10 01:08:52,423 - main - INFO - Loaded simulation, start MJD: 58379.0, stop MJD: 58380.0, size time steps in sec: 60.0
-2026-07-10 01:08:52,423 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-10 01:08:52,437 - main - INFO - Loaded 16471 number of User to Spacecraft links
-2026-07-10 01:08:52,437 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-10 01:08:52,484 - main - INFO - Finished reading configuration file
-2026-07-10 01:08:52,500 - main - INFO - Simulation time: 2018-09-18 00:00:00, time step: 0
-2026-07-10 01:08:52,677 - main - INFO - Simulation time: 2018-09-18 01:40:00, time step: 100
-2026-07-10 01:08:52,763 - main - INFO - Simulation time: 2018-09-18 03:20:00, time step: 200
-2026-07-10 01:08:52,847 - main - INFO - Simulation time: 2018-09-18 05:00:00, time step: 300
-2026-07-10 01:08:52,932 - main - INFO - Simulation time: 2018-09-18 06:40:00, time step: 400
-2026-07-10 01:08:53,009 - main - INFO - Simulation time: 2018-09-18 08:20:00, time step: 500
-2026-07-10 01:08:53,094 - main - INFO - Simulation time: 2018-09-18 10:00:00, time step: 600
-2026-07-10 01:08:53,168 - main - INFO - Simulation time: 2018-09-18 11:40:00, time step: 700
-2026-07-10 01:08:53,244 - main - INFO - Simulation time: 2018-09-18 13:20:00, time step: 800
-2026-07-10 01:08:53,336 - main - INFO - Simulation time: 2018-09-18 15:00:00, time step: 900
-2026-07-10 01:08:53,413 - main - INFO - Simulation time: 2018-09-18 16:40:00, time step: 1000
-2026-07-10 01:08:53,510 - main - INFO - Simulation time: 2018-09-18 18:20:00, time step: 1100
-2026-07-10 01:08:53,589 - main - INFO - Simulation time: 2018-09-18 20:00:00, time step: 1200
-2026-07-10 01:08:53,670 - main - INFO - Simulation time: 2018-09-18 21:40:00, time step: 1300
-2026-07-10 01:08:53,761 - main - INFO - Simulation time: 2018-09-18 23:20:00, time step: 1400
-2026-07-10 01:08:53,792 - main - INFO - Plotting analysis obs_swath_conical
-2026-07-10 01:08:54,437 - main - INFO - User revisit 0 of 16471
-2026-07-10 01:08:54,444 - main - INFO - User revisit 1000 of 16471
-2026-07-10 01:08:54,456 - main - INFO - User revisit 2000 of 16471
-2026-07-10 01:08:54,467 - main - INFO - User revisit 3000 of 16471
-2026-07-10 01:08:54,474 - main - INFO - User revisit 4000 of 16471
-2026-07-10 01:08:54,477 - main - INFO - User revisit 5000 of 16471
-2026-07-10 01:08:54,482 - main - INFO - User revisit 6000 of 16471
-2026-07-10 01:08:54,486 - main - INFO - User revisit 7000 of 16471
-2026-07-10 01:08:54,487 - main - INFO - User revisit 8000 of 16471
-2026-07-10 01:08:54,488 - main - INFO - User revisit 9000 of 16471
-2026-07-10 01:08:54,491 - main - INFO - User revisit 10000 of 16471
-2026-07-10 01:08:54,495 - main - INFO - User revisit 11000 of 16471
-2026-07-10 01:08:54,499 - main - INFO - User revisit 12000 of 16471
-2026-07-10 01:08:54,504 - main - INFO - User revisit 13000 of 16471
-2026-07-10 01:08:54,512 - main - INFO - User revisit 14000 of 16471
-2026-07-10 01:08:54,524 - main - INFO - User revisit 15000 of 16471
-2026-07-10 01:08:54,534 - main - INFO - User revisit 16000 of 16471
-2026-07-10 01:08:56,605 - main - INFO - Saved 3D plot to ../output/obs_swath_conical_3d.png
-2026-07-10 01:09:46,607 - main - INFO - Saved 2D movie to ../output/obs_swath_conical_2d.mp4
-2026-07-10 01:09:57,249 - main - INFO - Saved 3D movie to ../output/obs_swath_conical_3d.mp4
+2026-07-13 19:54:34,676 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\obs_swath_conical\Config.xml validated: 0 warning(s), no errors
+2026-07-13 19:54:34,677 - main - INFO - {'constellation_id': 1, 'constellation_name': 'MetOp-A', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_swath_conical/metop_a.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': 650000.0, 'frontal_area': None, 'mass': None}
+2026-07-13 19:54:34,709 - main - INFO - ['Found satellite:', '29499', 'Kepler Elements', "{'epoch_mjd': 58378.6172223, 'semi_major_axis': 7198353.8526316015, 'eccentricity': 4.53e-05, 'inclination': 1.721191348439248, 'right_ascension': 5.514839010574122, 'arg_perigee': 0.844564825040056, 'mean_anomaly': 1.8728430071450353}"]
+2026-07-13 19:54:34,902 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-13 19:54:35,314 - main - INFO - {'type': 'Grid', 'user_id': 16470, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.0], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-3.91862092e-10,  4.79892657e-26,  6.35675231e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.57079633, 3.14159265, 0.        ]), 'num_lat': 91, 'num_lon': 181, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001F834110690>, 'UserName': 'Grid'}
+2026-07-13 19:54:35,316 - main - INFO - Loaded simulation, start MJD: 58379.0, stop MJD: 58380.0, size time steps in sec: 60.0
+2026-07-13 19:54:35,316 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-13 19:54:35,328 - main - INFO - Loaded 16471 number of User to Spacecraft links
+2026-07-13 19:54:35,328 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-13 19:54:35,408 - main - INFO - Finished reading configuration file
+2026-07-13 19:54:35,422 - main - INFO - Simulation time: 2018-09-18 00:00:00, time step: 0
+2026-07-13 19:54:36,487 - main - INFO - Simulation time: 2018-09-18 01:40:00, time step: 100
+2026-07-13 19:54:36,547 - main - INFO - Simulation time: 2018-09-18 03:20:00, time step: 200
+2026-07-13 19:54:36,606 - main - INFO - Simulation time: 2018-09-18 05:00:00, time step: 300
+2026-07-13 19:54:36,683 - main - INFO - Simulation time: 2018-09-18 06:40:00, time step: 400
+2026-07-13 19:54:36,744 - main - INFO - Simulation time: 2018-09-18 08:20:00, time step: 500
+2026-07-13 19:54:36,818 - main - INFO - Simulation time: 2018-09-18 10:00:00, time step: 600
+2026-07-13 19:54:36,883 - main - INFO - Simulation time: 2018-09-18 11:40:00, time step: 700
+2026-07-13 19:54:36,945 - main - INFO - Simulation time: 2018-09-18 13:20:00, time step: 800
+2026-07-13 19:54:37,010 - main - INFO - Simulation time: 2018-09-18 15:00:00, time step: 900
+2026-07-13 19:54:37,077 - main - INFO - Simulation time: 2018-09-18 16:40:00, time step: 1000
+2026-07-13 19:54:37,144 - main - INFO - Simulation time: 2018-09-18 18:20:00, time step: 1100
+2026-07-13 19:54:37,216 - main - INFO - Simulation time: 2018-09-18 20:00:00, time step: 1200
+2026-07-13 19:54:37,283 - main - INFO - Simulation time: 2018-09-18 21:40:00, time step: 1300
+2026-07-13 19:54:37,345 - main - INFO - Simulation time: 2018-09-18 23:20:00, time step: 1400
+2026-07-13 19:54:37,371 - main - INFO - Plotting analysis obs_swath_conical
+2026-07-13 19:54:37,455 - main - INFO - Written data dump obs_swath_conical.csv (16471 rows)
+2026-07-13 19:54:38,072 - main - INFO - User revisit 0 of 16471
+2026-07-13 19:54:38,078 - main - INFO - User revisit 1000 of 16471
+2026-07-13 19:54:38,088 - main - INFO - User revisit 2000 of 16471
+2026-07-13 19:54:38,098 - main - INFO - User revisit 3000 of 16471
+2026-07-13 19:54:38,104 - main - INFO - User revisit 4000 of 16471
+2026-07-13 19:54:38,113 - main - INFO - User revisit 5000 of 16471
+2026-07-13 19:54:38,119 - main - INFO - User revisit 6000 of 16471
+2026-07-13 19:54:38,128 - main - INFO - User revisit 7000 of 16471
+2026-07-13 19:54:38,130 - main - INFO - User revisit 8000 of 16471
+2026-07-13 19:54:38,131 - main - INFO - User revisit 9000 of 16471
+2026-07-13 19:54:38,134 - main - INFO - User revisit 10000 of 16471
+2026-07-13 19:54:38,137 - main - INFO - User revisit 11000 of 16471
+2026-07-13 19:54:38,142 - main - INFO - User revisit 12000 of 16471
+2026-07-13 19:54:38,146 - main - INFO - User revisit 13000 of 16471
+2026-07-13 19:54:38,154 - main - INFO - User revisit 14000 of 16471
+2026-07-13 19:54:38,164 - main - INFO - User revisit 15000 of 16471
+2026-07-13 19:54:38,175 - main - INFO - User revisit 16000 of 16471
+2026-07-13 19:54:38,191 - main - INFO - Written data dump obs_swath_conical_revisit.csv (8822 rows)
+2026-07-13 19:54:38,950 - main - INFO - Written data dump obs_swath_conical_revisit_lat.csv (87 rows)
+2026-07-13 19:54:41,593 - main - INFO - Saved 3D plot to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_obs_swath_conical_2ed8chpg\obs_swath_conical_3d.png
+2026-07-13 19:55:30,701 - main - INFO - Saved 2D movie to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_obs_swath_conical_2ed8chpg\obs_swath_conical_2d.mp4
+2026-07-13 19:55:44,887 - main - INFO - Saved 3D movie to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_obs_swath_conical_2ed8chpg\obs_swath_conical_3d.mp4

@@ -311,10 +311,12 @@ write_test('com_gr2sp_budget', config(
     '      <GroundStationID>1</GroundStationID>\n'
     '      <TransmitterObject>Satellite</TransmitterObject>\n'
     '      <CarrierFrequency>8.025e9</CarrierFrequency>\n'
-    '      <TransmitPowerW>10</TransmitPowerW>\n'
+    '      <TransmitPowerW>20</TransmitPowerW>\n'
     '      <TransmitLossesdB>2</TransmitLossesdB>\n'
     '      <TransmitGaindB>20</TransmitGaindB>\n'
+    '      <TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>\n'
     '      <ReceiveGaindB>45</ReceiveGaindB>\n'
+    '      <ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_x_band_3m.grd</ReceiveAntennaPatternFile>\n'
     '      <ReceiveLossesdB>3</ReceiveLossesdB>\n'
     '      <ReceiveTempK>200</ReceiveTempK>\n'
     '      <PExceedPerc>0.5</PExceedPerc>\n'
@@ -324,7 +326,7 @@ write_test('com_gr2sp_budget', config(
     '      <IncludeClouds>False</IncludeClouds>\n'
     '      <ModulationType>QPSK</ModulationType>\n'
     '      <BitErrorRate>1e-5</BitErrorRate>\n'
-    '      <DataRateBitPerSec>300e6</DataRateBitPerSec>',
+    '      <DataRateBitPerSec>100e6</DataRateBitPerSec>',
     propagator='SGP4'), tle='terrasarx.txt')
 
 write_test('com_gr2sp_budget_interference', config(
@@ -339,8 +341,10 @@ write_test('com_gr2sp_budget_interference', config(
     '      <TransmitLossesdB>5</TransmitLossesdB>\n'
     '      <TransmitGaindB>33</TransmitGaindB>\n'
     '      <TransmitAntennaDiameter>0.25</TransmitAntennaDiameter>\n'
+    '      <TransmitAntennaPatternFile>../input/example_antenna_patterns/dish_ka_band_25cm.cut</TransmitAntennaPatternFile>\n'
     '      <ReceiveGaindB>64</ReceiveGaindB>\n'
     '      <ReceiveAntennaDiameter>6.8</ReceiveAntennaDiameter>\n'
+    '      <ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_ka_band_6_8m.cut</ReceiveAntennaPatternFile>\n'
     '      <ReceiveLossesdB>3</ReceiveLossesdB>\n'
     '      <ReceiveTempK>290</ReceiveTempK>\n'
     '      <PExceedPerc>0.5</PExceedPerc>\n'
@@ -546,6 +550,40 @@ write_test('dat_latency', config(
     '      <DownlinkRateMbps>1070</DownlinkRateMbps>\n'
     '      <PayloadLatitudeLimit>60</PayloadLatitudeLimit>\n'
     '      <GroundProcessingMin>15</GroundProcessingMin>'))
+
+# --------------------------------------------------------- satellite platform
+write_test('sat_thermal', config(
+    # Same SSO/eclipse scenario as pow_eclipse_duration: the eclipses drive
+    # the per-orbit temperature saw-tooth
+    sso_constellation(raan=140.0), ground_segment(['Svalbard']), static_users(DELFT),
+    *FEB26, 60,
+    '      <Type>sat_thermal</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <SurfaceArea>6.0</SurfaceArea>\n'
+    '      <CrossSectionSun>1.5</CrossSectionSun>\n'
+    '      <CrossSectionEarth>1.5</CrossSectionEarth>\n'
+    '      <Absorptivity>0.3</Absorptivity>\n'
+    '      <Emissivity>0.8</Emissivity>\n'
+    '      <InternalPowerW>300</InternalPowerW>\n'
+    '      <HeatCapacity>50000</HeatCapacity>'))
+
+write_test('sat_aocs', config(
+    sso_constellation(raan=140.0), ground_segment(['Svalbard']), static_users(DELFT),
+    *FEB26, 60,
+    '      <Type>sat_aocs</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <InertiaXX>100</InertiaXX>\n'
+    '      <InertiaYY>120</InertiaYY>\n'
+    '      <InertiaZZ>80</InertiaZZ>\n'
+    '      <MaxPointingOffset>1.0</MaxPointingOffset>\n'
+    '      <ResidualDipole>1.0</ResidualDipole>\n'
+    '      <DragArea>2.5</DragArea>\n'
+    '      <DragCoefficient>2.2</DragCoefficient>\n'
+    '      <SrpArea>2.5</SrpArea>\n'
+    '      <Reflectivity>0.6</Reflectivity>\n'
+    '      <CopOffset>0.2</CopOffset>'))
 
 # ------------------------------------------------- multiple analyses per run
 # Three analyses in one simulation, incl. a repeated type (sky angles for two

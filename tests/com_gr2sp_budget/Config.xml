@@ -52,10 +52,12 @@
       <GroundStationID>1</GroundStationID>
       <TransmitterObject>Satellite</TransmitterObject>
       <CarrierFrequency>8.025e9</CarrierFrequency>
-      <TransmitPowerW>10</TransmitPowerW>
+      <TransmitPowerW>20</TransmitPowerW>
       <TransmitLossesdB>2</TransmitLossesdB>
       <TransmitGaindB>20</TransmitGaindB>
+      <TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>
       <ReceiveGaindB>45</ReceiveGaindB>
+      <ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_x_band_3m.grd</ReceiveAntennaPatternFile>
       <ReceiveLossesdB>3</ReceiveLossesdB>
       <ReceiveTempK>200</ReceiveTempK>
       <PExceedPerc>0.5</PExceedPerc>
@@ -65,7 +67,7 @@
       <IncludeClouds>False</IncludeClouds>
       <ModulationType>QPSK</ModulationType>
       <BitErrorRate>1e-5</BitErrorRate>
-      <DataRateBitPerSec>300e6</DataRateBitPerSec>
+      <DataRateBitPerSec>100e6</DataRateBitPerSec>
     </Analysis>
   </SimulationManager>
 </Scenario>
