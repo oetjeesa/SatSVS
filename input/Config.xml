@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--Simulation Scenario-->
+<!--Mission: Earth Explorer 11 Wivern (conically scanning W-band Doppler
+    radar for in-cloud winds, dawn-dusk SSO). ~800 km conical scan swath.
+    Representative public orbit and instrument values; reduce the user grid or
+    the simulation window for quick looks.-->
 <Scenario>
   <SpaceSegment>
     <Constellation>
       <ConstellationID>1</ConstellationID>
       <NumOfSatellites>1</NumOfSatellites>
       <NumOfPlanes>1</NumOfPlanes>
-      <ConstellationName>LEO-SSO</ConstellationName>
+      <ConstellationName>Wivern</ConstellationName>
       <ReceiverConstellation>1</ReceiverConstellation>
+      <ObsSwathStop>400000.0</ObsSwathStop>
       <Satellite>
         <SatelliteID>1</SatelliteID>
         <Plane>1</Plane>
         <EpochMJD>61072.0</EpochMJD>
-        <SemiMajorAxis>6628137</SemiMajorAxis>
+        <Altitude>500000</Altitude>
         <Eccentricity>0.001</Eccentricity>
-        <Inclination>96.5</Inclination>
-        <RAAN>140.0</RAAN>
+        <LTAN>6.0</LTAN>
         <ArgOfPerigee>0.0</ArgOfPerigee>
         <MeanAnomaly>0.0</MeanAnomaly>
       </Satellite>
@@ -23,16 +26,27 @@
   </SpaceSegment>
   <GroundSegment>
     <Network>
-      <NumStation>1</NumStation>
-      <NetworkName>Net1</NetworkName>
+      <NumStation>2</NumStation>
+      <NetworkName>Polar</NetworkName>
     <GroundStation>
       <Type>Downlink</Type>
       <ConstellationID>1</ConstellationID>
       <GroundStationID>1</GroundStationID>
       <GroundStationName>Svalbard</GroundStationName>
-      <Latitude>77.875</Latitude>
-      <Longitude>20.9752</Longitude>
-      <Height>0</Height>
+      <Latitude>78.2297</Latitude>
+      <Longitude>15.4077</Longitude>
+      <Height>450</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>5</ElevationMask>
+    </GroundStation>
+    <GroundStation>
+      <Type>Downlink</Type>
+      <ConstellationID>1</ConstellationID>
+      <GroundStationID>2</GroundStationID>
+      <GroundStationName>Kiruna</GroundStationName>
+      <Latitude>67.8571</Latitude>
+      <Longitude>20.9643</Longitude>
+      <Height>402</Height>
       <ReceiverConstellation>1</ReceiverConstellation>
       <ElevationMask>5</ElevationMask>
     </GroundStation>
@@ -40,53 +54,31 @@
   </GroundSegment>
   <UserSegment>
     <User>
-      <Type>Static</Type>
-      <Latitude>52.0</Latitude>
-      <Longitude>4.36</Longitude>
+      <Type>Grid</Type>
+      <LatMin>-85</LatMin>
+      <LatMax>85</LatMax>
+      <LonMin>-180</LonMin>
+      <LonMax>180</LonMax>
+      <LatStep>2</LatStep>
+      <LonStep>2</LonStep>
       <Height>0</Height>
       <ReceiverConstellation>1</ReceiverConstellation>
-      <ElevationMask>5</ElevationMask>
+      <ElevationMask>0</ElevationMask>
     </User>
   </UserSegment>
   <SimulationManager>
     <StartDate>2026-02-01 00:00:00</StartDate>
-    <StopDate>2026-02-03 00:00:00</StopDate>
+    <StopDate>2026-02-04 00:00:00</StopDate>
     <TimeStep>60</TimeStep>
     <IncludeStation2SpaceLinks>False</IncludeStation2SpaceLinks>
     <IncludeUser2SpaceLinks>False</IncludeUser2SpaceLinks>
     <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
     <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
-    <OrbitPropagator>HPOP</OrbitPropagator>
-    <HPOP>
-      <IntegratorMinStep>0.001</IntegratorMinStep>
-      <IntegratorMaxStep>300</IntegratorMaxStep>
-      <IntegratorPositionTolerance>1.0</IntegratorPositionTolerance>
-      <Mass>500.0</Mass>
-      <Geopotential>True</Geopotential>
-      <GeopotentialDegree>21</GeopotentialDegree>
-      <GeopotentialOrder>21</GeopotentialOrder>
-      <EarthPoleRotation>True</EarthPoleRotation>
-      <Drag>True</Drag>
-      <DragArea>3.2</DragArea>
-      <DragCd>2.2</DragCd>
-      <DragModel>NRLMSISE00</DragModel>
-      <SolarRadiationPressure>True</SolarRadiationPressure>
-      <SRPArea>3.2</SRPArea>
-      <SRPCr>1.5</SRPCr>
-      <ThirdBodySun>True</ThirdBodySun>
-      <ThirdBodyMoon>True</ThirdBodyMoon>
-      <ThirdBodyPlanets>False</ThirdBodyPlanets>
-      <SolidTides>True</SolidTides>
-      <OceanTides>False</OceanTides>
-      <Relativity>False</Relativity>
-    </HPOP>
+    <OrbitPropagator>Keplerian</OrbitPropagator>
     <Analysis>
-      <Type>orb_deltav_element</Type>
-      <ConstellationID>1</ConstellationID>
-      <SatelliteID>1</SatelliteID>
-      <TargetType>Altitude</TargetType>
-      <TargetValue>240000</TargetValue>
-      <DeadBand>1000</DeadBand>
+      <Type>obs_swath_conical</Type>
+      <Revisit>True</Revisit>
+      <Statistic>Mean</Statistic>
     </Analysis>
   </SimulationManager>
 </Scenario>

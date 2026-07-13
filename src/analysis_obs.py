@@ -123,10 +123,11 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
     def after_loop(self, sm):
 
         if self.save_output=='numpy':
-            np.save('../output/user_cov_swath', self.user_metric)  # Save to numpy array
+            np.save(sm.output_path('user_cov_swath'), self.user_metric)  # Save to numpy array
         if self.save_output=='netcdf':
-            self.export2nc(sm, '../output/user_cov_swath.nc')  # Save to netcdf file
+            self.export2nc(sm, sm.output_path('user_cov_swath.nc'))  # Save to netcdf file
 
+        write_swath_coverage_csv(self, sm)
         self.plot_swath_coverage(sm, self.swath_edges, self.polar_view)
 
         if self.revisit:
@@ -139,9 +140,18 @@ class AnalysisObsSwathConical(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         if self.mp4:
             import plot_movie
             plot_movie.movie_ribbons_2d(sm, self.swath_edges,
-                                        '../output/' + self.type + '_2d.mp4')
+                                        sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist,
                                  swath_edges=self.swath_edges)
+
+
+def write_swath_coverage_csv(analysis, sm):
+    """Shared data dump of the swath analyses: per user grid point the number
+    of epochs inside the swath (the flag history behind revisit/coverage)."""
+    lons = [degrees(user.lla[1]) for user in sm.users]
+    lats = [degrees(user.lla[0]) for user in sm.users]
+    analysis.write_csv(sm, ['lon_deg', 'lat_deg', 'epochs_in_swath'],
+                       np.column_stack([lons, lats, analysis.user_metric.sum(axis=1)]))
 
 
 def plot_swath_3d_from_analysis(analysis, sm):
@@ -152,7 +162,7 @@ def plot_swath_3d_from_analysis(analysis, sm):
         return
     p3d.plot_swath_3d(sm, sm.satellites, analysis.sat_pos_hist,
                       analysis.swath_edges,
-                      '../output/' + analysis.type + '_3d.png',
+                      sm.output_path(analysis.type + '_3d.png'),
                       **analysis._kwargs_3d())
 
 
@@ -284,10 +294,11 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
     def after_loop(self, sm):
 
         if self.save_output=='numpy':
-            np.save('../output/user_cov_swath', self.user_metric)  # Save to numpy array
+            np.save(sm.output_path('user_cov_swath'), self.user_metric)  # Save to numpy array
         if self.save_output=='netcdf':
-            self.export2nc(sm, '../output/user_cov_swath.nc')  # Save to netcdf file
+            self.export2nc(sm, sm.output_path('user_cov_swath.nc'))  # Save to netcdf file
 
+        write_swath_coverage_csv(self, sm)
         self.plot_swath_coverage(sm, self.swath_edges, self.polar_view)
 
         if self.revisit:
@@ -300,7 +311,7 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         if self.mp4:
             import plot_movie
             plot_movie.movie_ribbons_2d(sm, self.swath_edges,
-                                        '../output/' + self.type + '_2d.mp4')
+                                        sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist,
                                  swath_edges=self.swath_edges)
 
@@ -430,9 +441,9 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
     def after_loop(self, sm):
 
         if self.save_output=='numpy':
-            np.save('../output/user_cov_swath', self.user_metric)  # Save to numpy array
+            np.save(sm.output_path('user_cov_swath'), self.user_metric)  # Save to numpy array
         if self.save_output=='netcdf':
-            self.export2nc(sm, '../output/user_cov_swath.nc')  # Save to netcdf file
+            self.export2nc(sm, sm.output_path('user_cov_swath.nc'))  # Save to netcdf file
 
         self.plot_sza_coverage(sm, self.user_metric, self.polar_view)
 
@@ -455,6 +466,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
                 if sza_stat >= 1:
                     plot_points[idx_user, :] = [degrees(user.lla[1]), degrees(user.lla[0]), sza_stat]
         plot_points = plot_points[~np.all(plot_points == 0, axis=1)]  # Clean up empty rows
+        self.write_csv(sm, ['lon_deg', 'lat_deg', 'mean_sza_deg'], plot_points)
         if polar_view is not None:
             fig, ax = make_map_polar(polar_view)
         else:
@@ -463,7 +475,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
                         c=plot_points[:,2], alpha=.3, transform=ccrs.PlateCarree())
         cb = plt.colorbar(sc, ax=ax, shrink=0.85)
         cb.set_label('Solar Zenith Angle Mean [deg]', fontsize=10)
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
 
@@ -521,6 +533,7 @@ class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
     def plot_sza_subsat(self, sm, user_metric, polar_view):
 
         self.user_metric = self.user_metric[~np.all(self.user_metric == 0, axis=1)]
+        self.write_csv(sm, ['lat_deg', 'lon_deg', 'sza_deg', 'doy'], self.user_metric)
         if polar_view is not None:
             fig, ax = make_map_polar(polar_view)
         else:
@@ -530,7 +543,7 @@ class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
                         transform=ccrs.PlateCarree())
         cb = plt.colorbar(sc, ax=ax, shrink=0.85)
         cb.set_label('Solar Zenith Angle [deg]', fontsize=10)
-        plt.savefig('../output/' + self.type + '.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
     def plot_sza_latitude(self, sm, user_metric, polar_view, range_lat):
@@ -546,16 +559,17 @@ class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
             results[i,0] = lat
             results[i,1] = df[(df.Latitude>lat-step_size/2) & (df.Latitude<lat+step_size/2)].SZA.mean()
 
+        self.write_csv(sm, ['lat_deg', 'mean_sza_deg'], results, suffix='lat')
         fig = plt.figure(figsize=(10, 5))
         plt.plot(results[:,0],results[:,1])
         plt.xlabel('Latitude [deg]')
         plt.ylabel('Solar Zenith Angle [deg]')
         plt.grid()
-        plt.savefig('../output/' + self.type + '_lat.png')
+        plt.savefig(sm.output_path(self.type + '_lat.png'))
         plt.show()
 
         if self.save_output=='numpy':
-            np.save('../output/user_sza_latitude', results)  # Save to numpy array
+            np.save(sm.output_path('user_sza_latitude'), results)  # Save to numpy array
 
 
     def plot_sza_latitude_year(self, sm, user_metric, polar_view, range_lat):
@@ -578,5 +592,5 @@ class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
         plt.xlabel('DOY [-]')
         plt.ylabel('Solar Zenith Angle [deg]')
         plt.grid()
-        plt.savefig('../output/' + self.type + '_lat_year.png')
+        plt.savefig(sm.output_path(self.type + '_lat_year.png'))
         plt.show()

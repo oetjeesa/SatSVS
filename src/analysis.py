@@ -108,6 +108,19 @@ class AnalysisBase:
     def after_loop(self, sm):
         pass
 
+    def write_csv(self, sm, columns, data, suffix=None):
+        """Numeric dump of the plotted metric next to the PNG, as
+        <type>[_suffix].csv with a one-line header. Every analysis dumps the
+        data behind its plot so results can be post-processed without a rerun
+        (and the regression tests compare numbers instead of pixels)."""
+        name = self.type + (f'_{suffix}' if suffix else '') + '.csv'
+        data = np.atleast_2d(np.asarray(data, dtype=float))
+        if data.size == 0:  # Header-only file: the run produced no data points
+            data = data.reshape(0, len(columns))
+        np.savetxt(sm.output_path(name), data, delimiter=',', fmt='%.10g',
+                   header=','.join(columns), comments='')
+        ls.logger.info(f'Written data dump {name} ({data.shape[0]} rows)')
+
 
 class AnalysisPlot3D:
     """Mixin for analyses that offer a 3D globe version of their world map
@@ -142,7 +155,7 @@ class AnalysisPlot3D:
         if node.find('ShowOrbit') is not None:
             self.show_orbit = misc_fn.str2bool(node.find('ShowOrbit').text)
         if node.find('SatelliteModelFile') is not None:
-            self.model_file = node.find('SatelliteModelFile').text
+            self.model_file = misc_fn.resolve_path(node.find('SatelliteModelFile').text)
         if node.find('SatelliteModelScale') is not None:
             self.model_scale = float(node.find('SatelliteModelScale').text)
         if node.find('MP4') is not None:
@@ -182,7 +195,7 @@ class AnalysisPlot3D:
         if p3d is None:
             return
         p3d.movie_3d(sm, satellites, pos_hist_eci,
-                     '../output/' + self.type + '_3d.mp4',
+                     sm.output_path(self.type + '_3d.mp4'),
                      track_latlon=track_latlon, swath_edges=swath_edges, grid=grid,
                      model_file=self.model_file, model_scale=self.model_scale,
                      show_orbit=self.show_orbit, clouds=self.earth_clouds)
@@ -203,7 +216,7 @@ class AnalysisPlot3D:
             return
         sats, hist = self._sats_and_hist(sm, satellites)
         p3d.plot_points_3d(sm, sats, hist, np.asarray(points_llv), scalar_label,
-                           '../output/' + self.type + '_3d.png', cmap=cmap, clim=clim,
+                           sm.output_path(self.type + '_3d.png'), cmap=cmap, clim=clim,
                            point_size=point_size, **self._kwargs_3d())
 
     def render_3d_grid(self, sm, lats_deg, lons_deg, values, scalar_label,
@@ -213,7 +226,7 @@ class AnalysisPlot3D:
             return
         sats, hist = self._sats_and_hist(sm, satellites)
         p3d.plot_grid_3d(sm, sats, hist, lats_deg, lons_deg, values, scalar_label,
-                         '../output/' + self.type + '_3d.png', cmap=cmap, clim=clim,
+                         sm.output_path(self.type + '_3d.png'), cmap=cmap, clim=clim,
                          **self._kwargs_3d())
 
     def render_3d_contours(self, sm, contours, satellites=None):
@@ -222,7 +235,7 @@ class AnalysisPlot3D:
             return
         sats, hist = self._sats_and_hist(sm, satellites)
         p3d.plot_contours_3d(sm, sats, hist, contours,
-                             '../output/' + self.type + '_3d.png', **self._kwargs_3d())
+                             sm.output_path(self.type + '_3d.png'), **self._kwargs_3d())
 
 
 def swath_ribbon_polygons(edges, max_step_deg=30.0):
@@ -311,7 +324,7 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
             for lon, lat in swath_ribbon_polygons(swath_edges[idx_sat]):
                 ax.fill(lon, lat, facecolor='orangered', edgecolor='orangered',
                         linewidth=0.3, alpha=0.4, transform=ccrs.PlateCarree())
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
     def revisit_gaps_hours(self, user_metric, time_step):
@@ -353,6 +366,8 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
                 else:
                     plot_points[idx_user, :] = [degrees(sm.users[idx_user].lla[1]), degrees(sm.users[idx_user].lla[0]), metric]
         plot_points = plot_points[~np.all(plot_points == 0, axis=1)]  # Clean up empty rows
+        self.write_csv(sm, ['lon_deg', 'lat_deg', f'{statistic}_revisit_hours'],
+                       plot_points, suffix='revisit')
         if metric>0:  # Only plot if not empty
             if polar_view is not None:
                 fig, ax = make_map_polar(polar_view)
@@ -365,7 +380,7 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
                             vmax=np.nanmax(plot_points[:,2]), transform=ccrs.PlateCarree())
             cb = plt.colorbar(sc, ax=ax, shrink=0.85)
             cb.set_label(statistic.capitalize() + ' Revisit Interval [hours]', fontsize=10)
-            plt.savefig(f'../output/{self.type}_revisit.png')
+            plt.savefig(sm.output_path(f'{self.type}_revisit.png'))
             plt.show()
 
     def plot_swath_revisit_latitude(self, sm, user_metric):
@@ -387,6 +402,8 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
         lats = np.array(sorted(lat_max))
         max_avg = np.array([np.mean(lat_max[lat]) for lat in lats])
         mean_avg = np.array([np.mean(lat_mean[lat]) for lat in lats])
+        self.write_csv(sm, ['lat_deg', 'max_revisit_days', 'mean_revisit_days'],
+                       np.column_stack([lats, max_avg, mean_avg]), suffix='revisit_lat')
         fig = plt.figure(figsize=(10, 6))
         plt.plot(lats, max_avg, 'r-', label='Max Revisit Time')
         plt.plot(lats, mean_avg, 'b-', label='Mean Revisit Time')
@@ -395,6 +412,6 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
         plt.xticks(np.arange(-90, 91, 15))
         plt.ylim(bottom=0)
         plt.grid(); plt.legend()
-        plt.savefig(f'../output/{self.type}_revisit_lat.png')
+        plt.savefig(sm.output_path(f'{self.type}_revisit_lat.png'))
         plt.show()
 

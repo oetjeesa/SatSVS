@@ -1,0 +1,17 @@
+<!-- Single-node spacecraft thermal balance over the orbit: direct solar flux
+     (with eclipses), Earth albedo, Earth IR and internal dissipation against
+     the radiated heat, integrated to a temperature history. Hot/cold case
+     equilibrium temperatures are logged. Works with any propagator. -->
+<Analysis>
+    <Type>sat_thermal</Type>
+    <ConstellationID>1</ConstellationID>    <!-- Optional: first matching satellite is analysed -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional -->
+    <SurfaceArea>6.0</SurfaceArea>          <!-- Total radiating surface area [m2] -->
+    <HeatCapacity>50000</HeatCapacity>      <!-- Thermal capacitance [J/K] (~mass x 900 J/kg/K for aluminium) -->
+    <CrossSectionSun>1.5</CrossSectionSun>      <!-- Optional: projected area to the Sun [m2], default SurfaceArea/4 (sphere) -->
+    <CrossSectionEarth>1.5</CrossSectionEarth>  <!-- Optional: projected area to the Earth [m2], default SurfaceArea/4 -->
+    <Absorptivity>0.3</Absorptivity>        <!-- Optional: solar absorptivity alpha, default 0.3 -->
+    <Emissivity>0.8</Emissivity>            <!-- Optional: IR emissivity epsilon, default 0.8 -->
+    <InternalPowerW>300</InternalPowerW>    <!-- Optional: dissipated electrical power [W], default 0 -->
+    <InitialTemperature>20</InitialTemperature> <!-- Optional [degC]; default: equilibrium at the first epoch -->
+</Analysis>

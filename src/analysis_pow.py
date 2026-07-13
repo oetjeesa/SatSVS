@@ -100,8 +100,11 @@ class AnalysisPowDepthDischarge(AnalysisBase):
         ax2.step(self.metric[:, 0], self.metric[:, 3], color='tab:green', label='P_Draw', where='post')
         
         fig.tight_layout()
-        plt.savefig('../output/pow_depth_discharge.png')
+        plt.savefig(sm.output_path('pow_depth_discharge.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'state_of_charge', 'power_generated_w', 'power_draw_w'],
+                       self.metric)
 
 class AnalysisPowEclipseDuration(AnalysisBase):
     def __init__(self):
@@ -149,12 +152,13 @@ class AnalysisPowEclipseDuration(AnalysisBase):
         self.in_eclipse_prev = in_eclipse_now
 
     def after_loop(self, sm):
+        self.write_csv(sm, ['doy', 'eclipse_duration_min'], self.eclipse_durations)
         if not self.eclipse_durations:
             ls.logger.warning("No eclipse events detected during the simulation. No plot produced.")
             return
 
         data = np.array(self.eclipse_durations)
-        
+
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(data[:, 0], data[:, 1], 'k.', markersize=2, label='Eclipse Duration')
         ax.set_xlabel('Day of Year (DOY)')
@@ -162,5 +166,5 @@ class AnalysisPowEclipseDuration(AnalysisBase):
         ax.set_title(f'Eclipse Duration per Orbit')
         ax.grid(True, which='both', linestyle='--', alpha=0.5)
         
-        plt.savefig('../output/pow_eclipse_duration.png')
+        plt.savefig(sm.output_path('pow_eclipse_duration.png'))
         plt.show()

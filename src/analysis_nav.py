@@ -66,6 +66,9 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 
+        self.write_csv(sm, ['lon_deg', 'lat_deg',
+                            f'{self.statistic.lower()}_{self.direction.lower()}_dop'],
+                       np.column_stack([lons, lats, metric]))
         grid_shape = get_user_grid_shape(sm, self.type)
         if grid_shape is None:
             return
@@ -76,7 +79,7 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' ' + self.direction + ' Dilution of Precision [-]', fontsize=10)
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
         if self.plot_3d:
@@ -87,7 +90,7 @@ class AnalysisNavDOP(AnalysisBase, AnalysisPlot3D):
             import plot_movie
             plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
                                      self.direction + ' Dilution of Precision [-]',
-                                     '../output/' + self.type + '_2d.mp4')
+                                     sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
                                  grid=(sm.user_latitudes, sm.user_longitudes, z_new,
                                        self.statistic + ' ' + self.direction + ' DOP [-]',
@@ -158,6 +161,9 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 
+        self.write_csv(sm, ['lon_deg', 'lat_deg',
+                            f'{self.statistic.lower()}_{self.direction.lower()}_accuracy_m'],
+                       np.column_stack([lons, lats, metric]))
         grid_shape = get_user_grid_shape(sm, self.type)
         if grid_shape is None:
             return
@@ -168,7 +174,7 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' ' + self.direction + ' Navigation Accuracy 95% [m]', fontsize=10)
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
         if self.plot_3d:
@@ -179,7 +185,7 @@ class AnalysisNavAccuracy(AnalysisBase, AnalysisPlot3D):
             import plot_movie
             plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
                                      self.direction + ' Navigation Accuracy 95% [m]',
-                                     '../output/' + self.type + '_2d.mp4')
+                                     sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
                                  grid=(sm.user_latitudes, sm.user_longitudes, z_new,
                                        self.statistic + ' ' + self.direction + ' Nav Accuracy 95% [m]',

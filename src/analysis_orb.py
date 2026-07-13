@@ -142,6 +142,7 @@ class AnalysisOrbKeplerElements(AnalysisBase):
         ]
         times = np.asarray(self.times_f_doy)
         plotted = False
+        csv_rows = []
         for idx_sat, satellite in enumerate(sm.satellites):
             if not self._selected(satellite):
                 continue
@@ -149,6 +150,10 @@ class AnalysisOrbKeplerElements(AnalysisBase):
             if not used.any():
                 continue
             elements = rv2kepler(self.sat_metric[idx_sat, used, 0:3], self.sat_metric[idx_sat, used, 3:6])
+            csv_rows.append(np.column_stack(
+                [times[used], np.full(used.sum(), satellite.sat_id), elements['sma'],
+                 elements['ecc'], np.degrees(elements['incl']), np.degrees(elements['raan']),
+                 np.degrees(elements['arg_perigee']), np.degrees(elements['mean_anomaly'])]))
             sma_km = elements['sma'] / 1000.0
             # Secular change: difference of the mean over the first and last
             # ~100 epochs, which averages out the J2 short-period oscillation
@@ -172,8 +177,12 @@ class AnalysisOrbKeplerElements(AnalysisBase):
         axes.flat[0].legend(fontsize=8)
         fig.suptitle('Osculating Kepler elements')
         fig.tight_layout()
-        plt.savefig('../output/' + self.type + '.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'sat_id', 'sma_m', 'eccentricity', 'inclination_deg',
+                            'raan_deg', 'arg_perigee_deg', 'mean_anomaly_deg'],
+                       np.vstack(csv_rows))
 
 
 class AnalysisOrbAirDensity(AnalysisBase):
@@ -248,8 +257,15 @@ class AnalysisOrbAirDensity(AnalysisBase):
         ax2.legend(loc='upper right', fontsize=8)
         fig.suptitle(f'Atmospheric density at satellite altitude ({sm.hpop.cfg.drag_model})')
         fig.tight_layout()
-        plt.savefig('../output/' + self.type + '.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        times = np.asarray(self.times_f_doy)
+        self.write_csv(sm, ['doy', 'sat_id', 'altitude_m', 'density_kgm3'],
+                       np.vstack([np.column_stack([times, np.full(sm.num_epoch, satellite.sat_id),
+                                                   self.sat_metric[idx_sat]])
+                                  for idx_sat, satellite in enumerate(sm.satellites)
+                                  if self._selected(satellite)]))
 
 
 class AnalysisOrbDisturbanceForces(AnalysisBase):
@@ -327,8 +343,11 @@ class AnalysisOrbDisturbanceForces(AnalysisBase):
         plt.grid(True)
         plt.legend(fontsize=8)
         fig.tight_layout()
-        plt.savefig('../output/' + self.type + '.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        columns = ['doy'] + [name.lower().replace(' ', '_') for name in self.force_names]
+        self.write_csv(sm, columns, np.column_stack([times, self.metric]))
 
 
 class AnalysisOrbPoleWobble(AnalysisBase):
@@ -377,8 +396,11 @@ class AnalysisOrbPoleWobble(AnalysisBase):
         ax2.legend()
         fig.suptitle('Earth pole wobble (IERS polar motion)')
         fig.tight_layout()
-        plt.savefig('../output/' + self.type + '.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'xp_arcsec', 'yp_arcsec'],
+                       np.column_stack([times, self.metric]))
 
 
 class AnalysisOrbDeltaVElement(AnalysisBase):
@@ -581,5 +603,9 @@ class AnalysisOrbDeltaVElement(AnalysisBase):
                      f'{len(maneuver_epochs)} maneuvers, {dv_total:.2f} m/s '
                      f'({dv_total / days * 365.25:.1f} m/s/year)')
         fig.tight_layout()
-        plt.savefig('../output/' + self.type + '.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', f'uncontrolled_{key}', f'controlled_{key}',
+                            'cumulative_deltav_ms'],
+                       np.column_stack([times, series, controlled, dv_cum]))

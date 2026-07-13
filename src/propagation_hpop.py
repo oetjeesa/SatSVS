@@ -36,7 +36,9 @@ import numpy as np
 import misc_fn
 import logging_svs as ls
 
-OREKIT_DATA_ZIP = '../input/orekit-data.zip'
+# Resolved relative to this file so runs started from outside src/ find it too
+OREKIT_DATA_ZIP = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               '..', 'input', 'orekit-data.zip')
 
 _vm_started = False
 

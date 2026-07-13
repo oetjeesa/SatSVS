@@ -8,9 +8,11 @@
     <TransmitPowerW>50</TransmitPowerW>
     <TransmitLossesdB>5</TransmitLossesdB>
     <TransmitGaindB>33</TransmitGaindB>
-    <TransmitAntennaDiameter>0.25</TransmitAntennaDiameter>  <!-- m, for the antenna pattern -->
+    <TransmitAntennaDiameter>0.25</TransmitAntennaDiameter>  <!-- m, for the analytic antenna pattern -->
+    <TransmitAntennaPatternFile>../input/example_antenna_patterns/dish_ka_band_25cm.cut</TransmitAntennaPatternFile>  <!-- Optional: GRASP pattern replaces the analytic one -->
     <ReceiveGaindB>64</ReceiveGaindB>
-    <ReceiveAntennaDiameter>6.8</ReceiveAntennaDiameter>     <!-- m, for the antenna pattern -->
+    <ReceiveAntennaDiameter>6.8</ReceiveAntennaDiameter>     <!-- m, for the analytic antenna pattern -->
+    <ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_ka_band_6_8m.cut</ReceiveAntennaPatternFile>  <!-- Optional: GRASP pattern replaces the analytic one -->
     <ReceiveLossesdB>3</ReceiveLossesdB>
     <ReceiveTempK>290</ReceiveTempK>
     <PExceedPerc>0.5</PExceedPerc>                    <!-- ITU-R attenuation exceedance probability in % -->

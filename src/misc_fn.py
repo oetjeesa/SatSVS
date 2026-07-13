@@ -18,6 +18,31 @@ import logging_svs as ls
 
 from multiprocessing import Process
 
+import os
+
+_CONFIG_DIR = '.'  # Directory of the loaded Config.xml, set by config.AppConfig
+
+
+def set_config_dir(path):
+    """Remember the directory of the Config.xml being loaded, so file
+    references inside it (TLE files, antenna patterns, polygons, satellite
+    models) can also be resolved relative to the config file itself."""
+    global _CONFIG_DIR
+    _CONFIG_DIR = path
+
+
+def resolve_path(path):
+    """Resolve a file reference from the config: first as given (relative to
+    the working directory, the historical behaviour when running from src/),
+    then relative to the directory of the Config.xml."""
+    if path is None or os.path.isfile(path):
+        return path
+    alternative = os.path.normpath(os.path.join(_CONFIG_DIR, path))
+    if os.path.isfile(alternative):
+        return alternative
+    return path
+
+
 def benchmark(func):
     """
     A decorator that prints the time a function takes to execute.

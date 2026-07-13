@@ -1,0 +1,21 @@
+<!-- AOCS disturbance torques over the orbit (worst-case SMAD models):
+     gravity gradient, aerodynamic, solar radiation pressure (zero in
+     eclipse) and magnetic residual-dipole torque, plus the momentum buildup
+     for reaction wheel sizing. Atmospheric density from the HPOP DragModel
+     when that propagator is active, else a built-in exponential atmosphere. -->
+<Analysis>
+    <Type>sat_aocs</Type>
+    <ConstellationID>1</ConstellationID>    <!-- Optional: first matching satellite is analysed -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional -->
+    <InertiaXX>100</InertiaXX>              <!-- Principal moments of inertia [kg m2] -->
+    <InertiaYY>120</InertiaYY>
+    <InertiaZZ>80</InertiaZZ>
+    <MaxPointingOffset>1.0</MaxPointingOffset>  <!-- Optional: worst-case attitude deviation [deg] for gravity gradient, default 1 -->
+    <ResidualDipole>1.0</ResidualDipole>    <!-- Optional: residual magnetic dipole [A m2], default 1 -->
+    <DragArea>2.5</DragArea>                <!-- Optional [m2], default constellation FrontalArea (or 1) -->
+    <DragCoefficient>2.2</DragCoefficient>  <!-- Optional, default 2.2 -->
+    <SrpArea>2.5</SrpArea>                  <!-- Optional [m2], default DragArea -->
+    <Reflectivity>0.6</Reflectivity>        <!-- Optional: SRP reflectance factor q, default 0.6 -->
+    <CopOffset>0.2</CopOffset>              <!-- Optional: CoP-CoM offset [m] (aero + SRP lever arm), default 0.1 -->
+    <WheelMomentum>15</WheelMomentum>       <!-- Optional: wheel capacity [N m s] line on the momentum plot -->
+</Analysis>

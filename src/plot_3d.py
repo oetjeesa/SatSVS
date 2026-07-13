@@ -28,9 +28,12 @@ import numpy as np
 from constants import R_EARTH
 import logging_svs as ls
 
-EARTH_TEXTURE = '../input/earth_texture.jpg'
-STAR_TEXTURE = '../input/starmap.jpg'  # Milky Way panorama (ESO/S. Brunier, CC BY 4.0)
-CLOUD_TEXTURE = '../input/earth_clouds.jpg'  # NASA Visible Earth cloud composite
+# Textures live in the repo's input/ directory, resolved relative to this file
+# so runs started from outside src/ (e.g. the test runner) find them too
+_INPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'input')
+EARTH_TEXTURE = os.path.join(_INPUT_DIR, 'earth_texture.jpg')
+STAR_TEXTURE = os.path.join(_INPUT_DIR, 'starmap.jpg')  # Milky Way panorama (ESO/S. Brunier, CC BY 4.0)
+CLOUD_TEXTURE = os.path.join(_INPUT_DIR, 'earth_clouds.jpg')  # NASA Visible Earth cloud composite
 
 
 def _sphere_grid(radius, inside=False):

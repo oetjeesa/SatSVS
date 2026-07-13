@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "satsvs"
+version = "3.0.0"
+description = "SatSVS - Satellite Service Volume Simulator: satellite, ground station and user mission analysis tool"
+authors = [{ name = "M. Tossaint" }]
+readme = "readme.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "astropy",
+    "sgp4>=2.0",
+    "numba",
+    "matplotlib",
+    "cartopy",
+    "geopandas",
+    "shapely",
+    "xarray",
+    "netcdf4",
+    "itur",
+]
+
+[project.optional-dependencies]
+# HPOP (Orekit) numerical propagator; also needs input/orekit-data.zip
+hpop = ["orekit-jpype", "jdk4py"]
+# 3D globe plots (<Plot3D>); also needs input/earth_texture.jpg
+plot3d = ["pyvista"]
+# MP4 movies (<MP4>)
+movie = ["imageio", "imageio-ffmpeg"]
+# Regression test suite (tests/)
+test = ["pytest"]
+
+# The tool is run as a script from src/ (see readme.md), not imported as a
+# package: `pip install -e .` only installs the dependencies above.
+[tool.setuptools]
+packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "hpop: test needs the HPOP (Orekit) propagator - deselect with -m 'not hpop'",
+]

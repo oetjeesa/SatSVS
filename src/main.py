@@ -1,7 +1,6 @@
 # Import python modules
+import argparse
 import os
-if os.path.exists('../output/main.log'):
-    os.remove('../output/main.log')
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,13 +8,28 @@ from astropy.time import Time
 
 # Import project modules
 import config
+import config_checks
 import logging_svs as ls
 import misc_fn
 from misc_fn import benchmark
 
 
-def load_configuration():
-    sm = config.AppConfig('../input/Config.xml')
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description='SatSVS - Satellite Service Volume Simulator. Runs the analyses '
+                    'defined in the configuration file (see readme.md).')
+    parser.add_argument('config', nargs='?', default='../input/Config.xml',
+                        help='Path to the Config.xml scenario file '
+                             '(default: ../input/Config.xml)')
+    parser.add_argument('-o', '--output-dir', default='../output',
+                        help='Directory for plots, data dumps and main.log '
+                             '(created if missing, default: ../output)')
+    return parser.parse_args(argv)
+
+
+def load_configuration(config_file='../input/Config.xml', output_dir='../output'):
+    config_checks.validate_config(config_file)  # Exits with clear errors on a bad config
+    sm = config.AppConfig(config_file, output_dir)
     sm.load_satellites()
     sm.load_stations()
     sm.load_users()
@@ -200,15 +214,19 @@ def write_posvel_satellites(sm):  # Cache the propagated ECI orbits for OrbitsFr
 def clear_load_orbit_file(sm):  # Clear or load previous orbit file
     sm.file_orbits = None
     if sm.orbits_from_previous_run:
-        sm.data_orbits = np.genfromtxt('../output/orbits_internal.txt', delimiter=',')
+        sm.data_orbits = np.genfromtxt(sm.output_path('orbits_internal.txt'), delimiter=',')
     else:
         # One file handle for the whole run; opening per satellite per epoch dominated the loop
-        sm.file_orbits = open('../output/orbits_internal.txt', 'w')
+        sm.file_orbits = open(sm.output_path('orbits_internal.txt'), 'w')
 
 
 if __name__ == '__main__':
 
-    sm = load_configuration()  # Load config into sm status machine holds status of sat, station, user and links
+    args = parse_args()
+    os.makedirs(args.output_dir, exist_ok=True)
+    ls.init_file(os.path.join(args.output_dir, 'main.log'))
+
+    sm = load_configuration(args.config, args.output_dir)  # Load config into sm status machine holds status of sat, station, user and links
 
     run_before_time_loop(sm)  # Run the before and during time loop
 
@@ -216,8 +234,5 @@ if __name__ == '__main__':
 
     run_after_time_loop(sm)  # Run the after time loop
 
-# TODO analysis SAT Thermal
-# TODO analysis SAT Aocs
 # TODO analysis SZA_pushbroom faster...
 # TODO incorporate datashader or geoviews
-

@@ -7,7 +7,11 @@
     <TransmitPowerW>10</TransmitPowerW>
     <TransmitLossesdB>2</TransmitLossesdB>
     <TransmitGaindB>20</TransmitGaindB>
+    <TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>  <!-- Optional: GRASP pattern replaces TransmitGaindB -->
+    <SatelliteAntennaPointing>Nadir</SatelliteAntennaPointing>  <!-- Nadir (isoflux/horn) or Tracking (steered dish) -->
     <ReceiveGaindB>45</ReceiveGaindB>
+    <ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_x_band_3m.grd</ReceiveAntennaPatternFile>  <!-- Optional: GRASP pattern replaces ReceiveGaindB -->
+
     <ReceiveLossesdB>3</ReceiveLossesdB>
     <ReceiveTempK>200</ReceiveTempK>
     <PExceedPerc>0.5</PExceedPerc>                    <!-- ITU-R attenuation exceedance probability in % -->

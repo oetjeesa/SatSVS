@@ -18,6 +18,7 @@ from analysis_nav import *
 from analysis_pow import *
 from analysis_dat import *
 from analysis_orb import *
+from analysis_sat import *
 
 from segments import Constellation, Satellite, Station, User, Ground2SpaceLink, User2SpaceLink, Space2SpaceLink
 import logging_svs as ls
@@ -26,7 +27,12 @@ import copy
 
 class AppConfig:
     
-    def __init__(self, file_name=None):
+    def __init__(self, file_name=None, output_dir='../output'):
+
+        self.output_dir = output_dir  # Directory for plots, data dumps and main.log
+        if file_name is not None:  # File references inside the config may be
+            # relative to the config file itself (see misc_fn.resolve_path)
+            misc_fn.set_config_dir(os.path.dirname(os.path.abspath(file_name)))
 
         self.constellations = []
         self.satellites = []
@@ -78,6 +84,11 @@ class AppConfig:
         self.times_str_pre = None
         self.times_datetime_pre = None
         self.times_f_doy_pre = None
+
+    def output_path(self, file_name):
+        """Full path of an output file (plot, data dump, cache) in the run's
+        output directory (--output-dir, default ../output)."""
+        return os.path.join(self.output_dir, file_name)
 
     def load_satellites(self):
 
@@ -173,7 +184,7 @@ class AppConfig:
                 ls.logger.info(sat.__dict__)
                 self.satellites.append(sat)
             for item in constellation.iter('TLEFileName'):
-                with open(item.text) as file:
+                with open(misc_fn.resolve_path(item.text)) as file:
                     cnt = 0
                     for line in file:
                         if cnt == 0:
@@ -318,7 +329,7 @@ class AppConfig:
                     points = list(ast.literal_eval(user_element.find('PolygonList').text))
                     poly = Polygon(points)
                 else:
-                    poly = GeoDataFrame.from_file(user_element.find('PolygonFile').text)
+                    poly = GeoDataFrame.from_file(misc_fn.resolve_path(user_element.find('PolygonFile').text))
                     poly = poly['geometry'].iloc[0]
                     #poly = poly[poly.ADMIN == 'Denmark']['geometry'].iloc[0]
                 # Setup a rough grid
@@ -366,7 +377,7 @@ class AppConfig:
                 else:
                     user.el_mask_max = len(mask_values) * [radians(90.0)]
 
-                user.tle_file_name = user_element.find('TLEFileName').text
+                user.tle_file_name = misc_fn.resolve_path(user_element.find('TLEFileName').text)
                 with open(user.tle_file_name) as file:
                     cnt = 0
                     for line in file:
@@ -524,6 +535,10 @@ class AppConfig:
                     analysis = AnalysisOrbPoleWobble()
                 if type_str == 'orb_deltav_element':
                     analysis = AnalysisOrbDeltaVElement()
+                if type_str == 'sat_thermal':
+                    analysis = AnalysisSatThermal()
+                if type_str == 'sat_aocs':
+                    analysis = AnalysisSatAocs()
                 if analysis is None:
                     ls.logger.error(f'Unknown analysis type: {type_str}. '
                                     f'See readme.md for the available analyses.')

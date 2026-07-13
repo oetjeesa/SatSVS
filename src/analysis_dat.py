@@ -61,8 +61,11 @@ class AnalysisSatDataStorage(AnalysisBase):
         
         plt.grid(True)
         plt.legend()
-        plt.savefig('../output/dat_storage.png')
+        plt.savefig(sm.output_path('dat_storage.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'ssr_fill_gbits', 'is_downlinking', 'is_recording'],
+                       self.metric)
 
 class AnalysisSatDataLatency(AnalysisBase):
     def __init__(self):
@@ -132,6 +135,7 @@ class AnalysisSatDataLatency(AnalysisBase):
                                         float(is_downlinking), float(is_recording)]
 
     def after_loop(self, sm):
+        self.write_csv(sm, ['doy', 'latency_hours'], self.latency_metrics)
         if not self.latency_metrics:
             return
 
@@ -165,5 +169,5 @@ class AnalysisSatDataLatency(AnalysisBase):
         ax3.grid(axis='y', alpha=0.3)
 
         plt.tight_layout()
-        plt.savefig('../output/dat_latency_stats.png')
+        plt.savefig(sm.output_path('dat_latency_stats.png'))
         plt.show()

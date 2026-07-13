@@ -19,7 +19,8 @@ MAX_FRAMES = 360  # Upper bound on movie frames; epochs are subsampled beyond it
 
 def open_writer(file_name, fps=20):
     """MP4 writer, or None (with a clear error log) when imageio/ffmpeg is
-    missing. macro_block_size=8 accepts the map figure's 1000x440 canvas."""
+    missing. The bitrate is capped at 4 Mbit/s to keep the movies at friendly
+    file sizes; macro_block_size=8 accepts the map figure's 1000x440 canvas."""
     try:
         import imageio.v2 as imageio
     except ImportError:
@@ -27,8 +28,8 @@ def open_writer(file_name, fps=20):
                         'installed (pip install imageio imageio-ffmpeg). '
                         'Movie skipped.')
         return None
-    return imageio.get_writer(file_name, fps=fps, codec='libx264', quality=7,
-                              macro_block_size=8)
+    return imageio.get_writer(file_name, fps=fps, codec='libx264',
+                              bitrate='4M', macro_block_size=8)
 
 
 def frame_epochs(num_epoch, max_frames=MAX_FRAMES):

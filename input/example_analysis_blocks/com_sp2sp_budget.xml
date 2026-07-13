@@ -8,6 +8,9 @@
     <TransmitLossesdB>2</TransmitLossesdB>
     <TransmitGaindB>30</TransmitGaindB>
     <ReceiveGaindB>30</ReceiveGaindB>
+    <!-- Optional GRASP patterns (ISL antennas track each other: peak gain used):
+    <TransmitAntennaPatternFile>../input/example_antenna_patterns/dish_ka_band_25cm.cut</TransmitAntennaPatternFile>
+    <ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_ka_band_25cm.cut</ReceiveAntennaPatternFile> -->
     <ReceiveLossesdB>2</ReceiveLossesdB>
     <ReceiveTempK>290</ReceiveTempK>
     <ModulationType>BPSK</ModulationType>             <!-- For the required C/N0 line -->

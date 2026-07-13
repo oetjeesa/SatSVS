@@ -9,8 +9,17 @@ import ast
 # Project modules
 from constants import K_BOLTZMANN, C_LIGHT
 from analysis import AnalysisBase
+import antenna
 import misc_fn
 import logging_svs as ls
+
+
+def _off_nadir_angle(satellite, station):
+    """Angle at the satellite between nadir and the line of sight to the
+    station: the off-boresight angle of a nadir-pointed satellite antenna."""
+    los = station.pos_ecf - satellite.pos_ecf
+    return misc_fn.angle_two_vectors(los, -satellite.pos_ecf,
+                                     norm(los), norm(satellite.pos_ecf))
 
 
 class AnalysisComGr2SpBudget(AnalysisBase):
@@ -34,9 +43,13 @@ class AnalysisComGr2SpBudget(AnalysisBase):
         self.modulation_type = None
         self.ber = None
         self.data_rate = None
+        self.tx_pattern_file = None  # Optional GRASP .cut/.grd antenna patterns
+        self.rx_pattern_file = None
+        self.tx_pattern = None
+        self.rx_pattern = None
+        self.sat_pointing = 'nadir'  # Satellite antenna: nadir-fixed or tracking
 
         self.idx_found_station = None
-        self.eirp = None
 
         self.metric = None
         self.cn0_required = 0
@@ -55,6 +68,12 @@ class AnalysisComGr2SpBudget(AnalysisBase):
             self.transmit_losses = float(node.find('TransmitLossesdB').text)
         if node.find('TransmitGaindB') is not None:
             self.transmit_gain = float(node.find('TransmitGaindB').text)
+        if node.find('TransmitAntennaPatternFile') is not None:
+            self.tx_pattern_file = node.find('TransmitAntennaPatternFile').text
+        if node.find('ReceiveAntennaPatternFile') is not None:
+            self.rx_pattern_file = node.find('ReceiveAntennaPatternFile').text
+        if node.find('SatelliteAntennaPointing') is not None:
+            self.sat_pointing = node.find('SatelliteAntennaPointing').text.lower()
 
         if node.find('PExceedPerc') is not None:
             self.p_exceed = float(node.find('PExceedPerc').text)
@@ -86,7 +105,15 @@ class AnalysisComGr2SpBudget(AnalysisBase):
             if station.station_id == self.station_id:
                 self.idx_found_station = idx_station
                 break
-        self.eirp = 10*log10(self.transmit_power) + self.transmit_gain - self.transmit_losses
+        if self.tx_pattern_file is not None:
+            self.tx_pattern = antenna.AntennaPattern.from_file(self.tx_pattern_file)
+        if self.rx_pattern_file is not None:
+            self.rx_pattern = antenna.AntennaPattern.from_file(self.rx_pattern_file)
+        if self.tx_pattern is not None or self.rx_pattern is not None:
+            antenna.plot_patterns(
+                [(label, p) for label, p in (('Tx', self.tx_pattern),
+                                             ('Rx', self.rx_pattern)) if p is not None],
+                sm.output_path(self.type + '_antenna.png'))
         self.metric = np.zeros((sm.num_epoch, 10))
         if self.modulation_type is not None:
             self.cn0_required = misc_fn.comp_cn0_required(self.modulation_type, self.ber, self.data_rate)
@@ -96,6 +123,27 @@ class AnalysisComGr2SpBudget(AnalysisBase):
         for idx_sat in sm.stations[idx_station].idx_sat_in_view:
             elevation = sm.gr2sp[idx_station][idx_sat].elevation
             distance = sm.gr2sp[idx_station][idx_sat].distance
+            # Antenna gains: with a pattern file the ground antenna tracks the
+            # satellite (peak gain); the satellite antenna is nadir-pointed
+            # (gain at the epoch's off-nadir angle, right for isoflux/horn
+            # antennas) or, with SatelliteAntennaPointing Tracking, steered at
+            # the station (peak gain). The scalar config gains are used
+            # otherwise
+            tx_gain, rx_gain = self.transmit_gain, self.receive_gain
+            if self.tx_pattern is not None or self.rx_pattern is not None:
+                off_sat = 0.0 if self.sat_pointing == 'tracking' else \
+                    _off_nadir_angle(sm.satellites[idx_sat], sm.stations[idx_station])
+                if self.transmitter_object == 'satellite':
+                    if self.tx_pattern is not None:
+                        tx_gain = self.tx_pattern.gain(off_sat)
+                    if self.rx_pattern is not None:
+                        rx_gain = self.rx_pattern.peak
+                else:  # Station transmits (uplink)
+                    if self.tx_pattern is not None:
+                        tx_gain = self.tx_pattern.peak
+                    if self.rx_pattern is not None:
+                        rx_gain = self.rx_pattern.gain(off_sat)
+            eirp = 10*log10(self.transmit_power) + tx_gain - self.transmit_losses
             fsl = 20*log10(distance/1000) + 20*log10(self.carrier_frequency/1e9) + 92.45
             # a_g = misc_fn.comp_gas_attenuation(self.carrier_frequency, elevation)  # Fast method but unaccurate <5 deg
             # fast method of the rain model
@@ -118,9 +166,9 @@ class AnalysisComGr2SpBudget(AnalysisBase):
             else:  # station is the transmitter
                 ant_temp = 290
             temp_sys = self.receive_temp + ant_temp
-            cn0 = self.eirp - fsl \
+            cn0 = eirp - fsl \
                   - a_g.value - a_r.value - a_c.value - a_s.value \
-                  +self.receive_gain - self.receive_losses - \
+                  + rx_gain - self.receive_losses - \
                   K_BOLTZMANN - 10*np.log10(temp_sys)
             self.metric[sm.cnt_epoch,:] = [self.times_f_doy[sm.cnt_epoch], degrees(elevation),
                                            cn0, a_g.value, a_r.value, a_c.value, a_s.value, a_t.value,
@@ -147,9 +195,13 @@ class AnalysisComGr2SpBudget(AnalysisBase):
             plt.plot(time_list, self.metric[:, 9], 'b+', label='CN0 Required')
         plt.xlabel('Day Of Year DOY [-]'); plt.ylabel('Elevation [deg], Power values [dB]')
         plt.legend(); plt.grid()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         ax.ticklabel_format(useOffset=False, style='plain')
         plt.show()
+
+        self.write_csv(sm, ['doy', 'elevation_deg', 'cn0_dbhz', 'gas_att_db', 'rain_att_db',
+                            'cloud_att_db', 'scint_att_db', 'total_att_db', 'fsl_db',
+                            'cn0_required_dbhz'], self.metric)
 
 
 class AnalysisComSp2SpBudget(AnalysisBase):
@@ -168,6 +220,8 @@ class AnalysisComSp2SpBudget(AnalysisBase):
         self.modulation_type = None
         self.ber = None
         self.data_rate = None
+        self.tx_pattern_file = None  # Optional GRASP .cut/.grd antenna patterns
+        self.rx_pattern_file = None
 
         self.idx_found_sat1 = None
         self.idx_found_sat2 = None
@@ -204,6 +258,10 @@ class AnalysisComSp2SpBudget(AnalysisBase):
             self.ber = float(node.find('BitErrorRate').text)
         if node.find('DataRateBitPerSec') is not None:
             self.data_rate = float(node.find('DataRateBitPerSec').text)
+        if node.find('TransmitAntennaPatternFile') is not None:
+            self.tx_pattern_file = node.find('TransmitAntennaPatternFile').text
+        if node.find('ReceiveAntennaPatternFile') is not None:
+            self.rx_pattern_file = node.find('ReceiveAntennaPatternFile').text
 
     def before_loop(self, sm):
         for idx_sat, satellite in enumerate(sm.satellites):
@@ -211,6 +269,18 @@ class AnalysisComSp2SpBudget(AnalysisBase):
                 self.idx_found_sat1 = idx_sat
             if satellite.sat_id == self.sat_id2:
                 self.idx_found_sat2 = idx_sat
+        # ISL antennas track each other: pattern files contribute their peak gain
+        patterns = []
+        if self.tx_pattern_file is not None:
+            pattern = antenna.AntennaPattern.from_file(self.tx_pattern_file)
+            self.transmit_gain = pattern.peak
+            patterns.append(('Tx', pattern))
+        if self.rx_pattern_file is not None:
+            pattern = antenna.AntennaPattern.from_file(self.rx_pattern_file)
+            self.receive_gain = pattern.peak
+            patterns.append(('Rx', pattern))
+        if patterns:
+            antenna.plot_patterns(patterns, sm.output_path(self.type + '_antenna.png'))
         self.eirp = 10*log10(self.transmit_power) + self.transmit_gain - self.transmit_losses
         self.metric = np.zeros((sm.num_epoch, 5))
         if self.modulation_type is not None:
@@ -239,8 +309,11 @@ class AnalysisComSp2SpBudget(AnalysisBase):
             plt.plot(self.metric[:, 0], self.metric[:, 4], 'r.', label='CN0 Required')
         plt.xlabel('DOY[-]'); plt.ylabel('Elevation [deg], Power values [dB]')
         plt.legend(); plt.grid()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'elevation_deg', 'cn0_dbhz', 'fsl_db',
+                            'cn0_required_dbhz'], self.metric)
 
 
 class AnalysisComDoppler(AnalysisBase):
@@ -289,8 +362,10 @@ class AnalysisComDoppler(AnalysisBase):
         ax2.plot(self.metric[:, 0], self.metric[:, 1], 'b.', label='Elevation [deg]')
         plt.xlabel('DOY[-]');
         plt.legend();
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'elevation_deg', 'doppler_hz'], self.metric)
 
 
 class AnalysisComGr2SpBudgetInterference(AnalysisBase):
@@ -316,6 +391,10 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
         self.modulation_type = None
         self.ber = None
         self.data_rate = None
+        self.tx_pattern_file = None  # Optional GRASP .cut/.grd antenna patterns
+        self.rx_pattern_file = None
+        self.tx_pattern = None
+        self.rx_pattern = None
 
         self.idx_found_station = None
         self.eirp = None
@@ -332,6 +411,10 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
             self.carrier_frequency = float(node.find('CarrierFrequency').text)
         if node.find('BandWidth') is not None:
             self.bandwidth = float(node.find('BandWidth').text)
+        if node.find('TransmitAntennaPatternFile') is not None:
+            self.tx_pattern_file = node.find('TransmitAntennaPatternFile').text
+        if node.find('ReceiveAntennaPatternFile') is not None:
+            self.rx_pattern_file = node.find('ReceiveAntennaPatternFile').text
 
         if node.find('TransmitPowerW') is not None:
             self.transmit_power = float(node.find('TransmitPowerW').text)
@@ -376,7 +459,16 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
             if station.station_id == self.station_id:
                 self.idx_found_station = idx_station
                 break
-        self.metric = np.zeros((sm.num_epoch, 12))
+        if self.tx_pattern_file is not None:
+            self.tx_pattern = antenna.AntennaPattern.from_file(self.tx_pattern_file)
+        if self.rx_pattern_file is not None:
+            self.rx_pattern = antenna.AntennaPattern.from_file(self.rx_pattern_file)
+        if self.tx_pattern is not None or self.rx_pattern is not None:
+            antenna.plot_patterns(
+                [(label, p) for label, p in (('Tx', self.tx_pattern),
+                                             ('Rx', self.rx_pattern)) if p is not None],
+                sm.output_path(self.type + '_antenna.png'))
+        self.metric = np.zeros((sm.num_epoch, 14))
         if self.modulation_type is not None:
             self.cn0_required = misc_fn.comp_cn0_required(self.modulation_type, self.ber, self.data_rate)
 
@@ -387,11 +479,18 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
             elevation = sm.gr2sp[idx_station][0].elevation
             distance = sm.gr2sp[idx_station][0].distance
 
+            # Nominal gains: both dishes point at each other, so pattern files
+            # contribute their peak (boresight) gain on the nominal link
+            tx_gain_nom, rx_gain_nom = self.transmit_gain, self.receive_gain
             if self.transmit_gain_manual is not None:
-                self.transmit_gain = misc_fn.dish_pattern_manual(self.transmit_gain_manual,0)
+                tx_gain_nom = misc_fn.dish_pattern_manual(self.transmit_gain_manual, 0)
+            if self.tx_pattern is not None:
+                tx_gain_nom = self.tx_pattern.peak
+            if self.rx_pattern is not None:
+                rx_gain_nom = self.rx_pattern.peak
 
             # Nominal satellite C/N0
-            self.eirp = 10 * log10(self.transmit_power) + self.transmit_gain - self.transmit_losses
+            self.eirp = 10 * log10(self.transmit_power) + tx_gain_nom - self.transmit_losses
             fsl = 20 * log10(distance / 1000) + 20 * log10(self.carrier_frequency / 1e9) + 92.45
             a_g, a_c, a_r, a_s, a_t = itur.atmospheric_attenuation_slant_path(
                 degrees(sm.stations[idx_station].lla[0]),
@@ -411,7 +510,7 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
             temp_sys = self.receive_temp + ant_temp
             cn0 = self.eirp - fsl \
                   - a_g.value - a_r.value - a_c.value - a_s.value \
-                  + self.receive_gain - self.receive_losses - \
+                  + rx_gain_nom - self.receive_losses - \
                   K_BOLTZMANN - 10*np.log10(temp_sys)
 
             # Interference computation from second satellite
@@ -420,17 +519,25 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
             off_boresight_angle = misc_fn.angle_two_vectors(u,v,np.linalg.norm(u),np.linalg.norm(v))
             C = self.eirp - fsl \
                   - a_g.value - a_r.value - a_c.value - a_s.value \
-                  + self.receive_gain - self.receive_losses
+                  + rx_gain_nom - self.receive_losses
             C_fact = np.power(10, C/10) # all in factors since C0/(N0+I0)
             N0 = K_BOLTZMANN + 10*np.log10(temp_sys)
             N0_fact = np.power(10, N0/10)
-            if self.transmit_gain_manual is not None:
+            # Interferer gains: both antennas discriminated by the leader/
+            # interferer separation angle, with the pattern files as drop-in
+            # replacement of the analytic dish patterns
+            if self.tx_pattern is not None:
+                tx_gain = self.tx_pattern.gain(off_boresight_angle)
+            elif self.transmit_gain_manual is not None:
                 tx_gain = misc_fn.dish_pattern_manual(self.transmit_gain_manual,off_boresight_angle)
             else:
                 tx_gain = misc_fn.dish_pattern(self.carrier_frequency,
                                            self.transmit_ant_dia,self.transmit_gain,off_boresight_angle)
-            rx_gain = misc_fn.dish_pattern(self.carrier_frequency,
-                                           self.receive_ant_dia,self.receive_gain,off_boresight_angle)
+            if self.rx_pattern is not None:
+                rx_gain = self.rx_pattern.gain(off_boresight_angle)
+            else:
+                rx_gain = misc_fn.dish_pattern(self.carrier_frequency,
+                                               self.receive_ant_dia,self.receive_gain,off_boresight_angle)
             I = 10 * log10(self.transmit_power) + tx_gain - self.transmit_losses + \
                 - fsl - a_g.value - a_r.value - a_c.value - a_s.value + \
                 + rx_gain - self.receive_losses
@@ -440,7 +547,8 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
 
             self.metric[sm.cnt_epoch,:] = [self.times_f_doy[sm.cnt_epoch], degrees(elevation),
                                            cn0, cni0, a_g.value, a_r.value, a_c.value, a_s.value, a_t.value,
-                                           degrees(off_boresight_angle), tx_gain, rx_gain]
+                                           degrees(off_boresight_angle), tx_gain, rx_gain,
+                                           tx_gain_nom, rx_gain_nom]
 
     def after_loop(self, sm):
         self.metric = self.metric[~np.all(self.metric == 0, axis=1)]  # Clean up empty rows
@@ -460,12 +568,12 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
         plt.plot(time_list, self.metric[:, 9], label='Off boresight angle interferer')
         plt.plot(time_list, self.metric[:, 10], label='Tx Gain Interferer')
         plt.plot(time_list, self.metric[:, 11], label='Rx Gain Interferer')
-        plt.plot(time_list, np.ones(len(time_list))*self.transmit_gain, label='Tx Gain Nom')
-        plt.plot(time_list, np.ones(len(time_list)) *self.receive_gain, label='Rx Gain Nom')
+        plt.plot(time_list, self.metric[:, 12], label='Tx Gain Nom')
+        plt.plot(time_list, self.metric[:, 13], label='Rx Gain Nom')
         plt.gca().ticklabel_format(axis='both', style='plain', useOffset=False)
         plt.xlabel('Day Of Year DOY [-]'); plt.ylabel('Angles [deg], Power values [dB]')
         plt.legend(); plt.grid()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
         fig = plt.figure(figsize=(10, 6))
@@ -475,4 +583,10 @@ class AnalysisComGr2SpBudgetInterference(AnalysisBase):
         plt.gca().ticklabel_format(axis='y', style='sci', useOffset=False)
         plt.xlabel('Day Of Year DOY [-]'); plt.ylabel('Power values [dB]')
         plt.legend(); plt.grid()
+        plt.savefig(sm.output_path(self.type + '_drop.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'elevation_deg', 'cn0_dbhz', 'cni0_dbhz', 'gas_att_db',
+                            'rain_att_db', 'cloud_att_db', 'scint_att_db', 'total_att_db',
+                            'off_boresight_deg', 'tx_gain_interferer_db', 'rx_gain_interferer_db',
+                            'tx_gain_nominal_db', 'rx_gain_nominal_db'], self.metric)

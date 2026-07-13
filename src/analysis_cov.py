@@ -48,8 +48,14 @@ class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
             ax.plot(degrees(station.lla[1]), degrees(station.lla[0]), 'r^',
                     transform=ccrs.PlateCarree())
         ax.text(50, 80, 'Red triangles: station locations', transform=ccrs.PlateCarree())
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        times = np.asarray(self.times_f_doy)
+        self.write_csv(sm, ['doy', 'sat_id', 'lat_deg', 'lon_deg', 'num_stations_in_view'],
+                       np.vstack([np.column_stack([times, np.full(sm.num_epoch, satellite.sat_id),
+                                                   self.sat_metric[idx_sat]])
+                                  for idx_sat, satellite in enumerate(sm.satellites)]))
 
         if self.plot_3d:
             points = np.vstack([m[:, [1, 0, 2]] for m in self.sat_metric])
@@ -59,7 +65,7 @@ class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
         if self.mp4:
             import plot_movie
             plot_movie.movie_track_2d(sm, self.sat_metric,
-                                      '../output/' + self.type + '_2d.mp4',
+                                      sm.output_path(self.type + '_2d.mp4'),
                                       color_index=2, clim=(0, len(sm.stations)),
                                       label='Number of stations in view [-]')
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
@@ -113,14 +119,21 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
                 y, x = self.sat_metric[idx_sat, :, 0], self.sat_metric[idx_sat, :, 1]
                 ax.plot(x, y, '+', label=str(satellite.sat_id), transform=ccrs.PlateCarree())
             ax.legend(fontsize=8)
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        times = np.asarray(self.times_f_doy)
+        self.write_csv(sm, ['doy', 'sat_id', 'lat_deg', 'lon_deg'],
+                       np.vstack([np.column_stack([times, np.full(sm.num_epoch, satellite.sat_id),
+                                                   self.sat_metric[idx_sat, :, 0:2]])
+                                  for idx_sat, satellite in enumerate(sm.satellites)
+                                  if self._selected(satellite)]))
 
         if self.mp4:
             import plot_movie
             idx_selected = [i for i, s in enumerate(sm.satellites) if self._selected(s)]
             plot_movie.movie_track_2d(sm, self.sat_metric[idx_selected],
-                                      '../output/' + self.type + '_2d.mp4')
+                                      sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, [sm.satellites[i] for i in idx_selected],
                                  self.sat_metric[idx_selected][:, :, 2:5],
                                  track_latlon=self.sat_metric[idx_selected][:, :, 0:2])
@@ -132,7 +145,7 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
             idx_selected = [i for i, s in enumerate(sm.satellites) if self._selected(s)]
             p3d.plot_ground_track_3d(sm, [sm.satellites[i] for i in idx_selected],
                                      [self.sat_metric[i] for i in idx_selected],
-                                     '../output/'+self.type+'_3d.png', **self._kwargs_3d())
+                                     sm.output_path(self.type + '_3d.png'), **self._kwargs_3d())
 
 
 class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
@@ -200,6 +213,8 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
             lats.append(degrees(sm.users[idx_usr].lla[0]))
             lons.append(degrees(sm.users[idx_usr].lla[1]))
 
+        self.write_csv(sm, ['lon_deg', 'lat_deg', f'{self.statistic.lower()}_pass_time_s'],
+                       np.column_stack([lons, lats, metric]))
         grid_shape = get_user_grid_shape(sm, self.type)
         if grid_shape is None:
             return
@@ -210,7 +225,7 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Pass Time Interval [s]', fontsize=10)
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
         if self.plot_3d:
@@ -221,7 +236,7 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
             import plot_movie
             plot_movie.movie_grid_2d(sm, self.user_metric.sum(axis=2).astype(float),
                                      self.type, 'Satellites of constellation in view [-]',
-                                     '../output/' + self.type + '_2d.mp4')
+                                     sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
                                  grid=(sm.user_latitudes, sm.user_longitudes, z_new,
                                        self.statistic + ' Pass Time Interval [s]',
@@ -285,8 +300,13 @@ class AnalysisCovSatelliteContour(AnalysisBase, AnalysisPlot3D):
                         label='Satellite ID: '+str(sm.satellites[idx_sat].sat_id),
                         transform=ccrs.PlateCarree())
                 ax.legend()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['sat_id', 'lat_deg', 'lon_deg'],
+                       np.vstack([np.column_stack([np.full(len(contour), sm.satellites[idx_sat].sat_id),
+                                                   np.degrees(contour)])
+                                  for idx_sat, contour in zip(idx_selected, contours)]))
 
         if self.plot_3d:
             selected = [sm.satellites[i] for i in idx_selected]
@@ -339,6 +359,8 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
                 metric.append(np.median(self.user_metric[idx_usr]))
             lats.append(degrees(user.lla[0]))
             lons.append(degrees(user.lla[1]))
+        self.write_csv(sm, ['lon_deg', 'lat_deg', f'{self.statistic.lower()}_max_elevation_deg'],
+                       np.column_stack([lons, lats, metric]))
         grid_shape = get_user_grid_shape(sm, self.type)
         if grid_shape is None:
             return
@@ -349,7 +371,7 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' of Max Elevation satellites in view [deg]', fontsize=10)
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
         if self.plot_3d:
@@ -360,7 +382,7 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
             import plot_movie
             plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
                                      'Max elevation in view [deg]',
-                                     '../output/' + self.type + '_2d.mp4')
+                                     sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
                                  grid=(sm.user_latitudes, sm.user_longitudes, z_new,
                                        self.statistic + ' Max Elevation in view [deg]',
@@ -383,7 +405,7 @@ class AnalysisCovSatellitePvt(AnalysisBase):
 
     def before_loop(self, sm):
         # One file handle for the whole run; opening per satellite per epoch dominated the loop
-        self.file_orbits = open('../output/orbits.txt', 'w')
+        self.file_orbits = open(sm.output_path('orbits.txt'), 'w')
 
     def in_loop(self, sm):
         for satellite in sm.satellites:
@@ -399,12 +421,12 @@ class AnalysisCovSatellitePvt(AnalysisBase):
     def after_loop(self, sm):
         self.file_orbits.close()
         self.file_orbits = None
-        if os.path.getsize('../output/orbits.txt') == 0:
+        if os.path.getsize(sm.output_path('orbits.txt')) == 0:
             ls.logger.error(f'No satellite matched ConstellationID {self.constellation_id} / '
                             f'SatelliteID {self.satellite_id}, nothing recorded. Available: ' +
                             ', '.join(f'{s.constellation_id}/{s.sat_id}' for s in sm.satellites))
             return
-        data = pd.read_csv('../output/orbits.txt', sep=',', header=None,
+        data = pd.read_csv(sm.output_path('orbits.txt'), sep=',', header=None,
                            names=['RunTime', 'ID', 'x', 'y', 'z', 'x_vel', 'y_vel', 'z_vel'])
         # Plot the configured satellite, or the first recorded one (satellite ids are
         # NORAD catalog numbers for TLE-defined constellations, not 1-based)
@@ -423,8 +445,11 @@ class AnalysisCovSatellitePvt(AnalysisBase):
         ax2.plot(self.times_f_doy, data2.z_vel, 'k+-', label='z_vel')
         ax1.legend(loc=2); ax2.legend(loc=0)
         plt.xlabel('DOY[-]'); fig.tight_layout()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['mjd', 'sat_id', 'x_m', 'y_m', 'z_m',
+                            'x_vel_ms', 'y_vel_ms', 'z_vel_ms'], data2.values)
 
 
 class AnalysisCovSatelliteSkyAngles(AnalysisBase):
@@ -475,8 +500,11 @@ class AnalysisCovSatelliteSkyAngles(AnalysisBase):
         plt.xlabel('DOY[-]');
         ax1.legend(loc='upper left'); ax2.legend(loc='upper right')
         plt.grid()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'azimuth_deg', 'elevation_deg'],
+                       np.column_stack([self.times_f_doy, self.user_metric]))
 
 
 class AnalysisCovSatelliteVisible(AnalysisBase):
@@ -503,8 +531,11 @@ class AnalysisCovSatelliteVisible(AnalysisBase):
                      label=f'User lat/lon {round(degrees(user.lla[0]),1)} {round(degrees(user.lla[1]),1)}')
         plt.xlabel('DOY[-]'); plt.ylabel('Number of satellites in view [-]')
         plt.grid(); plt.legend()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy'] + [f'user_{user.user_id}' for user in sm.users],
+                       np.column_stack([self.times_f_doy, self.user_metric.T]))
 
 
 class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
@@ -544,6 +575,8 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
                 metric.append(np.median(self.user_metric[idx_user]))
             latitudes.append(degrees(user.lla[0]))
             longitudes.append(degrees(user.lla[1]))
+        self.write_csv(sm, ['lon_deg', 'lat_deg', f'{self.statistic.lower()}_satellites_in_view'],
+                       np.column_stack([longitudes, latitudes, metric]))
         grid_shape = get_user_grid_shape(sm, self.type)
         if grid_shape is None:
             return
@@ -554,7 +587,7 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Number of satellites in view [-]', fontsize=10)
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
         if self.plot_3d:
@@ -565,7 +598,7 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
             import plot_movie
             plot_movie.movie_grid_2d(sm, self.user_metric, self.type,
                                      'Number of satellites in view [-]',
-                                     '../output/' + self.type + '_2d.mp4')
+                                     sm.output_path(self.type + '_2d.mp4'))
             self.render_movie_3d(sm, sm.satellites, self.sat_pos_hist_3d,
                                  grid=(sm.user_latitudes, sm.user_longitudes, z_new,
                                        self.statistic + ' Satellites in view [-]',
@@ -598,7 +631,10 @@ class AnalysisCovSatelliteVisibleId(AnalysisBase):
         plt.plot(self.times_f_doy, self.user_metric, 'r+')
         plt.xlabel('DOY[-]'); plt.ylabel('IDs of satellites in view [-]')
         plt.grid()
-        plt.savefig('../output/'+self.type+'.png')
+        plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy'] + [f'slot_{i}' for i in range(sm.num_sat)],
+                       np.column_stack([self.times_f_doy, self.user_metric]))
 
 
