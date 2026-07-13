@@ -5,12 +5,20 @@
 <img src="/docs/schema.png" alt="schema"/>
 
 ## Installation & first run
-Download from github, and install the following libraries:
-- Numpy, pandas and numba
-- Astropy and sgp4
-- Cartopy and xarray
-- Geopandas and shapely
-- Itur
+Download from github and install the dependencies from the included
+__pyproject.toml__ (run from the repository root):
+
+```
+pip install -e .                # core dependencies
+pip install -e .[hpop]          # + HPOP (Orekit) numerical propagator
+pip install -e .[plot3d]        # + 3D globe plots (pyvista)
+pip install -e .[movie]         # + MP4 movies (imageio/imageio-ffmpeg)
+pip install -e .[test]          # + pytest for the regression test suite
+```
+
+The core dependencies are: numpy, pandas, scipy, numba, astropy, sgp4, matplotlib,
+cartopy, xarray, netcdf4, geopandas, shapely and itur. Some features need extra
+data files:
 - For the HPOP orbit propagator only: orekit_jpype and jdk4py (bundled JVM), plus the
   Orekit physical data archive saved as __input/orekit-data.zip__
   (download from https://gitlab.orekit.org/orekit/orekit-data)
@@ -18,13 +26,31 @@ Download from github, and install the following libraries:
   __input/earth_texture.jpg__ (e.g. the public domain NASA Blue Marble image
   https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57752/land_shallow_topo_2048.jpg).
   The starry background uses __input/starmap.jpg__ (Milky Way panorama, ESO/S. Brunier,
-  CC BY 4.0, https://www.eso.org/public/images/eso0932a/ — plain black background if
-  absent) and the optional cloud layer (EarthClouds) uses __input/earth_clouds.jpg__
+  CC BY 4.0, https://www.eso.org/public/images/eso0932a/, shipped downscaled and
+  dimmed for a subtle background — plain black background if absent) and the
+  optional cloud layer (EarthClouds) uses __input/earth_clouds.jpg__
   (e.g. the NASA cloud composite
   https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57747/cloud_combined_2048.jpg)
 - For the MP4 movies only (MP4 flag): imageio and imageio-ffmpeg
 
-To run, edit the config.xml file and run: python main.py
+To run, edit the configuration file and run from inside `src/`:
+
+```
+cd src
+python main.py                                        # uses ../input/Config.xml -> ../output/
+python main.py path/to/Config.xml                     # any scenario file
+python main.py path/to/Config.xml --output-dir out1   # per-run output directory
+```
+
+The optional command line arguments make batch/trade-study runs easy: every run
+can read its own scenario file and write plots, data dumps and main.log into its
+own output directory. The configuration is validated at startup — misspelled
+tags produce a "did you mean" warning and missing/invalid required parameters
+stop the run with a clear message instead of a mid-run crash.
+
+Next to every plot the analysis writes the plotted numbers as a CSV file
+(__output/<analysis_type>.csv__, with a header line naming the columns), so
+results can be post-processed without rerunning the simulation.
 
 ## Introduction
 Framework takes care of geometry computations, satellite propagation, ground station and user rotation in ECI/ECF.
@@ -88,11 +114,9 @@ Analysis can be added as wished, the baseline of analysis available are below
   (semi-major axis, eccentricity, inclination, RAAN, argument of perigee, mean
   anomaly), e.g. the orbital decay under atmospheric drag with the HPOP propagator
 
-_To be implemented at a later stage:_
-
-### Satellite
-- __sat_thermal__: Thermal conditions over orbit
-- __sat_attitude_control__: Satellite attitude control over orbit
+### Satellite platform
+- __sat_thermal__: Single-node thermal balance over orbit (solar/albedo/Earth IR/eclipses)
+- __sat_aocs__: AOCS disturbance torques and momentum buildup over orbit
 
 ## Configuration file
 The configuration file is found in the input directory under the name __config.xml__. 
@@ -746,6 +770,39 @@ Optional in the analysis part are:
 <img src="/docs/obs_sza_subsat_lat_year.png" alt="obs_sza_subsat_lat_year"/>    
 
 
+### Antenna patterns for the com analyses (GRASP .cut/.grd)
+The link-budget analyses (com_gr2sp_budget, com_sp2sp_budget,
+com_gr2sp_budget_interference) can use real antenna patterns instead of the
+scalar gains, read from the TICRA GRASP file formats:
+```
+<TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>
+<ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_x_band_3m.grd</ReceiveAntennaPatternFile>
+```
+- Tabulated cut files (__.cut__, polar cuts ICUT=1) and ASCII grid files
+  (__.grd__, uv grids IGRID=1) are supported; the far field must use the
+  standard GRASP power normalisation (gain dBi = 10log10 of the summed squared
+  field components). The 2D pattern is power-averaged over the phi cuts /
+  grid directions into a gain versus off-boresight-angle curve.
+- When a pattern file is given, the corresponding scalar gain
+  (TransmitGaindB/ReceiveGaindB) is replaced. The ground station antenna is
+  assumed to track the satellite (peak gain). In com_gr2sp_budget the
+  satellite antenna is nadir-pointed by default — the gain follows the
+  off-nadir angle to the station every epoch, which is the right model for
+  isoflux and horn antennas; set
+  `<SatelliteAntennaPointing>Tracking</SatelliteAntennaPointing>` for a
+  steered antenna (peak gain). In com_sp2sp_budget both ISL antennas track
+  each other (peak gains). In com_gr2sp_budget_interference the pattern files
+  replace the analytic dish patterns: peak gain on the nominal link, and the
+  interferer discriminated by the leader/interferer separation angle through
+  the actual pattern sidelobes.
+- The loaded pattern(s) are plotted to __output/<analysis_type>_antenna.png__
+  for verification.
+
+Ready-to-use example patterns (LEO X-band isoflux, X-band 3 m and Ka-band
+0.25 m / 6.8 m dishes) are provided in __input/example_antenna_patterns__,
+generated by make_patterns.py there from realistic aperture models — patterns
+exported from GRASP or compatible antenna tools can be dropped in directly.
+
 ### com_gr2sp_budget
 Plots the link budget parameters for a certain ground station to all satellites. 
 The models used are coming from ITU-R python package itur, which implements:
@@ -803,12 +860,18 @@ Optional in the analysis part are:
     <ModulationType>BPSK</ModulationType>
     <BitErrorRate>1e-5</BitErrorRate>
     <DataRateBitPerSec>1e6</DataRateBitPerSec>
+    <TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>
+    <ReceiveAntennaPatternFile>../input/example_antenna_patterns/dish_x_band_3m.grd</ReceiveAntennaPatternFile>
+    <SatelliteAntennaPointing>Nadir</SatelliteAntennaPointing>
 ```
 
 Some parameters can be entered to get the required CN0:
 - ModulationType: 'BPSK' or 'QPSK'
 - BitErrorRate: bit error rate required
 - DataRateBitPerSec: datarate required
+
+The antenna pattern files replace the scalar gains (see the Antenna patterns
+section above); SatelliteAntennaPointing is Nadir (default) or Tracking.
 
 <img src="/docs/com_gr2sp_budget.png" alt="com_gr2sp_budget"/>
 
@@ -1228,6 +1291,105 @@ Optional are:
 - ConstellationID/SatelliteID: select the satellite (the first match is analysed).
 
 <img src="/docs/orb_deltav_element.png" alt="orb_deltav_element"/>
+
+### sat_thermal
+Single-node spacecraft thermal balance over the orbit. Per time step the heat
+inputs — direct solar flux (zero in the Earth shadow, same eclipse model as the
+pow_ analyses), Earth albedo (scaled with the sun elevation over the subsatellite
+point and the Earth view factor), Earth infrared and the internal electrical
+dissipation — are balanced against the radiated heat (epsilon sigma A T^4) and
+integrated to a temperature history. The plot shows the temperature (left axis)
+and the individual heat flows (right axis); the log reports the temperature range
+and the classic hot-case/cold-case equilibrium temperatures. Works with any
+propagator.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>sat_thermal</Type>
+    <SurfaceArea>6.0</SurfaceArea>
+    <HeatCapacity>50000</HeatCapacity>
+</Analysis>
+```
+- SurfaceArea: total radiating surface area in m^2.
+- HeatCapacity: thermal capacitance in J/K (roughly satellite mass x 900 J/kg/K
+  for an aluminium-dominated bus).
+
+Optional are:
+```
+    <CrossSectionSun>1.5</CrossSectionSun>
+    <CrossSectionEarth>1.5</CrossSectionEarth>
+    <Absorptivity>0.3</Absorptivity>
+    <Emissivity>0.8</Emissivity>
+    <InternalPowerW>300</InternalPowerW>
+    <InitialTemperature>20</InitialTemperature>
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
+- CrossSectionSun/CrossSectionEarth: projected areas towards the Sun and the
+  Earth in m^2; default SurfaceArea/4 (a sphere presents a quarter of its
+  surface to any direction).
+- Absorptivity/Emissivity: solar absorptivity alpha (default 0.3) and infrared
+  emissivity epsilon (default 0.8) of the outer surface.
+- InternalPowerW: dissipated electrical power in W (default 0).
+- InitialTemperature: start temperature in degC; when omitted the node starts in
+  equilibrium with the first-epoch fluxes.
+- ConstellationID/SatelliteID: select the satellite (the first match is analysed).
+
+<img src="/docs/sat_thermal.png" alt="sat_thermal"/>
+
+### sat_aocs
+AOCS disturbance torques over the orbit with the standard worst-case models
+(SMAD): gravity gradient (at a configurable worst-case attitude deviation),
+aerodynamic torque (dynamic pressure on the drag area with the centre-of-pressure
+lever arm), solar radiation pressure torque (zero in eclipse) and the magnetic
+torque of the residual dipole in a tilted-dipole geomagnetic field. The
+atmospheric density is sampled from the HPOP DragModel (NRLMSISE00 etc.) when
+that propagator is active and from a built-in piecewise-exponential atmosphere
+otherwise. The plot shows the torque components over time (log scale, left axis)
+and the momentum buildup (the integral of the total torque — a conservative
+reaction wheel sizing figure, right axis); the log reports the worst-case torque
+per source and the momentum accumulation per orbit and per day.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>sat_aocs</Type>
+    <InertiaXX>100</InertiaXX>
+    <InertiaYY>120</InertiaYY>
+    <InertiaZZ>80</InertiaZZ>
+</Analysis>
+```
+- InertiaXX/InertiaYY/InertiaZZ: principal moments of inertia in kg m^2 (the
+  gravity gradient torque uses the largest difference).
+
+Optional are:
+```
+    <MaxPointingOffset>1.0</MaxPointingOffset>
+    <ResidualDipole>1.0</ResidualDipole>
+    <DragArea>2.5</DragArea>
+    <DragCoefficient>2.2</DragCoefficient>
+    <SrpArea>2.5</SrpArea>
+    <Reflectivity>0.6</Reflectivity>
+    <CopOffset>0.2</CopOffset>
+    <WheelMomentum>15</WheelMomentum>
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
+- MaxPointingOffset: worst-case attitude deviation from the local vertical in
+  degrees for the gravity gradient torque (default 1).
+- ResidualDipole: residual magnetic dipole in A m^2 (default 1).
+- DragArea/DragCoefficient: aerodynamic area in m^2 (default the constellation
+  FrontalArea, else 1) and drag coefficient (default 2.2).
+- SrpArea/Reflectivity: solar radiation pressure area in m^2 (default DragArea)
+  and reflectance factor q (default 0.6).
+- CopOffset: centre-of-pressure to centre-of-mass offset in m, the lever arm of
+  the aerodynamic and SRP torques (default 0.1).
+- WheelMomentum: optional reaction wheel momentum capacity in N m s, drawn as a
+  line on the momentum plot.
+- ConstellationID/SatelliteID: select the satellite (the first match is analysed).
+
+<img src="/docs/sat_aocs.png" alt="sat_aocs"/>
 
 
 

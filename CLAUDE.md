@@ -8,7 +8,8 @@ Satellite Service Volume Simulator (SatSVS) — a Python tool for satellite miss
 analysis. It propagates satellite orbits, rotates ground stations and users in
 ECI/ECF, computes visibility links between them, and runs one or more analyses per
 run (coverage, Earth observation, communication link budget, navigation
-DOP/accuracy, power, data handling, orbit elements).
+DOP/accuracy, power, data handling, orbit elements, satellite platform
+thermal/AOCS).
 
 See `readme.md` for the full catalogue of analyses and the complete `Config.xml`
 schema — it is the authoritative user-facing reference for every analysis type and
@@ -16,17 +17,22 @@ its XML parameters.
 
 ## Running
 
-The tool is run as a script, not a package. There is no build, lint, or test suite.
-The working directory matters: nearly every path is hardcoded relative to `src/`
-(e.g. `../input/Config.xml`, `../output/`), and `sys.path.append('../src')` appears
-at the top of each module. **Run from inside `src/`:**
+The tool is run as a script, not a package. The working directory matters:
+relative paths inside configs resolve against `src/`. **Run from inside `src/`:**
 
 ```
 cd src
-python main.py
+python main.py [config.xml] [--output-dir DIR]
 ```
 
-There are no requirements/environment files. Key third-party dependencies: `numpy`,
+The positional argument is the scenario file (default `../input/Config.xml`) and
+`--output-dir` (default `../output`) is where plots, CSV data dumps and
+`main.log` are written — per-run output directories make batch runs easy. The
+config is validated at startup by `config_checks.py` (unknown-tag warnings with
+did-you-mean, fatal errors for missing/invalid required parameters).
+
+Dependencies are declared in `pyproject.toml` (`pip install -e .`, with extras
+`[hpop]`, `[plot3d]`, `[movie]`, `[test]`). Key third-party dependencies: `numpy`,
 `astropy`, `sgp4` (v2.x — the accelerated `sgp4.api.Satrec` API), `numba`,
 `matplotlib` + `cartopy`, `geopandas`/`shapely`, and `itur` (ITU-R propagation
 models, used only by `com_*` analyses). The HPOP propagator additionally needs
@@ -37,6 +43,15 @@ models, used only by `com_*` analyses). The HPOP propagator additionally needs
 optional `<EarthClouds>` layer `input/earth_clouds.jpg`. MP4 movies (`<MP4>` on the
 world-map analyses; 2D fill-up movies in `plot_movie.py`, 3D fly-along in
 `plot_3d.movie_3d`) additionally need `imageio` + `imageio-ffmpeg`.
+
+## Testing
+
+`py -m pytest tests` runs the regression suite: each `tests/<name>/Config.xml`
+is run into a scratch output directory and every CSV data dump is compared
+against the golden copy in the test folder with tolerances (see
+`tests/test_analyses.py`). `-m "not hpop"` skips the Orekit-based tests,
+`--update-golden` refreshes the golden CSVs. `tests/run_test.py <name>|--all`
+refreshes all reference outputs (plots + CSVs) in the test folders.
 
 ## Configuration drives everything
 
@@ -91,18 +106,30 @@ instead of re-propagating.
 **Analyses** subclass `AnalysisBase` (`analysis.py`) and implement four hooks:
 `read_config(node)`, `before_loop(sm)`, `in_loop(sm)`, `after_loop(sm)` — the loop in
 `main.py` calls them at the matching phases, and `after_loop` is where plots
-(`../output/<type>.png`) are produced. Concrete analyses live grouped by domain in
-`analysis_cov.py`, `analysis_obs.py`, `analysis_com.py`, `analysis_nav.py`;
+(`sm.output_path('<type>.png')`) and the CSV data dump of the plotted metric
+(`AnalysisBase.write_csv`, compared by the regression tests) are produced.
+Concrete analyses live grouped by domain in `analysis_cov.py`, `analysis_obs.py`,
+`analysis_com.py`, `analysis_nav.py`, `analysis_pow.py`, `analysis_dat.py`,
+`analysis_orb.py`, `analysis_sat.py`;
 `analysis.py` also holds the cartopy map helpers (`make_map_cyl`, `make_map_polar`)
 and shared plotting mixins (e.g. `AnalysisObs` swath/revisit plotting on a map).
 `misc_fn.py` holds geometry/time helpers (MJD/GMST, coordinate
-conversions); `constants.py` holds physical constants (`R_EARTH`, `GM_EARTH`, etc.).
+conversions); `constants.py` holds physical constants (`R_EARTH`, `GM_EARTH`, etc.);
+`antenna.py` reads GRASP .cut/.grd antenna patterns for the `com_*` link budgets
+(`<TransmitAntennaPatternFile>`/`<ReceiveAntennaPatternFile>`, examples in
+`input/example_antenna_patterns/`).
 
 ### Adding a new analysis (per readme.md)
 
 1. Add an analysis class at the end of the relevant `analysis_*.py`, using an existing
-   class or `AnalysisBase` as a template.
+   class or `AnalysisBase` as a template (write plots via `sm.output_path(...)` and
+   dump the plotted numbers with `self.write_csv(sm, columns, data)`).
 2. Add the type-string → class branch in `config.py` `load_simulation`.
+3. Register the type and its parameters in `config_checks.py`
+   (`ANALYSIS_PARAMS`, `ANALYSIS_REQUIRED`) so the startup validation knows it.
+4. Document it in `readme.md`, add an example block in
+   `input/example_analysis_blocks/`, and add a test scenario in
+   `tests/make_configs.py` + goldens via `tests/run_test.py <name>`.
 
 ## Conventions
 
