@@ -70,6 +70,18 @@ networks: ESA ESTRACK, NASA DSN and NASA NEN).
 Analysis can be added as wished, the baseline of analysis available are below 
 (and explained further below):
 
+### Orbit
+- __orb_kepler_elements__: Evolution of the osculating Kepler elements over time
+- __orb_air_density__: Atmospheric density at the satellite altitude over time (HPOP)
+- __orb_disturbance_forces__: Magnitude of the perturbation accelerations over time (HPOP)
+- __orb_pole_wobble__: Polar motion (wobble of the Earth rotation axis) over time (HPOP)
+- __orb_deltav_element__: Station-keeping delta-v to hold one orbit element in a deadband
+  (semi-major axis, eccentricity, inclination, RAAN, argument of perigee, mean
+  anomaly), e.g. the orbital decay under atmospheric drag with the HPOP propagator
+- __orb_beta_angle__: Solar beta angle and analytic eclipse fraction over time
+- __orb_lifetime__: Orbital lifetime under drag, 25-year rule compliance and deorbit delta-v
+- __orb_environment__: Space environment along the orbit (trapped radiation/SAA, dose vs. shielding, atomic oxygen, micrometeoroids)
+
 ### Coverage
 - __cov_ground_track__: Ground Track of Satellite on map
 - __cov_satellite_pvt__: Output satellite position and velocity in ECI (for later use)
@@ -101,32 +113,13 @@ Analysis can be added as wished, the baseline of analysis available are below
 - __nav_dillution_of_precision__: DOP values for user(s) (also spacecraft user)
 - __nav_accuracy__: Navigation accuracy (UERE*DOP) values for user(s) (also spacecraft user)
 
-### Satellite power
-- __sat_battery_depth_discharge__: Battery state-of-charge / depth-of-discharge and power generation vs. draw over orbit
-- __sat_eclipse_duration__: Eclipse duration per orbit over the simulation
-
-### Data handling
-- __sat_data_storage__: Solid State Recorder (SSR) fill level over orbit (recording vs. downlink)
-- __sat_data_latency__: Data latency statistics from acquisition to ground reception
-
-### Orbit
-- __orb_kepler_elements__: Evolution of the osculating Kepler elements over time
-- __orb_air_density__: Atmospheric density at the satellite altitude over time (HPOP)
-- __orb_disturbance_forces__: Magnitude of the perturbation accelerations over time (HPOP)
-- __orb_pole_wobble__: Polar motion (wobble of the Earth rotation axis) over time (HPOP)
-- __orb_deltav_element__: Station-keeping delta-v to hold one orbit element in a deadband
-  (semi-major axis, eccentricity, inclination, RAAN, argument of perigee, mean
-  anomaly), e.g. the orbital decay under atmospheric drag with the HPOP propagator
-- __orb_beta_angle__: Solar beta angle and analytic eclipse fraction over time
-- __orb_lifetime__: Orbital lifetime under drag, 25-year rule compliance and deorbit delta-v
-- __orb_environment__: Space environment along the orbit (trapped radiation/SAA, dose vs. shielding, atomic oxygen, micrometeoroids)
-
-### Satellite platform
+### Satellite
 - __sat_thermal__: Single-node thermal balance over orbit (solar/albedo/Earth IR/eclipses)
 - __sat_aocs__: AOCS disturbance torques and momentum buildup over orbit
-- __sat_battery_depth_discharge__ / __sat_eclipse_duration__ and __sat_data_storage__ /
-  __sat_data_latency__ above also belong to the satellite platform domain (power and
-  data handling subsystems; implemented together in `analysis_sat.py`)
+- __sat_battery_depth_discharge__: Battery state-of-charge / depth-of-discharge and power generation vs. draw over orbit
+- __sat_eclipse_duration__: Eclipse duration per orbit over the simulation
+- __sat_data_storage__: Solid State Recorder (SSR) fill level over orbit (recording vs. downlink)
+- __sat_data_latency__: Data latency statistics from acquisition to ground reception
 
 ## Configuration file
 The configuration file is found in the input directory under the name __config.xml__. 
