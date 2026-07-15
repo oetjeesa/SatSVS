@@ -37,7 +37,7 @@ footer { color: #999; font-size: 12px; margin-top: 30px; }
 <body>
 <div class="page">
 <h1>Sentinel-3</h1>
-<div class="generated">SatSVS simulation report, generated 2026-07-15 16:03</div>
+<div class="generated">SatSVS simulation report, generated 2026-07-15 16:12</div>
 <table class="meta">
 <tr><td>Simulation</td><td>start MJD: 61072.0, stop MJD: 61075.0, size time steps in sec: 60.0</td></tr>
 </table>
@@ -63,53 +63,50 @@ footer { color: #999; font-size: 12px; margin-top: 30px; }
 <table class="meta"><tr><td>Type</td><td>LatMin</td><td>LatMax</td><td>LonMin</td><td>LonMax</td><td>LatStep</td><td>LonStep</td><td>Height</td><td>ReceiverConstellation</td><td>ElevationMask</td></tr>
 <tr><td>Grid</td><td>-85</td><td>85</td><td>-180</td><td>180</td><td>5</td><td>5</td><td>0</td><td>1</td><td>5</td></tr>
 </table>
-<h3>Analyses</h3><ul class="files">
-<li><b>cov_ground_track</b> — ConstellationID: 1</li>
-<li><b>cov_satellite_contour</b> — ConstellationID: 1, SatelliteID: 1, ElevationMask: 5</li>
-<li><b>cov_pass_time</b> — ConstellationID: 1, Statistic: Mean</li>
-<li><b>obs_swath_push_broom</b> — Revisit: True, Statistic: Mean</li>
-<li><b>sat_battery_depth_discharge</b> — BatteryCapacityWh: 2500, InitialSoC: 1.0, SolarPanelArea: 6.5, PanelEfficiency: 0.26, BasePowerDrawW: 1100, InstrumentPowerDrawW: 350, PayloadLatitudeLimit: 90</li>
-<li><b>sat_eclipse_duration</b></li>
-<li><b>sat_data_storage</b> — SSRCapacityGbits: 384, InitialFillGbits: 0, InstrumentRateMbps: 35, DownlinkRateMbps: 520, PayloadLatitudeLimit: 90</li>
-<li><b>sat_data_latency</b> — SSRCapacityGbits: 384, InitialFillGbits: 0, InstrumentRateMbps: 35, DownlinkRateMbps: 520, PayloadLatitudeLimit: 90, GroundProcessingMin: 15</li>
-<li><b>orb_deltav_element</b> — TargetType: Altitude, DeadBand: 500, ConstellationID: 1, SatelliteID: 1</li>
-</ul>
 </section>
 <section id="cov_ground_track">
 <h2>cov_ground_track</h2>
+<table class="meta"><tr><td>ConstellationID</td><td>1</td></tr></table>
 <figure><img src="cov_ground_track.png" alt="cov_ground_track.png" loading="lazy"><figcaption>cov_ground_track.png</figcaption></figure>
 </section>
 <section id="cov_pass_time">
 <h2>cov_pass_time</h2>
+<table class="meta"><tr><td>ConstellationID</td><td>1</td></tr><tr><td>Statistic</td><td>Mean</td></tr></table>
 <figure><img src="cov_pass_time.png" alt="cov_pass_time.png" loading="lazy"><figcaption>cov_pass_time.png</figcaption></figure>
 </section>
 <section id="cov_satellite_contour">
 <h2>cov_satellite_contour</h2>
+<table class="meta"><tr><td>ConstellationID</td><td>1</td></tr><tr><td>SatelliteID</td><td>1</td></tr><tr><td>ElevationMask</td><td>5</td></tr></table>
 <figure><img src="cov_satellite_contour.png" alt="cov_satellite_contour.png" loading="lazy"><figcaption>cov_satellite_contour.png</figcaption></figure>
 </section>
 <section id="obs_swath_push_broom">
 <h2>obs_swath_push_broom</h2>
+<table class="meta"><tr><td>Revisit</td><td>True</td></tr><tr><td>Statistic</td><td>Mean</td></tr></table>
 <figure><img src="obs_swath_push_broom.png" alt="obs_swath_push_broom.png" loading="lazy"><figcaption>obs_swath_push_broom.png</figcaption></figure>
 <figure><img src="obs_swath_push_broom_revisit.png" alt="obs_swath_push_broom_revisit.png" loading="lazy"><figcaption>obs_swath_push_broom_revisit.png</figcaption></figure>
 <figure><img src="obs_swath_push_broom_revisit_lat.png" alt="obs_swath_push_broom_revisit_lat.png" loading="lazy"><figcaption>obs_swath_push_broom_revisit_lat.png</figcaption></figure>
 </section>
 <section id="orb_deltav_element">
 <h2>orb_deltav_element</h2>
+<table class="meta"><tr><td>TargetType</td><td>Altitude</td></tr><tr><td>DeadBand</td><td>500</td></tr><tr><td>ConstellationID</td><td>1</td></tr><tr><td>SatelliteID</td><td>1</td></tr></table>
 <pre class="log">orb_deltav_element: no TargetValue given, using the initial Altitude of the simulation
 orb_deltav_element: Altitude kept within +/- 500.0 of 805501 with 0 maneuver(s), total delta-v 0.000 m/s (0.0 m/s/year)</pre>
 <figure><img src="orb_deltav_element.png" alt="orb_deltav_element.png" loading="lazy"><figcaption>orb_deltav_element.png</figcaption></figure>
 </section>
 <section id="sat_battery_depth_discharge">
 <h2>sat_battery_depth_discharge</h2>
+<table class="meta"><tr><td>BatteryCapacityWh</td><td>2500</td></tr><tr><td>InitialSoC</td><td>1.0</td></tr><tr><td>SolarPanelArea</td><td>6.5</td></tr><tr><td>PanelEfficiency</td><td>0.26</td></tr><tr><td>BasePowerDrawW</td><td>1100</td></tr><tr><td>InstrumentPowerDrawW</td><td>350</td></tr><tr><td>PayloadLatitudeLimit</td><td>90</td></tr></table>
 <figure><img src="sat_battery_depth_discharge.png" alt="sat_battery_depth_discharge.png" loading="lazy"><figcaption>sat_battery_depth_discharge.png</figcaption></figure>
 </section>
 <section id="sat_data_latency">
 <h2>sat_data_latency</h2>
+<table class="meta"><tr><td>SSRCapacityGbits</td><td>384</td></tr><tr><td>InitialFillGbits</td><td>0</td></tr><tr><td>InstrumentRateMbps</td><td>35</td></tr><tr><td>DownlinkRateMbps</td><td>520</td></tr><tr><td>PayloadLatitudeLimit</td><td>90</td></tr><tr><td>GroundProcessingMin</td><td>15</td></tr></table>
 <figure><img src="sat_data_latency_histogram.png" alt="sat_data_latency_histogram.png" loading="lazy"><figcaption>sat_data_latency_histogram.png</figcaption></figure>
 <figure><img src="sat_data_latency_timeseries.png" alt="sat_data_latency_timeseries.png" loading="lazy"><figcaption>sat_data_latency_timeseries.png</figcaption></figure>
 </section>
 <section id="sat_data_storage">
 <h2>sat_data_storage</h2>
+<table class="meta"><tr><td>SSRCapacityGbits</td><td>384</td></tr><tr><td>InitialFillGbits</td><td>0</td></tr><tr><td>InstrumentRateMbps</td><td>35</td></tr><tr><td>DownlinkRateMbps</td><td>520</td></tr><tr><td>PayloadLatitudeLimit</td><td>90</td></tr></table>
 <figure><img src="sat_data_storage.png" alt="sat_data_storage.png" loading="lazy"><figcaption>sat_data_storage.png</figcaption></figure>
 </section>
 <section id="sat_eclipse_duration">

@@ -159,16 +159,31 @@ def _scenario_summary(config_file, e):
         out.append('<h3>User segment</h3>')
         out.append(_element_table(users, e))
 
-    analyses = list(root.iter('Analysis'))
-    if analyses:
-        out.append('<h3>Analyses</h3><ul class="files">')
-        for analysis in analyses:
-            params = ', '.join(f'{k}: {v}' for k, v in
-                               _kv_rows(analysis, skip=('Type',)))
-            out.append(f'<li><b>{e(analysis.findtext("Type", "?"))}</b>'
-                       f'{" — " + e(params) if params else ""}</li>')
-        out.append('</ul>')
+    # The analysis parameters are shown in each analysis' own report section
+    # (above its plots), not repeated here
     return '\n'.join(out)
+
+
+def _analysis_params_by_group(config_file):
+    """Per analysis output group (type, and type_2, type_3 for repeated
+    types, numbered like the tool numbers the output files) the parameter
+    pairs of its <Analysis> block."""
+    if config_file is None or not os.path.isfile(config_file):
+        return {}
+    try:
+        root = ET.parse(config_file).getroot()
+    except Exception:
+        return {}
+    groups, counts = {}, {}
+    for analysis in root.iter('Analysis'):
+        type_str = (analysis.findtext('Type') or '').strip()
+        if not type_str:
+            continue
+        counts[type_str] = counts.get(type_str, 0) + 1
+        group = type_str if counts[type_str] == 1 else \
+            f'{type_str}_{counts[type_str]}'
+        groups[group] = _kv_rows(analysis, skip=('Type',))
+    return groups
 
 
 def _read_log(results_dir):
@@ -245,8 +260,14 @@ def write_report(results_dir, title=None, meta=None, config_file=None):
         out.append('<section><h2>Warnings</h2>\n<pre class="log warn">'
                    + e('\n'.join(warnings)) + '</pre></section>\n')
 
+    params_by_group = _analysis_params_by_group(config_file)
     for group in sorted(groups):
         out.append(f'<section id="{e(group)}">\n<h2>{e(group)}</h2>\n')
+        params = params_by_group.get(group)
+        if params:  # The <Analysis> block parameters, above the plots
+            out.append('<table class="meta">' +
+                       ''.join(f'<tr><td>{e(k)}</td><td>{e(v)}</td></tr>'
+                               for k, v in params) + '</table>\n')
         summary = [m for m, level in log
                    if level == 'INFO' and m.startswith(group + ':')]
         if summary:
