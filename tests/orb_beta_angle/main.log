@@ -1,42 +1,42 @@
-2026-07-15 09:36:55,631 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\orb_beta_angle\Config.xml validated: 0 warning(s), no errors
-2026-07-15 09:36:55,632 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': 3.2, 'mass': 500.0, 'bstar': 0.0}
-2026-07-15 09:36:55,632 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x0000022DABD7A660>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': 3.2, 'mass': 500.0, 'satrec': <sgp4.wrapper.Satrec object at 0x0000022D831334F0>, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
-2026-07-15 09:36:57,549 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-15 09:36:57,550 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x0000022DACE30050>}
-2026-07-15 09:36:57,551 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61192.0, size time steps in sec: 3600.0
-2026-07-15 09:36:57,551 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-15 09:36:57,551 - main - INFO - Loaded 1 number of User to Spacecraft links
-2026-07-15 09:36:57,552 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-15 09:36:57,552 - main - INFO - Finished reading configuration file
-2026-07-15 09:36:57,593 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
-2026-07-15 09:36:58,581 - main - INFO - Simulation time: 2026-02-05 04:00:00, time step: 100
-2026-07-15 09:36:58,684 - main - INFO - Simulation time: 2026-02-09 08:00:00, time step: 200
-2026-07-15 09:36:58,777 - main - INFO - Simulation time: 2026-02-13 12:00:00, time step: 300
-2026-07-15 09:36:58,880 - main - INFO - Simulation time: 2026-02-17 16:00:00, time step: 400
-2026-07-15 09:36:58,991 - main - INFO - Simulation time: 2026-02-21 20:00:00, time step: 500
-2026-07-15 09:36:59,087 - main - INFO - Simulation time: 2026-02-26 00:00:00, time step: 600
-2026-07-15 09:36:59,184 - main - INFO - Simulation time: 2026-03-02 04:00:00, time step: 700
-2026-07-15 09:36:59,280 - main - INFO - Simulation time: 2026-03-06 08:00:00, time step: 800
-2026-07-15 09:36:59,377 - main - INFO - Simulation time: 2026-03-10 12:00:00, time step: 900
-2026-07-15 09:36:59,478 - main - INFO - Simulation time: 2026-03-14 16:00:00, time step: 1000
-2026-07-15 09:36:59,588 - main - INFO - Simulation time: 2026-03-18 20:00:00, time step: 1100
-2026-07-15 09:36:59,736 - main - INFO - Simulation time: 2026-03-23 00:00:00, time step: 1200
-2026-07-15 09:36:59,863 - main - INFO - Simulation time: 2026-03-27 04:00:00, time step: 1300
-2026-07-15 09:37:00,021 - main - INFO - Simulation time: 2026-03-31 08:00:00, time step: 1400
-2026-07-15 09:37:00,112 - main - INFO - Simulation time: 2026-04-04 12:00:00, time step: 1500
-2026-07-15 09:37:00,209 - main - INFO - Simulation time: 2026-04-08 16:00:00, time step: 1600
-2026-07-15 09:37:00,302 - main - INFO - Simulation time: 2026-04-12 20:00:00, time step: 1700
-2026-07-15 09:37:00,396 - main - INFO - Simulation time: 2026-04-17 00:00:00, time step: 1800
-2026-07-15 09:37:00,486 - main - INFO - Simulation time: 2026-04-21 04:00:00, time step: 1900
-2026-07-15 09:37:00,582 - main - INFO - Simulation time: 2026-04-25 08:00:00, time step: 2000
-2026-07-15 09:37:00,692 - main - INFO - Simulation time: 2026-04-29 12:00:00, time step: 2100
-2026-07-15 09:37:00,842 - main - INFO - Simulation time: 2026-05-03 16:00:00, time step: 2200
-2026-07-15 09:37:00,949 - main - INFO - Simulation time: 2026-05-07 20:00:00, time step: 2300
-2026-07-15 09:37:01,084 - main - INFO - Simulation time: 2026-05-12 00:00:00, time step: 2400
-2026-07-15 09:37:01,219 - main - INFO - Simulation time: 2026-05-16 04:00:00, time step: 2500
-2026-07-15 09:37:01,330 - main - INFO - Simulation time: 2026-05-20 08:00:00, time step: 2600
-2026-07-15 09:37:01,454 - main - INFO - Simulation time: 2026-05-24 12:00:00, time step: 2700
-2026-07-15 09:37:01,542 - main - INFO - Simulation time: 2026-05-28 16:00:00, time step: 2800
-2026-07-15 09:37:01,613 - main - INFO - Plotting analysis orb_beta_angle
-2026-07-15 09:37:01,698 - main - INFO - orb_beta_angle: satellite 1 beta -61.4 .. 72.7 deg, max eclipse 36.1 min/orbit (38.9% of the orbit)
-2026-07-15 09:37:01,920 - main - INFO - Written data dump orb_beta_angle.csv (2880 rows)
+2026-07-15 12:55:40,521 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\orb_beta_angle\Config.xml validated: 0 warning(s), no errors
+2026-07-15 12:55:40,522 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': 3.2, 'mass': 500.0, 'bstar': 0.0}
+2026-07-15 12:55:40,522 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x0000023E5662A270>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': 3.2, 'mass': 500.0, 'satrec': <sgp4.wrapper.Satrec object at 0x0000023E549AEF10>, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-15 12:55:40,803 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-15 12:55:40,805 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x0000023E564EBC50>}
+2026-07-15 12:55:40,807 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61192.0, size time steps in sec: 3600.0
+2026-07-15 12:55:40,807 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-15 12:55:40,807 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-15 12:55:40,807 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-15 12:55:40,807 - main - INFO - Finished reading configuration file
+2026-07-15 12:55:40,849 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-15 12:55:41,060 - main - INFO - Simulation time: 2026-02-05 04:00:00, time step: 100
+2026-07-15 12:55:41,228 - main - INFO - Simulation time: 2026-02-09 08:00:00, time step: 200
+2026-07-15 12:55:41,351 - main - INFO - Simulation time: 2026-02-13 12:00:00, time step: 300
+2026-07-15 12:55:41,497 - main - INFO - Simulation time: 2026-02-17 16:00:00, time step: 400
+2026-07-15 12:55:41,624 - main - INFO - Simulation time: 2026-02-21 20:00:00, time step: 500
+2026-07-15 12:55:41,762 - main - INFO - Simulation time: 2026-02-26 00:00:00, time step: 600
+2026-07-15 12:55:41,898 - main - INFO - Simulation time: 2026-03-02 04:00:00, time step: 700
+2026-07-15 12:55:42,022 - main - INFO - Simulation time: 2026-03-06 08:00:00, time step: 800
+2026-07-15 12:55:42,167 - main - INFO - Simulation time: 2026-03-10 12:00:00, time step: 900
+2026-07-15 12:55:42,312 - main - INFO - Simulation time: 2026-03-14 16:00:00, time step: 1000
+2026-07-15 12:55:42,460 - main - INFO - Simulation time: 2026-03-18 20:00:00, time step: 1100
+2026-07-15 12:55:42,614 - main - INFO - Simulation time: 2026-03-23 00:00:00, time step: 1200
+2026-07-15 12:55:42,766 - main - INFO - Simulation time: 2026-03-27 04:00:00, time step: 1300
+2026-07-15 12:55:42,890 - main - INFO - Simulation time: 2026-03-31 08:00:00, time step: 1400
+2026-07-15 12:55:43,010 - main - INFO - Simulation time: 2026-04-04 12:00:00, time step: 1500
+2026-07-15 12:55:43,151 - main - INFO - Simulation time: 2026-04-08 16:00:00, time step: 1600
+2026-07-15 12:55:43,324 - main - INFO - Simulation time: 2026-04-12 20:00:00, time step: 1700
+2026-07-15 12:55:43,476 - main - INFO - Simulation time: 2026-04-17 00:00:00, time step: 1800
+2026-07-15 12:55:43,627 - main - INFO - Simulation time: 2026-04-21 04:00:00, time step: 1900
+2026-07-15 12:55:43,778 - main - INFO - Simulation time: 2026-04-25 08:00:00, time step: 2000
+2026-07-15 12:55:43,888 - main - INFO - Simulation time: 2026-04-29 12:00:00, time step: 2100
+2026-07-15 12:55:44,005 - main - INFO - Simulation time: 2026-05-03 16:00:00, time step: 2200
+2026-07-15 12:55:44,120 - main - INFO - Simulation time: 2026-05-07 20:00:00, time step: 2300
+2026-07-15 12:55:44,246 - main - INFO - Simulation time: 2026-05-12 00:00:00, time step: 2400
+2026-07-15 12:55:44,392 - main - INFO - Simulation time: 2026-05-16 04:00:00, time step: 2500
+2026-07-15 12:55:44,538 - main - INFO - Simulation time: 2026-05-20 08:00:00, time step: 2600
+2026-07-15 12:55:44,670 - main - INFO - Simulation time: 2026-05-24 12:00:00, time step: 2700
+2026-07-15 12:55:44,783 - main - INFO - Simulation time: 2026-05-28 16:00:00, time step: 2800
+2026-07-15 12:55:44,878 - main - INFO - Plotting analysis orb_beta_angle
+2026-07-15 12:55:44,968 - main - INFO - orb_beta_angle: satellite 1 beta -61.4 .. 72.7 deg, max eclipse 36.1 min/orbit (38.9% of the orbit)
+2026-07-15 12:55:45,224 - main - INFO - Written data dump orb_beta_angle.csv (2880 rows)

@@ -9,7 +9,7 @@ import astropy.units as u
 
 # Project modules
 from constants import GM_EARTH, OMEGA_EARTH, R_EARTH
-from analysis import AnalysisBase
+from analysis import AnalysisBase, make_map_cyl
 from analysis_sat import air_density_exponential
 import misc_fn
 import logging_svs as ls
@@ -136,17 +136,16 @@ class AnalysisOrbKeplerElements(AnalysisBase):
                 self.sat_metric[idx_sat, sm.cnt_epoch, 3:6] = vel
 
     def after_loop(self, sm):
-        fig, axes = plt.subplots(3, 2, figsize=(12, 10), sharex=True)
-        panels = [  # (key, scale factor, label)
-            ('sma', 1e-3, 'Semi-major axis [km]'),
-            ('ecc', 1.0, 'Eccentricity [-]'),
-            ('incl', np.degrees(1.0), 'Inclination [deg]'),
-            ('raan', np.degrees(1.0), 'RAAN [deg]'),
-            ('arg_perigee', np.degrees(1.0), 'Argument of perigee [deg]'),
-            ('mean_anomaly', np.degrees(1.0), 'Mean anomaly [deg]'),
+        panels = [  # (key, scale factor, label, file name suffix)
+            ('sma', 1e-3, 'Semi-major axis [km]', 'semi_major_axis'),
+            ('ecc', 1.0, 'Eccentricity [-]', 'eccentricity'),
+            ('incl', np.degrees(1.0), 'Inclination [deg]', 'inclination'),
+            ('raan', np.degrees(1.0), 'RAAN [deg]', 'raan'),
+            ('arg_perigee', np.degrees(1.0), 'Argument of perigee [deg]', 'arg_perigee'),
+            ('mean_anomaly', np.degrees(1.0), 'Mean anomaly [deg]', 'mean_anomaly'),
         ]
         times = np.asarray(self.times_f_doy)
-        plotted = False
+        results = []  # (satellite, used epochs, osculating elements)
         csv_rows = []
         for idx_sat, satellite in enumerate(sm.satellites):
             if not self._selected(satellite):
@@ -166,24 +165,26 @@ class AnalysisOrbKeplerElements(AnalysisBase):
             first, last = np.mean(sma_km[:n_avg]), np.mean(sma_km[-n_avg:])
             ls.logger.info(f'Satellite {satellite.sat_id}: mean SMA first epochs {first:.3f} km, '
                            f'last epochs {last:.3f} km, change {(last-first)*1000:.1f} m')
-            for ax, (key, scale, label) in zip(axes.flat, panels):
-                ax.plot(times[used], elements[key] * scale, '-', linewidth=0.9,
-                        label=f'Sat {satellite.sat_id}')
-            plotted = True
-        if not plotted:
+            results.append((satellite, used, elements))
+        if not results:
             ls.logger.error(f'No satellite matched ConstellationID {self.constellation_id} / '
                             f'SatelliteID {self.satellite_id}. No plot produced.')
             return
-        for ax, (key, scale, label) in zip(axes.flat, panels):
-            ax.set_ylabel(label)
-            ax.grid(True)
-        for ax in axes[-1, :]:
+        # One plot per element (<type>_semi_major_axis.png, ...) instead of a
+        # single six-panel figure
+        for key, scale, label, suffix in panels:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            for satellite, used, elements in results:
+                ax.plot(times[used], elements[key] * scale, '-', linewidth=0.9,
+                        label=f'Sat {satellite.sat_id}')
             ax.set_xlabel('DOY [-]')
-        axes.flat[0].legend(fontsize=8)
-        fig.suptitle('Osculating Kepler elements')
-        fig.tight_layout()
-        plt.savefig(sm.output_path(self.type + '.png'))
-        plt.show()
+            ax.set_ylabel(label)
+            ax.set_title(f'Osculating Kepler elements: {label}')
+            ax.grid(True)
+            ax.legend(fontsize=8)
+            fig.tight_layout()
+            plt.savefig(sm.output_path(f'{self.type}_{suffix}.png'))
+            plt.show()
 
         self.write_csv(sm, ['doy', 'sat_id', 'sma_m', 'eccentricity', 'inclination_deg',
                             'raan_deg', 'arg_perigee_deg', 'mean_anomaly_deg'],
@@ -384,24 +385,32 @@ class AnalysisOrbPoleWobble(AnalysisBase):
         if not self.enabled:
             return
         times = np.asarray(self.times_f_doy)
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+        # Two separate plots (<type>_timeseries.png and <type>_track.png)
+        # instead of a single two-panel figure
+        fig, ax1 = plt.subplots(figsize=(10, 6))
         ax1.plot(times, self.metric[:, 0], 'r-', label='xp')
         ax1.plot(times, self.metric[:, 1], 'b-', label='yp')
         ax1.set_xlabel('DOY [-]')
         ax1.set_ylabel('Polar motion [arcsec]')
+        ax1.set_title('Earth pole wobble (IERS polar motion)')
         ax1.grid(True)
         ax1.legend()
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_timeseries.png'))
+        plt.show()
+
+        fig, ax2 = plt.subplots(figsize=(8, 6))
         ax2.plot(self.metric[:, 0], self.metric[:, 1], 'g-')
         ax2.plot(self.metric[0, 0], self.metric[0, 1], 'go', label='start')
         ax2.plot(self.metric[-1, 0], self.metric[-1, 1], 'rs', label='end')
         ax2.set_xlabel('xp [arcsec]')
         ax2.set_ylabel('yp [arcsec]')
+        ax2.set_title('Earth pole wobble track (IERS polar motion)')
         ax2.set_aspect('equal', adjustable='datalim')
         ax2.grid(True)
         ax2.legend()
-        fig.suptitle('Earth pole wobble (IERS polar motion)')
         fig.tight_layout()
-        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.savefig(sm.output_path(self.type + '_track.png'))
         plt.show()
 
         self.write_csv(sm, ['doy', 'xp_arcsec', 'yp_arcsec'],
@@ -714,8 +723,11 @@ class AnalysisOrbBetaAngle(AnalysisBase):
             return
         ax1.axhline(0.0, color='gray', linewidth=0.6)
         ax1.set_xlabel('DOY [-]')
-        ax1.set_ylabel('Solar beta angle [deg]')
-        ax2.set_ylabel('Eclipse fraction of the orbit [%]')
+        # Colour each y-axis like its (first) curve: beta C0, eclipse C1
+        ax1.set_ylabel('Solar beta angle [deg]', color='C0')
+        ax1.tick_params(axis='y', labelcolor='C0')
+        ax2.set_ylabel('Eclipse fraction of the orbit [%]', color='C1')
+        ax2.tick_params(axis='y', labelcolor='C1')
         ax2.set_ylim(bottom=0)
         ax1.grid(True)
         ax1.legend(loc='upper left', fontsize=8)
@@ -1134,31 +1146,37 @@ class AnalysisOrbEnvironment(AnalysisBase):
         ls.logger.info(f'{self.type}: micrometeoroid impacts >1 ug over the mission on '
                        f'{self.surface_area:.0f} m2: {impacts_1ug:.1f}')
 
-        fig = plt.figure(figsize=(16, 9))
-        ax1 = fig.add_subplot(2, 3, 1, projection=ccrs.PlateCarree())
-        ax1.set_global()
-        ax1.coastlines(linewidth=0.5)
+        # Six separate plots (<type>_trapped_flux.png, ...) instead of a
+        # single six-panel environment sheet. All panels are first-order
+        # engineering models - use SPENVIS/IRENE for design values.
+        fig, ax1 = make_map_cyl()
         total_flux = j_p + j_e
         quiet = total_flux <= 0
         ax1.scatter(lon[quiet], lat[quiet], s=1, c='lightgrey',
                     transform=ccrs.PlateCarree())
         sc = ax1.scatter(lon[~quiet], lat[~quiet], s=4, c=np.log10(total_flux[~quiet]),
                          cmap=plt.cm.jet, transform=ccrs.PlateCarree())
-        plt.colorbar(sc, ax=ax1, shrink=0.7, label='log10 trapped flux [/cm2/s]')
-        ax1.set_title('SAA and polar horn crossings')
+        plt.colorbar(sc, ax=ax1, shrink=0.85, label='log10 trapped flux [/cm2/s]')
+        ax1.set_title('Trapped radiation: SAA and polar horn crossings '
+                      '(first-order model)')
+        plt.savefig(sm.output_path(self.type + '_trapped_flux.png'))
+        plt.show()
 
-        ax2 = fig.add_subplot(2, 3, 2)
+        fig, ax2 = plt.subplots(figsize=(10, 6))
         ax2.semilogy(times, np.where(j_p > 0, j_p, np.nan), 'r.', markersize=2,
                      label='Protons >10 MeV')
         ax2.semilogy(times, np.where(j_e > 0, j_e, np.nan), 'b.', markersize=2,
                      label='Electrons >1 MeV')
         ax2.set_xlabel('Day of Year (DOY)')
         ax2.set_ylabel('Flux [/cm2/s]')
-        ax2.set_title('Trapped particle flux')
+        ax2.set_title('Trapped particle flux (first-order model)')
         ax2.grid(True, alpha=0.4)
         ax2.legend(fontsize=8)
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_flux_timeseries.png'))
+        plt.show()
 
-        ax3 = fig.add_subplot(2, 3, 3)
+        fig, ax3 = plt.subplots(figsize=(10, 6))
         ax3.plot(times, l_shell, 'g-', linewidth=0.6)
         ax3.set_xlabel('Day of Year (DOY)')
         ax3.set_ylabel('L-shell [-]', color='g')
@@ -1167,27 +1185,37 @@ class AnalysisOrbEnvironment(AnalysisBase):
         ax3b = ax3.twinx()
         ax3b.plot(times, b_gauss, 'm-', linewidth=0.6)
         ax3b.set_ylabel('B [gauss]', color='m')
-        ax3.set_title('Magnetic drift-shell coordinates')
+        ax3.set_title('Magnetic drift-shell coordinates (eccentric dipole)')
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_drift_shell.png'))
+        plt.show()
 
-        ax4 = fig.add_subplot(2, 3, 4)
+        fig, ax4 = plt.subplots(figsize=(10, 6))
         ax4.semilogy(_SHIELD_MM, dose_total, 'k-o', markersize=4, label='Total')
         ax4.semilogy(_SHIELD_MM, dose_p, 'r--', label='Trapped protons')
         ax4.semilogy(_SHIELD_MM, dose_e, 'b--', label='Trapped electrons')
         ax4.set_xlabel('Aluminium shielding [mm]')
         ax4.set_ylabel('Total ionizing dose [rad/yr]')
-        ax4.set_title('Dose-depth curve')
+        ax4.set_title('Dose-depth curve (first-order model - use SPENVIS/IRENE '
+                      'for design values)')
         ax4.grid(True, which='both', alpha=0.4)
         ax4.legend(fontsize=8)
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_dose_depth.png'))
+        plt.show()
 
-        ax5 = fig.add_subplot(2, 3, 5)
+        fig, ax5 = plt.subplots(figsize=(10, 6))
         years = np.linspace(0.0, self.mission_years, 50)
         ax5.plot(years, years * ao_erosion_um / self.mission_years, 'g-')
         ax5.set_xlabel('Mission time [years]')
         ax5.set_ylabel('Kapton erosion depth [um]')
-        ax5.set_title(f'Atomic oxygen (ram flux {ao_flux:.2e} /cm2/s)')
+        ax5.set_title(f'Atomic oxygen erosion (ram flux {ao_flux:.2e} /cm2/s)')
         ax5.grid(True, alpha=0.4)
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_atomic_oxygen.png'))
+        plt.show()
 
-        ax6 = fig.add_subplot(2, 3, 6)
+        fig, ax6 = plt.subplots(figsize=(10, 6))
         ax6.loglog(masses, mm_flux_m2yr, 'b-', label='Flux [/m2/yr]')
         ax6.loglog(masses, mm_impacts, 'r--',
                    label=f'Impacts, {self.surface_area:.0f} m2, '
@@ -1197,11 +1225,8 @@ class AnalysisOrbEnvironment(AnalysisBase):
         ax6.set_title('Micrometeoroids (Gruen 1985)')
         ax6.grid(True, which='both', alpha=0.4)
         ax6.legend(fontsize=8)
-
-        fig.suptitle('Space environment along the orbit - first-order engineering '
-                     'models (use SPENVIS/IRENE for design values)', fontsize=11)
-        fig.tight_layout(rect=(0, 0, 1, 0.96))
-        plt.savefig(sm.output_path(self.type + '.png'))
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_micrometeoroids.png'))
         plt.show()
 
         self.write_csv(sm, ['doy', 'lat_deg', 'lon_deg', 'alt_km', 'l_shell', 'b_gauss',

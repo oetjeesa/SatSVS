@@ -1323,14 +1323,16 @@ Optional in the analysis part are:
   latitude in degrees (default 90).
 - GroundProcessingMin: Fixed ground processing delay in minutes added to each latency value (default 0).
 
-<img src="/docs/sat_data_latency_stats.png" alt="sat_data_latency"/>
+<img src="/docs/sat_data_latency_timeseries.png" alt="sat_data_latency_timeseries"/>
+<img src="/docs/sat_data_latency_histogram.png" alt="sat_data_latency_histogram"/>
 
 
 ### orb_kepler_elements
 Plots the evolution of all osculating Kepler elements of the satellite(s) over the
 simulation time, computed each epoch from the ECI state vector: semi-major axis,
-eccentricity, inclination, RAAN, argument of perigee and mean anomaly (one panel
-each). Run with the HPOP propagator this shows the perturbation effects — e.g. the
+eccentricity, inclination, RAAN, argument of perigee and mean anomaly (one plot
+per element, orb_kepler_elements_semi_major_axis.png etc.). Run with the HPOP
+propagator this shows the perturbation effects — e.g. the
 drag decay of the semi-major axis (the log reports the secular change, averaging
 out the J2 short-period oscillation) and the J2 RAAN drift. It also works with the
 other propagators: constant elements for Keplerian, mean-element variations for
@@ -1348,7 +1350,12 @@ Optional are, to select one constellation or one satellite:
     <ConstellationID>1</ConstellationID>
     <SatelliteID>1</SatelliteID>
 ```
-<img src="/docs/orb_kepler_elements.png" alt="orb_kepler_elements"/>
+<img src="/docs/orb_kepler_elements_semi_major_axis.png" alt="orb_kepler_elements_semi_major_axis"/>
+<img src="/docs/orb_kepler_elements_eccentricity.png" alt="orb_kepler_elements_eccentricity"/>
+<img src="/docs/orb_kepler_elements_inclination.png" alt="orb_kepler_elements_inclination"/>
+<img src="/docs/orb_kepler_elements_raan.png" alt="orb_kepler_elements_raan"/>
+<img src="/docs/orb_kepler_elements_arg_perigee.png" alt="orb_kepler_elements_arg_perigee"/>
+<img src="/docs/orb_kepler_elements_mean_anomaly.png" alt="orb_kepler_elements_mean_anomaly"/>
 
 
 ### orb_air_density
@@ -1413,7 +1420,8 @@ The following parameters are needed:
     <Type>orb_pole_wobble</Type>
 </Analysis>
 ```
-<img src="/docs/orb_pole_wobble.png" alt="orb_pole_wobble"/>
+<img src="/docs/orb_pole_wobble_timeseries.png" alt="orb_pole_wobble_timeseries"/>
+<img src="/docs/orb_pole_wobble_track.png" alt="orb_pole_wobble_track"/>
 
 
 ### orb_deltav_element
@@ -1533,7 +1541,9 @@ Optional are:
 <img src="/docs/orb_lifetime.png" alt="orb_lifetime"/>
 
 ### orb_environment
-Space environment along the orbit, as a SPENVIS-style summary sheet with six panels:
+Space environment along the orbit, as a SPENVIS-style summary in six plots
+(orb_environment_trapped_flux.png, _flux_timeseries, _drift_shell, _dose_depth,
+_atomic_oxygen, _micrometeoroids):
 - Trapped radiation: the geomagnetic field is modelled as an eccentric tilted dipole
   (the offset dipole centre is what creates the South Atlantic Anomaly), giving the
   McIlwain L-shell and field strength B along the orbit. AE8/AP8-style parametrisations
@@ -1572,7 +1582,12 @@ Optional in the analysis part are:
 - MissionYears: accumulation period for fluences, erosion and impact counts (default 5).
 - SurfaceArea: area exposed to micrometeoroids in m^2 (default 10).
 
-<img src="/docs/orb_environment.png" alt="orb_environment"/>
+<img src="/docs/orb_environment_trapped_flux.png" alt="orb_environment_trapped_flux"/>
+<img src="/docs/orb_environment_flux_timeseries.png" alt="orb_environment_flux_timeseries"/>
+<img src="/docs/orb_environment_drift_shell.png" alt="orb_environment_drift_shell"/>
+<img src="/docs/orb_environment_dose_depth.png" alt="orb_environment_dose_depth"/>
+<img src="/docs/orb_environment_atomic_oxygen.png" alt="orb_environment_atomic_oxygen"/>
+<img src="/docs/orb_environment_micrometeoroids.png" alt="orb_environment_micrometeoroids"/>
 
 ### sat_thermal
 Single-node spacecraft thermal balance over the orbit. Per time step the heat

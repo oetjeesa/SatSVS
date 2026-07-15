@@ -647,24 +647,29 @@ class AnalysisSatDataLatency(AnalysisBase):
         # Calculate percentage < 2 hours
         pct_under_2h = (np.sum(latencies < 2.0) / len(latencies)) * 100
 
-        fig, (ax2, ax3) = plt.subplots(2, 1, figsize=(12, 16))
-
-        # --- Latency Time Series ---
+        # Two separate plots (<type>_timeseries.png and <type>_histogram.png)
+        # instead of a single two-panel figure
+        fig, ax2 = plt.subplots(figsize=(12, 6))
         ax2.scatter(lat_data[:, 0], latencies, c='red', s=5, alpha=0.3)
         ax2.axhline(2.0, color='black', linestyle=':', label='2h Threshold')
+        ax2.set_xlabel('Day of Year (DOY)')
         ax2.set_ylabel('Latency (Hours)')
         ax2.set_title(f'{pct_under_2h:.1f}% of data received in < 2 hours')
         ax2.legend()
         ax2.grid(True)
+        plt.tight_layout()
+        plt.savefig(sm.output_path('sat_data_latency_timeseries.png'))
+        plt.show()
 
-        # --- Histogram ---
+        fig, ax3 = plt.subplots(figsize=(12, 6))
         ax3.hist(latencies, bins=50, color='skyblue', edgecolor='black', alpha=0.7)
         ax3.axvline(mean_lat, color='blue', linestyle='--', label=f'Mean: {mean_lat:.2f}h')
         ax3.axvline(p95_lat, color='orange', linestyle='--', label=f'95%: {p95_lat:.2f}h')
         ax3.set_xlabel('Latency (Hours)')
+        ax3.set_ylabel('Number of data packets [-]')
+        ax3.set_title('Data latency histogram')
         ax3.legend()
         ax3.grid(axis='y', alpha=0.3)
-
         plt.tight_layout()
-        plt.savefig(sm.output_path('sat_data_latency_stats.png'))
+        plt.savefig(sm.output_path('sat_data_latency_histogram.png'))
         plt.show()

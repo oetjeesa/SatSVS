@@ -104,7 +104,7 @@ test configs from scratch.
 | sat_eclipse_duration | ~35 min eclipse per orbit (beta~0, 700 km) |
 | sat_data_storage | SSR sawtooth 0–250 Gbit, downlink windows shaded |
 | sat_data_latency | Mean 0.95 h, 95% 1.57 h, 100% < 2 h |
-| orb_kepler_elements | HPOP + drag: 6-panel Kepler element evolution — J2 SMA oscillation over a 15.4 km secular drag decay in 3 days at ~250 km, +0.97 deg/day RAAN drift |
+| orb_kepler_elements | HPOP + drag: Kepler element evolution (one plot per element) — J2 SMA oscillation over a 15.4 km secular drag decay in 3 days at ~250 km, +0.97 deg/day RAAN drift |
 | orb_air_density | Density 4–8e-11 kg/m3 oscillating anti-phase with the 240–265 km altitude oscillation (perigee peaks) |
 | orb_disturbance_forces | Textbook hierarchy at 250 km: J2 ~2e-2, drag ~2e-5, Moon > Sun > solid tides ~1e-6..5e-7, SRP square wave dropping to zero in eclipse, central gravity 9 m/s2 reference |
 | orb_pole_wobble | xp 0.09→0.13, yp 0.36→0.41 arcsec over 60 days — arc of the annual/Chandler circle with sub-daily EOP loops |

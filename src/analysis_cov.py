@@ -304,14 +304,18 @@ class AnalysisCovSatelliteContour(AnalysisBase, AnalysisPlot3D):
             sm.satellites[idx_sat].det_lla()
             contour = misc_fn.sat_contour(sm.satellites[idx_sat].lla, self.elevation_mask)
             contours.append(contour)
+            # Continuous closed contour line, broken at the date line (same
+            # style as the ground track)
+            x, y = track_with_gaps(np.degrees(np.append(contour[:, 1], contour[0, 1])),
+                                   np.degrees(np.append(contour[:, 0], contour[0, 0])))
             if self.satellite_id > 0:
-                ax.plot(contour[:, 1] / PI * 180, contour[:, 0] / PI * 180, 'r.',
-                        transform=ccrs.PlateCarree())
+                ax.plot(x, y, 'r-', linewidth=1.5, transform=ccrs.PlateCarree())
             else:
-                ax.plot(contour[:, 1] / PI * 180, contour[:, 0] / PI * 180, '.',
+                ax.plot(x, y, '-', linewidth=1.5,
                         label='Satellite ID: '+str(sm.satellites[idx_sat].sat_id),
                         transform=ccrs.PlateCarree())
-                ax.legend()
+        if self.satellite_id == 0:
+            ax.legend(fontsize=8, loc='lower left')
         plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
@@ -640,7 +644,16 @@ class AnalysisCovSatelliteVisibleId(AnalysisBase):
     def after_loop(self, sm):
         fig = plt.figure(figsize=(10, 6))
         plt.subplots_adjust(left=.1, right=.95, top=0.95, bottom=0.07)
-        plt.plot(self.times_f_doy, self.user_metric, 'r+')
+        # Horizontal pass segments instead of point markers: the NaN gaps
+        # already break the line between passes; additionally break where a
+        # slot switches to another satellite ID so no vertical connectors
+        # are drawn
+        times = np.asarray(self.times_f_doy)
+        for col in self.user_metric.T:
+            switch = np.flatnonzero(np.isfinite(col[1:]) & np.isfinite(col[:-1]) &
+                                    (col[1:] != col[:-1])) + 1
+            plt.plot(np.insert(times, switch, np.nan),
+                     np.insert(col, switch, np.nan), 'r-', linewidth=1.5)
         plt.xlabel('DOY[-]'); plt.ylabel('IDs of satellites in view [-]')
         plt.grid()
         plt.savefig(sm.output_path(self.type + '.png'))
