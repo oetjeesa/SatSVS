@@ -8,6 +8,8 @@ Satellite platform (subsystem) analyses:
 All work with any orbit propagator; sat_aocs samples the HPOP atmosphere
 model when available and falls back to a built-in exponential atmosphere.
 """
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 from math import degrees, radians
@@ -793,6 +795,7 @@ class AnalysisSatDragCoefficient(AnalysisBase):
             .cell_data['Area'], dtype=float)
         self._centroids = np.asarray(mesh.cell_centers().points, dtype=float)
         self._mesh_length = float(mesh.length)
+        self._mesh = mesh  # Kept for the annotated 3D model figure
         self._obb = None
         if self.shadowing:
             import vtk
@@ -817,6 +820,61 @@ class AnalysisSatDragCoefficient(AnalysisBase):
                 if self._obb.IntersectWithLine(origin, end, points, None):
                     visible[i] = False
         return gamma[visible], self._areas[visible]
+
+    def _plot_model_3d(self, sm):
+        """Annotated 3D render of the satellite mesh with the body axes and
+        the azimuth/elevation definition of the attitude sweep (azimuth from
+        +x in the x/y plane, elevation towards +z), written to
+        <type>_model.png."""
+        import pyvista as pv
+        off_screen = os.environ.get('MPLBACKEND', '').lower() == 'agg'
+        plotter = pv.Plotter(off_screen=off_screen, window_size=[1200, 900])
+        plotter.set_background('white')
+        plotter.add_mesh(self._mesh, color='lightgray', show_edges=True,
+                         edge_color='darkgray')
+        scale = self._mesh_length * 0.7
+        origin = np.zeros(3)
+        axes = [(np.array([1.0, 0.0, 0.0]), 'red', '+x flight / ram (az=0, el=0)'),
+                (np.array([0.0, 1.0, 0.0]), 'green', '+y (az=90)'),
+                (np.array([0.0, 0.0, 1.0]), 'blue', '+z nadir (el=90)')]
+        label_points, label_texts = [], []
+        for direction, color, label in axes:
+            plotter.add_mesh(pv.Arrow(start=origin, direction=direction,
+                                      scale=scale, tip_radius=0.03,
+                                      shaft_radius=0.012), color=color)
+            label_points.append(direction * scale * 1.08)
+            label_texts.append(label)
+        # Example flow direction with its azimuth and elevation arcs
+        az, el = np.radians(45.0), np.radians(30.0)
+        flow = np.array([np.cos(el) * np.cos(az), np.cos(el) * np.sin(az),
+                         np.sin(el)])
+        plotter.add_mesh(pv.Arrow(start=origin, direction=flow, scale=scale,
+                                  tip_radius=0.03, shaft_radius=0.012),
+                         color='orange')
+        label_points.append(flow * scale * 1.1)
+        label_texts.append('flow direction (az=45, el=30)')
+        radius = 0.55 * scale
+        in_plane = np.array([np.cos(az), np.sin(az), 0.0])
+        az_arc = pv.CircularArc(pointa=np.array([radius, 0.0, 0.0]),
+                                pointb=in_plane * radius, center=origin)
+        el_arc = pv.CircularArc(pointa=in_plane * radius,
+                                pointb=flow * radius, center=origin)
+        plotter.add_mesh(az_arc, color='orange', line_width=3)
+        plotter.add_mesh(el_arc, color='orange', line_width=3)
+        mid_az = np.array([np.cos(az / 2.0), np.sin(az / 2.0), 0.0])
+        label_points.append(mid_az * radius * 1.05)
+        label_texts.append('azimuth')
+        mid_dir = in_plane * np.cos(el / 2.0) + \
+            np.array([0.0, 0.0, np.sin(el / 2.0)])
+        label_points.append(mid_dir * radius * 1.05)
+        label_texts.append('elevation')
+        plotter.add_point_labels(np.array(label_points), label_texts,
+                                 font_size=16, text_color='black',
+                                 shape=None, always_visible=True,
+                                 show_points=False)
+        plotter.view_isometric()
+        plotter.screenshot(sm.output_path(self.type + '_model.png'))
+        plotter.close()
 
     def _atmosphere(self, altitude_m, v_rel):
         """(speed ratio s, re-emission velocity ratio) at altitude from the
@@ -889,12 +947,15 @@ class AnalysisSatDragCoefficient(AnalysisBase):
         azimuths = np.arange(-180.0, 180.0 + 1e-9, self.attitude_step)
         elevations = np.arange(-90.0, 90.0 + 1e-9, self.attitude_step)
         cda_map = np.zeros((len(elevations), len(azimuths)))
+        area_map = np.zeros_like(cda_map)
         for i, el in enumerate(np.radians(elevations)):
             for j, az in enumerate(np.radians(azimuths)):
                 direction = np.array([np.cos(el) * np.cos(az),
                                       np.cos(el) * np.sin(az), np.sin(el)])
                 gamma, areas = self._incidence(direction)
                 cda_map[i, j] = sentman_cda(gamma, areas, mean_s, mean_v_ratio)
+                area_map[i, j] = float(np.sum(np.clip(gamma, 0.0, None) * areas))
+        cd_map = cda_map / np.maximum(area_map, 1e-12)
         weights = np.cos(np.radians(elevations))[:, None] * np.ones(len(azimuths))
         tumbling_cda = float(np.sum(cda_map * weights) / np.sum(weights))
 
@@ -903,29 +964,39 @@ class AnalysisSatDragCoefficient(AnalysisBase):
         ls.logger.info(f'{self.type}: nadir-fixed (+x ram) CdA {ram_cda:.3f} m2, '
                        f'Cd {ram_cd:.3f} on {self._ram_area:.2f} m2 projected area '
                        f'(speed ratio {mean_s:.1f})')
-        ls.logger.info(f'{self.type}: attitude sweep CdA {cda_map.min():.3f} .. '
-                       f'{cda_map.max():.3f} m2, tumbling average {tumbling_cda:.3f} m2')
+        ls.logger.info(f'{self.type}: attitude sweep projected area '
+                       f'{area_map.min():.2f} .. {area_map.max():.2f} m2, Cd '
+                       f'{cd_map.min():.2f} .. {cd_map.max():.2f}, CdA '
+                       f'{cda_map.min():.3f} .. {cda_map.max():.3f} m2, '
+                       f'tumbling average CdA {tumbling_cda:.3f} m2')
         ls.logger.info(f'{self.type}: suggested config values '
                        f'<DragArea>{self._ram_area:.3f}</DragArea> '
                        f'<DragCd>{ram_cd:.3f}</DragCd> (nadir-fixed), or '
                        f'DragArea*DragCd = {tumbling_cda:.3f} m2 (tumbling)')
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-        mesh_plot = ax.pcolormesh(azimuths, elevations, cda_map, shading='auto',
-                                  cmap=plt.cm.viridis)
-        ax.plot(0.0, 0.0, 'r^', markersize=10, markeredgecolor='white')
-        ax.annotate('ram (+x)', (0.0, 0.0), xytext=(6, 6),
-                    textcoords='offset points', color='white', fontsize=9)
-        ax.set_xlabel('Flow azimuth in body frame [deg]')
-        ax.set_ylabel('Flow elevation in body frame [deg]')
-        ax.set_xlim(-180, 180)
-        ax.set_ylim(-90, 90)
-        ax.set_title(f'Drag area CdA over attitude (tumbling average '
-                     f'{tumbling_cda:.2f} m2)')
-        plt.colorbar(mesh_plot, ax=ax, shrink=0.85, label='CdA [m2]')
-        fig.tight_layout()
-        plt.savefig(sm.output_path(self.type + '.png'))
-        plt.show()
+        # Separate attitude maps for the drag coefficient (referenced to the
+        # projected area of each attitude) and the projected area itself
+        for values, label, suffix in (
+                (cd_map, 'Drag coefficient Cd [-]', ''),
+                (area_map, 'Projected area A [m2]', '_area')):
+            fig, ax = plt.subplots(figsize=(10, 6))
+            mesh_plot = ax.pcolormesh(azimuths, elevations, values,
+                                      shading='auto', cmap=plt.cm.viridis)
+            ax.plot(0.0, 0.0, 'r^', markersize=10, markeredgecolor='white')
+            ax.annotate('ram (+x)', (0.0, 0.0), xytext=(6, 6),
+                        textcoords='offset points', color='white', fontsize=9)
+            ax.set_xlabel('Flow azimuth in body frame [deg]')
+            ax.set_ylabel('Flow elevation in body frame [deg]')
+            ax.set_xlim(-180, 180)
+            ax.set_ylim(-90, 90)
+            ax.set_title(f'{label.split(" [")[0]} over attitude (tumbling '
+                         f'average CdA {tumbling_cda:.2f} m2)')
+            plt.colorbar(mesh_plot, ax=ax, shrink=0.85, label=label)
+            fig.tight_layout()
+            plt.savefig(sm.output_path(self.type + suffix + '.png'))
+            plt.show()
+
+        self._plot_model_3d(sm)
 
         fig, ax1 = plt.subplots(figsize=(10, 6))
         ax1.plot(times, self.metric[:, 3], '-', color='C0', linewidth=1.0)
@@ -947,7 +1018,8 @@ class AnalysisSatDragCoefficient(AnalysisBase):
                             'cd_a_m2', 'cd'],
                        np.column_stack([times, self.metric]))
         az_grid, el_grid = np.meshgrid(azimuths, elevations)
-        self.write_csv(sm, ['az_deg', 'el_deg', 'cd_a_m2'],
+        self.write_csv(sm, ['az_deg', 'el_deg', 'area_m2', 'cd', 'cd_a_m2'],
                        np.column_stack([az_grid.ravel(), el_grid.ravel(),
+                                        area_map.ravel(), cd_map.ravel(),
                                         cda_map.ravel()]),
                        suffix='attitude')

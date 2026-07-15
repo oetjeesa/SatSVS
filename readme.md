@@ -1734,8 +1734,11 @@ gas-surface interaction, with ray-cast shadowing between panels. The mesh is the
 same dependency as the 3D plots), or the built-in bus + solar panel model.
 
 Outputs:
-- the drag area CdA over a body-frame attitude sweep of the flow direction
-  (map plot with the ram (+x) attitude marked, plus the tumbling average),
+- separate attitude-sweep maps of the drag coefficient Cd (referenced to the
+  projected area of each attitude) and of the projected area A, with the ram
+  (+x) attitude marked and the tumbling-average CdA in the title,
+- an annotated 3D render of the model with the body axes and the
+  azimuth/elevation definition of the sweep (`<type>_model.png`),
 - CdA along the orbit for a nadir-fixed spacecraft (+x flight direction; the
   molecular speed ratio follows the altitude through an NRLMSISE-class mean
   composition and temperature profile),
@@ -1781,7 +1784,9 @@ Optional in the analysis part are:
   on convex shapes).
 - MaxFacets: larger meshes are decimated to this facet count (default 5000).
 
+<img src="/docs/sat_drag_coefficient_model.png" alt="sat_drag_coefficient_model"/>
 <img src="/docs/sat_drag_coefficient.png" alt="sat_drag_coefficient"/>
+<img src="/docs/sat_drag_coefficient_area.png" alt="sat_drag_coefficient_area"/>
 <img src="/docs/sat_drag_coefficient_orbit.png" alt="sat_drag_coefficient_orbit"/>
 
 
