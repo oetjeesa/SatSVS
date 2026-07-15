@@ -1,24 +1,24 @@
-2026-07-13 19:55:58,914 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\obs_sza_push_broom\Config.xml validated: 0 warning(s), no errors
-2026-07-13 19:55:58,915 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_sza_push_broom/sentinel-1.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': 250000.0, 'obs_swath_stop': 650000.0, 'frontal_area': None, 'mass': None}
-2026-07-13 19:55:58,915 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 58945.03033, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001402, 'inclination': 1.7135991661930727, 'right_ascension': 1.8332065798322439, 'arg_perigee': 1.4609802102594134, 'mean_anomaly': 4.824578744702885}"]
-2026-07-13 19:55:59,095 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-13 19:55:59,156 - main - INFO - {'type': 'Grid', 'user_id': 2700, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.0], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-3.91862092e-10,  4.79892657e-26,  6.35675231e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.57079633, 3.14159265, 0.        ]), 'num_lat': 37, 'num_lon': 73, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x00000224F9B70690>, 'UserName': 'Grid'}
-2026-07-13 19:55:59,158 - main - INFO - Loaded simulation, start MJD: 58946.0, stop MJD: 58946.5, size time steps in sec: 60.0
-2026-07-13 19:55:59,158 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-13 19:55:59,160 - main - INFO - Loaded 2701 number of User to Spacecraft links
-2026-07-13 19:55:59,160 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-13 19:55:59,172 - main - INFO - Finished reading configuration file
-2026-07-13 19:55:59,179 - main - INFO - Simulation time: 2020-04-07 00:00:00, time step: 0
-2026-07-13 19:56:00,862 - main - INFO - Simulation time: 2020-04-07 01:40:00, time step: 100
-2026-07-13 19:56:01,552 - main - INFO - Simulation time: 2020-04-07 03:20:00, time step: 200
-2026-07-13 19:56:02,099 - main - INFO - Simulation time: 2020-04-07 05:00:00, time step: 300
-2026-07-13 19:56:02,617 - main - INFO - Simulation time: 2020-04-07 06:40:00, time step: 400
-2026-07-13 19:56:03,181 - main - INFO - Simulation time: 2020-04-07 08:20:00, time step: 500
-2026-07-13 19:56:03,689 - main - INFO - Simulation time: 2020-04-07 10:00:00, time step: 600
-2026-07-13 19:56:04,211 - main - INFO - Simulation time: 2020-04-07 11:40:00, time step: 700
-2026-07-13 19:56:04,316 - main - INFO - Plotting analysis obs_sza_push_broom
-2026-07-13 19:56:04,316 - main - INFO - User sza coverage 0 of 2701
-2026-07-13 19:56:04,323 - main - INFO - User sza coverage 1000 of 2701
-2026-07-13 19:56:04,329 - main - INFO - User sza coverage 2000 of 2701
-2026-07-13 19:56:04,341 - main - INFO - Written data dump obs_sza_push_broom.csv (686 rows)
-2026-07-13 19:56:06,474 - main - INFO - Saved 3D plot to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_obs_sza_push_broom_xhc1n4q_\obs_sza_push_broom_3d.png
+2026-07-15 13:33:23,836 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\obs_sza_push_broom\Config.xml validated: 0 warning(s), no errors
+2026-07-15 13:33:23,837 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/obs_sza_push_broom/sentinel-1.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': 250000.0, 'obs_swath_stop': 650000.0, 'frontal_area': None, 'mass': None}
+2026-07-15 13:33:23,840 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 58945.03033, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001402, 'inclination': 1.7135991661930727, 'right_ascension': 1.8332065798322439, 'arg_perigee': 1.4609802102594134, 'mean_anomaly': 4.824578744702885}"]
+2026-07-15 13:33:24,140 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-15 13:33:24,251 - main - INFO - {'type': 'Grid', 'user_id': 2700, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.0], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([-3.91862092e-10,  4.79892657e-26,  6.35675231e+06]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([1.57079633, 3.14159265, 0.        ]), 'num_lat': 37, 'num_lon': 73, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000002367A1B7ED0>, 'UserName': 'Grid'}
+2026-07-15 13:33:24,254 - main - INFO - Loaded simulation, start MJD: 58946.0, stop MJD: 58946.5, size time steps in sec: 60.0
+2026-07-15 13:33:24,254 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-15 13:33:24,257 - main - INFO - Loaded 2701 number of User to Spacecraft links
+2026-07-15 13:33:24,257 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-15 13:33:24,277 - main - INFO - Finished reading configuration file
+2026-07-15 13:33:24,286 - main - INFO - Simulation time: 2020-04-07 00:00:00, time step: 0
+2026-07-15 13:33:26,308 - main - INFO - Simulation time: 2020-04-07 01:40:00, time step: 100
+2026-07-15 13:33:27,039 - main - INFO - Simulation time: 2020-04-07 03:20:00, time step: 200
+2026-07-15 13:33:27,711 - main - INFO - Simulation time: 2020-04-07 05:00:00, time step: 300
+2026-07-15 13:33:28,380 - main - INFO - Simulation time: 2020-04-07 06:40:00, time step: 400
+2026-07-15 13:33:29,006 - main - INFO - Simulation time: 2020-04-07 08:20:00, time step: 500
+2026-07-15 13:33:29,678 - main - INFO - Simulation time: 2020-04-07 10:00:00, time step: 600
+2026-07-15 13:33:30,357 - main - INFO - Simulation time: 2020-04-07 11:40:00, time step: 700
+2026-07-15 13:33:30,472 - main - INFO - Plotting analysis obs_sza_push_broom
+2026-07-15 13:33:30,472 - main - INFO - User sza coverage 0 of 2701
+2026-07-15 13:33:30,479 - main - INFO - User sza coverage 1000 of 2701
+2026-07-15 13:33:30,485 - main - INFO - User sza coverage 2000 of 2701
+2026-07-15 13:33:30,506 - main - INFO - Written data dump obs_sza_push_broom.csv (686 rows)
+2026-07-15 13:33:32,143 - main - INFO - Saved 3D plot to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_obs_sza_push_broom_2_mirsn6\obs_sza_push_broom_3d.png

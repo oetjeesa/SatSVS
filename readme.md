@@ -419,6 +419,27 @@ In order to run an analysis block it has to be uncommented and the parameters ad
 - Use as a template one of the other analysis classes above or the base analysis class definition
 - Add the class instantiation at the end of config.py
 
+### 2D map options
+Every analysis that produces a 2D world map accepts these optional flags in its
+`<Analysis>` block to decorate the map (all default off):
+```
+<EarthImage>True</EarthImage>
+<ShowStations>True</ShowStations>
+<ShowUsers>True</ShowUsers>
+<ShowGroundTrack>True</ShowGroundTrack>
+```
+- EarthImage: draw the map background as an Earth photo (input/earth_texture.jpg,
+  the same texture as the 3D globe, with the cartopy stock image as fallback)
+  instead of plain coastlines.
+- ShowStations: mark the ground station locations with red triangles and their names.
+- ShowUsers: mark the user locations with blue triangles (skipped with a warning
+  for user grids with more than 200 points).
+- ShowGroundTrack: draw the subsatellite ground track(s) of all satellites as thin
+  grey lines, recorded during the run.
+
+For example the cov_ground_track reference image below uses EarthImage,
+ShowStations and ShowUsers; the obs_target_imaging image uses ShowGroundTrack.
+
 ### 3D plots
 All analyses that produce a world map (cov_ground_track, cov_satellite_contour,
 cov_satellite_visible_grid, cov_satellite_highest, cov_depth_of_coverage,

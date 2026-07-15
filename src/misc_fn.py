@@ -49,6 +49,14 @@ def config_dir():
     return _CONFIG_DIR
 
 
+def track_with_gaps(lon, lat):
+    """Ground track as one continuous line: NaN breaks inserted at the
+    +/-180 deg longitude wraps, so the line does not cross the whole map at
+    every date line passage."""
+    jumps = np.flatnonzero(np.abs(np.diff(lon)) > 180.0) + 1
+    return np.insert(lon, jumps, np.nan), np.insert(lat, jumps, np.nan)
+
+
 def benchmark(func):
     """
     A decorator that prints the time a function takes to execute.

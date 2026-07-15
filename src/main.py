@@ -44,6 +44,7 @@ def load_configuration(config_file='../input/Config.xml', output_dir='../output'
 def run_before_time_loop(sm):
     for analysis in sm.analyses:
         analysis.before_loop(sm)  # Run analyses which are needed before time loop
+        analysis.before_loop_map2d(sm)  # Shared 2D-map decorations (ground track memory)
     ls.logger.info('Finished reading configuration file')
 
 
@@ -64,6 +65,7 @@ def run_time_loop(sm):
 
         for analysis in sm.analyses:
             analysis.in_loop(sm)  # Run analyses which are needed in time loop
+            analysis.in_loop_map2d(sm)  # Shared 2D-map decorations (ground track)
 
     if sm.file_orbits is not None:  # Close the orbit cache file
         sm.file_orbits.close()

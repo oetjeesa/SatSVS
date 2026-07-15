@@ -59,6 +59,7 @@
     <OrbitPropagator>Keplerian</OrbitPropagator>
     <Analysis>
       <Type>obs_target_imaging</Type>
+      <ShowGroundTrack>True</ShowGroundTrack>
       <MaxOffNadir>45</MaxOffNadir>
       <MinSunElevation>10</MinSunElevation>
       <Target>Rome, 41.9, 12.5</Target>

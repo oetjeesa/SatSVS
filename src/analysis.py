@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import cartopy.crs as ccrs
@@ -9,13 +11,13 @@ import logging_svs as ls
 import misc_fn
 
 
-def make_map_cyl(figsize=(10, 4.4)):
+def make_map_cyl(figsize=(10, 5.6)):
     """
     Global cylindrical (PlateCarree) map with gridlines and coastlines,
     the cartopy equivalent of the previous Basemap(projection='cyl') setup.
     Data plotted on the returned axes must pass transform=ccrs.PlateCarree().
-    Constrained layout plus a figure height close to the fixed 2:1 map aspect
-    keeps the white margins small.
+    Constrained layout with the figure height a bit above the fixed 2:1 map
+    aspect leaves a comfortable white margin above and below the map.
     """
     fig = plt.figure(figsize=figsize, layout='constrained')
     ax = plt.axes(projection=ccrs.PlateCarree())
@@ -87,7 +89,96 @@ def map_pcolormesh(ax, x, y, z, **kwargs):
     return ax.pcolormesh(x, y, z, shading='auto', transform=ccrs.PlateCarree(), **kwargs)
 
 
-class AnalysisBase:
+class AnalysisMap2D:
+    """Mixin of AnalysisBase: shared optional decorations of the 2D world-map
+    plots, available on every world-map analysis (all default off):
+
+    <EarthImage>True</EarthImage>            Earth photo as the map background
+        (input/earth_texture.jpg, cartopy stock image as fallback)
+    <ShowStations>True</ShowStations>        ground stations as red triangles
+        with their names
+    <ShowUsers>True</ShowUsers>              user locations as blue triangles
+        (skipped with a warning for large user grids)
+    <ShowGroundTrack>True</ShowGroundTrack>  subsatellite ground track(s),
+        recorded per epoch, as thin grey lines
+
+    The config reading and the loop hooks are wired centrally (config.py
+    load_simulation, main.py run loops); a map-drawing analysis only calls
+    decorate_map2d(sm, ax) once per created map."""
+
+    EARTH_TEXTURE = '../input/earth_texture.jpg'
+
+    def init_map2d(self):
+        self.show_stations = False
+        self.show_users = False
+        self.earth_image = False
+        self.show_ground_track = False
+        self._map2d_track = None  # (num_sat, num_epoch, 2) lat/lon [deg]
+
+    def read_config_map2d(self, node):
+        if node.find('ShowStations') is not None:
+            self.show_stations = misc_fn.str2bool(node.find('ShowStations').text)
+        if node.find('ShowUsers') is not None:
+            self.show_users = misc_fn.str2bool(node.find('ShowUsers').text)
+        if node.find('EarthImage') is not None:
+            self.earth_image = misc_fn.str2bool(node.find('EarthImage').text)
+        if node.find('ShowGroundTrack') is not None:
+            self.show_ground_track = misc_fn.str2bool(node.find('ShowGroundTrack').text)
+
+    def before_loop_map2d(self, sm):
+        if self.show_ground_track:
+            self._map2d_track = np.full((sm.num_sat, sm.num_epoch, 2), np.nan)
+
+    def in_loop_map2d(self, sm):
+        if self._map2d_track is not None:
+            for idx_sat, satellite in enumerate(sm.satellites):
+                satellite.det_lla()
+                self._map2d_track[idx_sat, sm.cnt_epoch] = [degrees(satellite.lla[0]),
+                                                            degrees(satellite.lla[1])]
+
+    def decorate_map2d(self, sm, ax):
+        """Draw the enabled decorations on a 2D map; call once right after
+        the map is created. The Earth image goes under the analysis data
+        (zorder 0), the ground track and the markers on top of it."""
+        if self.earth_image:
+            texture = misc_fn.resolve_path(self.EARTH_TEXTURE)
+            if texture is not None and os.path.isfile(texture):
+                ax.imshow(plt.imread(texture), extent=(-180, 180, -90, 90),
+                          transform=ccrs.PlateCarree(), origin='upper', zorder=0)
+            else:
+                ls.logger.warning(f'EarthImage: texture {self.EARTH_TEXTURE} not '
+                                  f'found, using the cartopy stock image')
+                ax.stock_img()
+        if self._map2d_track is not None:
+            for idx_sat in range(self._map2d_track.shape[0]):
+                lat = self._map2d_track[idx_sat, :, 0]
+                lon = self._map2d_track[idx_sat, :, 1]
+                used = np.isfinite(lat)
+                if not used.any():
+                    continue
+                x, y = misc_fn.track_with_gaps(lon[used], lat[used])
+                ax.plot(x, y, '-', color='0.35', linewidth=0.7,
+                        transform=ccrs.PlateCarree(), zorder=6)
+        if self.show_stations:
+            for station in sm.stations:
+                lon, lat = degrees(station.lla[1]), degrees(station.lla[0])
+                ax.plot(lon, lat, '^', color='red', markersize=9,
+                        markeredgecolor='black', transform=ccrs.PlateCarree(),
+                        zorder=7)
+                ax.text(lon + 2.0, lat + 2.0, station.station_name, fontsize=8,
+                        transform=ccrs.PlateCarree(), zorder=7)
+        if self.show_users:
+            if len(sm.users) > 200:
+                ls.logger.warning(f'ShowUsers: skipped, the user segment has '
+                                  f'{len(sm.users)} points (a grid would flood the map)')
+            else:
+                for user in sm.users:
+                    ax.plot(degrees(user.lla[1]), degrees(user.lla[0]), '^',
+                            color='blue', markersize=7, markeredgecolor='black',
+                            transform=ccrs.PlateCarree(), zorder=7)
+
+
+class AnalysisBase(AnalysisMap2D):
 
     def __init__(self):
 
@@ -95,6 +186,7 @@ class AnalysisBase:
         self.times_f_doy = []  # Time list of simulation
 
         self.type = ''
+        self.init_map2d()  # Shared 2D-map decoration flags (AnalysisMap2D)
 
     def read_config(self, node):  # Node in xml element tree
         pass
@@ -252,7 +344,10 @@ def swath_ribbon_polygons(edges, max_step_deg=30.0):
     """
     from shapely.geometry import Polygon, box
 
-    window = box(-180.0, -90.0, 180.0, 90.0)
+    # Clip a hair inside the map window: rings lying exactly on the +/-180
+    # projection boundary can crash cartopy's polygon reassembly at draw time
+    # (MultiPolygon of a GeometryCollection)
+    window = box(-179.999, -89.999, 179.999, 89.999)
     polygons = []
     valid = ~np.all(edges.reshape(len(edges), -1) == 0, axis=1)
     idx_valid = np.flatnonzero(valid)
@@ -309,6 +404,30 @@ def swath_ribbon_polygons(edges, max_step_deg=30.0):
     return polygons
 
 
+def fill_ribbon_safe(ax, lon, lat, **style):
+    """ax.fill of a lon/lat polygon with the map projection applied up front:
+    cartopy's deferred draw-time projection crashes on some degenerate rings
+    (polar stereographic ring reassembly can produce a GeometryCollection),
+    so project through shapely here, retry with a repaired/simplified
+    outline, and let the caller skip the ribbon instead of the whole run
+    dying inside savefig. Returns True when the ribbon was drawn."""
+    from shapely.geometry import Polygon
+    poly = Polygon(np.column_stack([lon, lat]))
+    for attempt in (poly, poly.buffer(0).simplify(0.05)):
+        if attempt.is_empty:
+            continue
+        try:
+            geom = ax.projection.project_geometry(attempt, ccrs.PlateCarree())
+        except Exception:
+            continue
+        for g in getattr(geom, 'geoms', [geom]):
+            if g.geom_type == 'Polygon' and not g.is_empty:
+                x, y = g.exterior.xy
+                ax.fill(np.asarray(x), np.asarray(y), **style)  # projection coords
+        return True
+    return False
+
+
 class AnalysisObs:   # Common methods needed for some OBS analysis
 
     def plot_swath_coverage(self, sm, swath_edges, polar_view):
@@ -320,10 +439,18 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
             fig, ax = make_map_polar(polar_view)
         else:
             fig, ax = make_map_cyl()
+        if isinstance(self, AnalysisMap2D):
+            self.decorate_map2d(sm, ax)
+        skipped = 0
         for idx_sat in range(swath_edges.shape[0]):
             for lon, lat in swath_ribbon_polygons(swath_edges[idx_sat]):
-                ax.fill(lon, lat, facecolor='orangered', edgecolor='orangered',
-                        linewidth=0.3, alpha=0.4, transform=ccrs.PlateCarree())
+                if not fill_ribbon_safe(ax, lon, lat, facecolor='orangered',
+                                        edgecolor='orangered', linewidth=0.3,
+                                        alpha=0.4):
+                    skipped += 1
+        if skipped:
+            ls.logger.warning(f'{self.type}: {skipped} swath ribbon(s) could not '
+                              f'be projected onto the map and were skipped')
         plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 
@@ -375,6 +502,8 @@ class AnalysisObs:   # Common methods needed for some OBS analysis
             else:
                 fig, ax = make_map_cyl()
                 point_size = 3
+            if isinstance(self, AnalysisMap2D):
+                self.decorate_map2d(sm, ax)
             sc = ax.scatter(plot_points[:,0], plot_points[:,1], s=point_size, cmap=plt.cm.jet,
                             c=plot_points[:,2], vmin=np.nanmin(plot_points[:,2]),
                             vmax=np.nanmax(plot_points[:,2]), transform=ccrs.PlateCarree())

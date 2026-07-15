@@ -12,12 +12,7 @@ from constants import PI
 from analysis import AnalysisBase, AnalysisPlot3D, make_map_cyl, map_pcolormesh, get_user_grid_shape
 
 
-def track_with_gaps(lon, lat):
-    """Ground track as one continuous line: NaN breaks inserted at the
-    +/-180 deg longitude wraps, so the line does not cross the whole map at
-    every date line passage."""
-    jumps = np.flatnonzero(np.abs(np.diff(lon)) > 180.0) + 1
-    return np.insert(lon, jumps, np.nan), np.insert(lat, jumps, np.nan)
+track_with_gaps = misc_fn.track_with_gaps  # moved to misc_fn (also used by AnalysisMap2D)
 
 
 class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
@@ -45,6 +40,7 @@ class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
 
     def after_loop(self, sm):
         fig, ax = make_map_cyl(figsize=(10, 4))
+        self.decorate_map2d(sm, ax)
         sc = None
         for idx_sat in range(sm.num_sat):
             metric = self.sat_metric[idx_sat]
@@ -117,6 +113,7 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
     def after_loop(self, sm):
 
         fig, ax = make_map_cyl()
+        self.decorate_map2d(sm, ax)
         # Continuous track line (like the 3D view), broken at the date line
         for idx_sat, satellite in enumerate(sm.satellites):
             if not self._selected(satellite):
@@ -234,6 +231,7 @@ class AnalysisCovPassTime(AnalysisBase, AnalysisPlot3D):
         y_new = np.reshape(np.array(lats), grid_shape)
         z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
+        self.decorate_map2d(sm, ax)
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Pass Time Interval [s]', fontsize=10)
@@ -299,6 +297,7 @@ class AnalysisCovSatelliteContour(AnalysisBase, AnalysisPlot3D):
         else:
             idx_selected = self.idx_found_satellites
         fig, ax = make_map_cyl()
+        self.decorate_map2d(sm, ax)
         contours = []
         for idx_sat in idx_selected:
             sm.satellites[idx_sat].det_lla()
@@ -384,6 +383,7 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
         y_new = np.reshape(np.array(lats), grid_shape)
         z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
+        self.decorate_map2d(sm, ax)
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' of Max Elevation satellites in view [deg]', fontsize=10)
@@ -600,6 +600,7 @@ class AnalysisCovSatelliteVisibleGrid(AnalysisBase, AnalysisPlot3D):
         y_new = np.reshape(np.array(latitudes), grid_shape)
         z_new = np.reshape(np.array(metric), grid_shape)
         fig, ax = make_map_cyl()
+        self.decorate_map2d(sm, ax)
         im1 = map_pcolormesh(ax, x_new, y_new, z_new, cmap=plt.cm.jet)
         cb = plt.colorbar(im1, ax=ax, shrink=0.85, pad=0.02)
         cb.set_label(self.statistic + ' Number of satellites in view [-]', fontsize=10)

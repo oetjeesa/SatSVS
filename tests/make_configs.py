@@ -212,6 +212,9 @@ write_test('cov_ground_track', config(
     '      <Type>cov_ground_track</Type>\n'
     '      <ConstellationID>1</ConstellationID>\n'
     '      <SatelliteID>31698</SatelliteID>\n'
+    '      <EarthImage>True</EarthImage>\n'
+    '      <ShowStations>True</ShowStations>\n'
+    '      <ShowUsers>True</ShowUsers>\n'
     '      <Plot3D>True</Plot3D>\n'
     '      <EarthClouds>True</EarthClouds>\n'
     '      <MP4>True</MP4>',
@@ -339,6 +342,7 @@ write_test('obs_target_imaging', config(
     sso_constellation(raan=140.0), ground_segment(['Svalbard']), static_users(DELFT),
     '2026-02-01 00:00:00', '2026-02-03 00:00:00', 30,
     '      <Type>obs_target_imaging</Type>\n'
+    '      <ShowGroundTrack>True</ShowGroundTrack>\n'
     '      <MaxOffNadir>45</MaxOffNadir>\n'
     '      <MinSunElevation>10</MinSunElevation>\n'
     '      <Target>Rome, 41.9, 12.5</Target>\n'

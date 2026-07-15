@@ -622,6 +622,7 @@ class AppConfig:
                 analysis.type = type_str if type_counts[type_str] == 1 else \
                     f'{type_str}_{type_counts[type_str]}'
                 analysis.read_config(analysis_node)  # Read the configuration for the specific analysis
+                analysis.read_config_map2d(analysis_node)  # Shared 2D-map decoration flags
                 self.analyses.append(analysis)
             if not self.analyses:
                 ls.logger.warning('No <Analysis> block found; the run will only propagate the orbits')

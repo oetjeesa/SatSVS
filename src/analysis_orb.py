@@ -1150,6 +1150,7 @@ class AnalysisOrbEnvironment(AnalysisBase):
         # single six-panel environment sheet. All panels are first-order
         # engineering models - use SPENVIS/IRENE for design values.
         fig, ax1 = make_map_cyl()
+        self.decorate_map2d(sm, ax1)
         total_flux = j_p + j_e
         quiet = total_flux <= 0
         ax1.scatter(lon[quiet], lat[quiet], s=1, c='lightgrey',

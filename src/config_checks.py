@@ -16,6 +16,9 @@ import logging_svs as ls
 PLOT3D_PARAMS = {'Plot3D', 'ShowSatellite', 'ShowOrbit', 'SatelliteModelFile',
                  'SatelliteModelScale', 'MP4', 'EarthClouds'}
 
+# 2D-map decorations shared by every world-map analysis (AnalysisMap2D mixin)
+MAP2D_PARAMS = {'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack'}
+
 COM_GR2SP_PARAMS = {
     'GroundStationID', 'TransmitterObject', 'CarrierFrequency', 'TransmitPowerW',
     'TransmitLossesdB', 'TransmitGaindB', 'TransmitAntennaPatternFile',
@@ -26,23 +29,23 @@ COM_GR2SP_PARAMS = {
 
 # Known parameters per analysis type (the authoritative reference is readme.md)
 ANALYSIS_PARAMS = {
-    'cov_ground_track': {'ConstellationID', 'SatelliteID'} | PLOT3D_PARAMS,
+    'cov_ground_track': {'ConstellationID', 'SatelliteID'} | PLOT3D_PARAMS | MAP2D_PARAMS,
     'cov_depth_of_coverage': PLOT3D_PARAMS,
-    'cov_pass_time': {'ConstellationID', 'Statistic'} | PLOT3D_PARAMS,
-    'cov_satellite_contour': {'ConstellationID', 'SatelliteID', 'ElevationMask'} | PLOT3D_PARAMS,
-    'cov_satellite_highest': {'ConstellationID', 'Statistic'} | PLOT3D_PARAMS,
+    'cov_pass_time': {'ConstellationID', 'Statistic'} | PLOT3D_PARAMS | MAP2D_PARAMS,
+    'cov_satellite_contour': {'ConstellationID', 'SatelliteID', 'ElevationMask'} | PLOT3D_PARAMS | MAP2D_PARAMS,
+    'cov_satellite_highest': {'ConstellationID', 'Statistic'} | PLOT3D_PARAMS | MAP2D_PARAMS,
     'cov_satellite_pvt': {'ConstellationID', 'SatelliteID'},
     'cov_satellite_sky_angles': {'ConstellationID', 'SatelliteID'},
     'cov_satellite_visible': set(),
-    'cov_satellite_visible_grid': {'Statistic'} | PLOT3D_PARAMS,
+    'cov_satellite_visible_grid': {'Statistic'} | PLOT3D_PARAMS | MAP2D_PARAMS,
     'cov_satellite_visible_id': {'ConstellationID'},
-    'obs_swath_conical': {'PolarView', 'Revisit', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS,
-    'obs_swath_push_broom': {'PolarView', 'Revisit', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS,
-    'obs_sza_push_broom': {'PolarView', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS,
-    'obs_sza_subsat': {'PolarView', 'SaveOutput', 'RangeLatitude'} | PLOT3D_PARAMS,
-    'obs_aoi_revisit': {'Statistic'},
+    'obs_swath_conical': {'PolarView', 'Revisit', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS | MAP2D_PARAMS,
+    'obs_swath_push_broom': {'PolarView', 'Revisit', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS | MAP2D_PARAMS,
+    'obs_sza_push_broom': {'PolarView', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS | MAP2D_PARAMS,
+    'obs_sza_subsat': {'PolarView', 'SaveOutput', 'RangeLatitude'} | PLOT3D_PARAMS | MAP2D_PARAMS,
+    'obs_aoi_revisit': {'Statistic'} | MAP2D_PARAMS,
     'obs_target_imaging': {'Target', 'TargetFile', 'MaxOffNadir', 'MinSunElevation',
-                           'ConstellationID'},
+                           'ConstellationID'} | MAP2D_PARAMS,
     'com_gr2sp_budget': COM_GR2SP_PARAMS,
     'com_gr2sp_budget_interference': COM_GR2SP_PARAMS | {
         'BandWidth', 'TransmitGainManualdB', 'TransmitAntennaDiameter',
@@ -58,8 +61,8 @@ ANALYSIS_PARAMS = {
     'com_pfd': {'GroundStationID', 'CarrierFrequency', 'TransmitPowerW',
                 'TransmitLossesdB', 'BandWidth', 'ReferenceBandwidth',
                 'TransmitGaindB', 'TransmitAntennaPatternFile', 'PfdLimit'},
-    'nav_dilution_of_precision': {'Direction', 'Statistic'} | PLOT3D_PARAMS,
-    'nav_accuracy': {'Direction', 'Statistic'} | PLOT3D_PARAMS,
+    'nav_dilution_of_precision': {'Direction', 'Statistic'} | PLOT3D_PARAMS | MAP2D_PARAMS,
+    'nav_accuracy': {'Direction', 'Statistic'} | PLOT3D_PARAMS | MAP2D_PARAMS,
     'sat_battery_depth_discharge': {
         'BatteryCapacityWh', 'InitialSoC', 'SolarPanelArea', 'PanelEfficiency',
         'BasePowerDrawW', 'InstrumentPowerDrawW', 'PayloadLatitudeLimit'},
@@ -77,7 +80,8 @@ ANALYSIS_PARAMS = {
     'orb_beta_angle': {'ConstellationID', 'SatelliteID'},
     'orb_lifetime': {'ConstellationID', 'SatelliteID', 'Mass', 'DragArea',
                      'DragCoefficient', 'DensityScale', 'MaxYears', 'ReentryAltitude'},
-    'orb_environment': {'ConstellationID', 'SatelliteID', 'MissionYears', 'SurfaceArea'},
+    'orb_environment': {'ConstellationID', 'SatelliteID', 'MissionYears',
+                        'SurfaceArea'} | MAP2D_PARAMS,
     'sat_thermal': {'ConstellationID', 'SatelliteID', 'SurfaceArea', 'CrossSectionSun',
                     'CrossSectionEarth', 'Absorptivity', 'Emissivity', 'InternalPowerW',
                     'HeatCapacity', 'InitialTemperature'},
@@ -207,6 +211,7 @@ BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeSpace2SpaceLinks', 'OrbitsFromPreviousRun', 'IncludeRain',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',
              'Plot3D', 'ShowSatellite', 'ShowOrbit', 'MP4', 'EarthClouds',
+             'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack',
              'Geopotential', 'EarthPoleRotation', 'Drag', 'SolarRadiationPressure',
              'ThirdBodySun', 'ThirdBodyMoon', 'ThirdBodyPlanets', 'SolidTides',
              'OceanTides', 'Relativity'}

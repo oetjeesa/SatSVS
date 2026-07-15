@@ -470,8 +470,10 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
         self.write_csv(sm, ['lon_deg', 'lat_deg', 'mean_sza_deg'], plot_points)
         if polar_view is not None:
             fig, ax = make_map_polar(polar_view)
+            self.decorate_map2d(sm, ax)
         else:
             fig, ax = make_map_cyl()
+            self.decorate_map2d(sm, ax)
         sc = ax.scatter(plot_points[:,0], plot_points[:,1], s=12, marker='o', cmap=plt.cm.jet,
                         c=plot_points[:,2], alpha=.3, transform=ccrs.PlateCarree())
         cb = plt.colorbar(sc, ax=ax, shrink=0.85)
@@ -537,8 +539,10 @@ class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
         self.write_csv(sm, ['lat_deg', 'lon_deg', 'sza_deg', 'doy'], self.user_metric)
         if polar_view is not None:
             fig, ax = make_map_polar(polar_view)
+            self.decorate_map2d(sm, ax)
         else:
             fig, ax = make_map_cyl()
+            self.decorate_map2d(sm, ax)
         sc = ax.scatter(self.user_metric[:, 1], self.user_metric[:, 0], s=12, marker='o',
                         cmap=plt.cm.jet, c=self.user_metric[:, 2], alpha=.5,
                         transform=ccrs.PlateCarree())
@@ -663,6 +667,7 @@ class AnalysisObsAoiRevisit(AnalysisObsSwathPushBroom):
         gl.top_labels = False
         gl.right_labels = False
         ax.coastlines()
+        self.decorate_map2d(sm, ax)
         if np.isfinite(stat_gap).any():
             sc = ax.scatter(lons, lats, s=14, marker='s', cmap=plt.cm.jet, c=stat_gap,
                             transform=ccrs.PlateCarree())
@@ -803,6 +808,7 @@ class AnalysisObsTargetImaging(AnalysisBase):
         target_rows = np.array(target_rows)
 
         fig, ax = make_map_cyl()
+        self.decorate_map2d(sm, ax)
         sc = ax.scatter(target_rows[:, 2], target_rows[:, 1], s=60, marker='^',
                         cmap=plt.cm.jet, c=target_rows[:, 3], edgecolors='black',
                         linewidths=0.5, transform=ccrs.PlateCarree(), zorder=5)
