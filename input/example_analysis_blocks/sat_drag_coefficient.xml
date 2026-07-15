@@ -1,0 +1,17 @@
+<!-- Drag coefficient from the satellite geometry: Sentman free-molecular panel method
+     over the <SatelliteModelFile> STL (true dimensions in metres, needs pyvista) or the
+     built-in bus + solar panel model, with ray-cast panel shadowing. Produces the CdA
+     attitude map, the along-orbit nadir-fixed CdA and a recommended DragArea/DragCd pair. -->
+<Analysis>
+    <Type>sat_drag_coefficient</Type>
+    <ConstellationID>1</ConstellationID>                    <!-- Optional: satellite selection -->
+    <SatelliteID>1</SatelliteID>                            <!-- Optional -->
+    <SatelliteModelFile>../input/satellite.stl</SatelliteModelFile>  <!-- Optional: STL in metres (default: built-in model) -->
+    <SatelliteModelScale>1.0</SatelliteModelScale>          <!-- Optional: metres per STL unit -->
+    <AccommodationCoefficient>0.93</AccommodationCoefficient>  <!-- Optional: energy accommodation (0.9-1.0 below ~500 km) -->
+    <WallTemperature>300</WallTemperature>                  <!-- Optional: surface temperature [K] -->
+    <ExosphericTemperature>1000</ExosphericTemperature>     <!-- Optional: atmosphere temperature scale [K] -->
+    <AttitudeStep>15</AttitudeStep>                         <!-- Optional: attitude sweep step [deg] -->
+    <Shadowing>True</Shadowing>                             <!-- Optional: ray-cast panel-on-panel shadowing -->
+    <MaxFacets>5000</MaxFacets>                             <!-- Optional: decimate larger meshes -->
+</Analysis>

@@ -615,6 +615,8 @@ class AppConfig:
                     analysis = AnalysisSatThermal()
                 if type_str == 'sat_aocs':
                     analysis = AnalysisSatAocs()
+                if type_str == 'sat_drag_coefficient':
+                    analysis = AnalysisSatDragCoefficient()
                 if analysis is None:
                     ls.logger.error(f'Unknown analysis type: {type_str}. '
                                     f'See readme.md for the available analyses.')

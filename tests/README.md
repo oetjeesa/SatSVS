@@ -67,6 +67,7 @@ test configs from scratch.
 | orb_beta_angle | ISS-like 420 km / 51.6 deg orbit, SGP4 (J2 nodal regression), 4 months at 1 h — beta beat cycle and eclipse fraction |
 | orb_lifetime | 500 km SSO, Keplerian, 1 day at 60 s — drag decay projection to re-entry, 25-year rule and deorbit delta-v |
 | orb_environment | 800 km SSO, Keplerian, 1 day at 60 s — eccentric-dipole trapped radiation (SAA + polar horns), dose-depth curve, atomic oxygen, Gruen micrometeoroids |
+| sat_drag_coefficient | 500 km SSO, built-in bus + solar panel mesh — Sentman free-molecular panel drag with shadowing, 30 deg attitude sweep |
 | sat_thermal | 700 km SSO satellite, RAAN 140 deg (beta ~0 for max eclipses), 1 day at 60 s — single-node thermal balance with per-orbit eclipse saw-tooth |
 | sat_aocs | Same 700 km SSO scenario — worst-case disturbance torques (magnetic dominant at 700 km) and momentum buildup |
 | multi_analysis | GPS constellation, static users (Delft, Singapore): cov_satellite_visible plus cov_satellite_sky_angles for SV1 and SV7, all three in a single run (the repeated type writes cov_satellite_sky_angles_2.png) |
@@ -112,6 +113,7 @@ test configs from scratch.
 | orb_beta_angle | Classic beta beat of a 51.6-deg LEO under J2 regression: ±60..72 deg swings over ~60-day cycles, eclipse fraction up to 38% at low beta and eclipse-free peaks above the 70-deg shadow half-angle |
 | orb_lifetime | 500 km, Cd·A/m 0.014 m2/kg: 3.64-year decay with the accelerating knee below 400 km (25-year rule compliant); deorbit delta-v 109 m/s matches the half-Hohmann hand calculation |
 | orb_environment | SAA localized over the South Atlantic (18.5% of orbit time above 100 protons/cm2/s), electron horns at high latitude; TID 879 rad/yr behind 4 mm Al, proton fluence 3.7e9 /cm2/yr, kapton erosion 0.1 um per 5 yr at 800 km, 179 impacts >1 ug on 20 m2 in 5 yr — SPENVIS orders of magnitude |
+| sat_drag_coefficient | Ram CdA 4.36 m2 (Cd 3.03 on the 1.44 m2 projected area — the edge-on panels add real grazing-flux drag above the naive 2.2), attitude sweep 4.0–11.8 m2 with the maximum for flow normal to the panels, tumbling average 7.8 m2, speed ratio 7.3 at 500 km |
 | sat_thermal | Per-orbit temperature saw-tooth −63..−21 degC between the eclipse cooling and sunlit heating, converging to a limit cycle from the first-epoch equilibrium; hot/cold case equilibria −11/−63 degC match the (Q/εσA)^0.25 hand calculation |
 | sat_aocs | Textbook torque hierarchy at 700 km: magnetic ~4.6e-5 N m dominant (two peaks per orbit at the magnetic poles), SRP 3.7e-6 dropping to zero in eclipse, gravity gradient 2.4e-6 constant, aero 1.2e-6; momentum ramp 0.24 N m s/orbit |
 | multi_analysis | Three analyses in one run: cov_satellite_visible plus sky angles for SV1 and SV7 with independent metric memory (different pass patterns per satellite); repeated type numbered as cov_satellite_sky_angles_2.png |

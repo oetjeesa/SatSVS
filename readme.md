@@ -120,6 +120,7 @@ Analysis can be added as wished, the baseline of analysis available are below
 - __sat_eclipse_duration__: Eclipse duration per orbit over the simulation
 - __sat_data_storage__: Solid State Recorder (SSR) fill level over orbit (recording vs. downlink)
 - __sat_data_latency__: Data latency statistics from acquisition to ground reception
+- __sat_drag_coefficient__: Drag coefficient from the satellite geometry (Sentman free-molecular panel method on the STL model)
 
 ## Configuration file
 The configuration file is found in the input directory under the name __config.xml__. 
@@ -1722,6 +1723,66 @@ Optional are:
 - ConstellationID/SatelliteID: select the satellite (the first match is analysed).
 
 <img src="/docs/sat_aocs.png" alt="sat_aocs"/>
+
+### sat_drag_coefficient
+Estimates the aerodynamic drag coefficient from the satellite geometry with the
+Sentman free-molecular panel method — the correct flow regime at orbital altitudes
+(the molecular mean free path is kilometres, so no CFD is involved). Every facet of
+the satellite mesh contributes drag through the analytic diffuse-reflection
+gas-surface interaction, with ray-cast shadowing between panels. The mesh is the
+`<SatelliteModelFile>` STL taken at true dimensions in metres (needs pyvista, the
+same dependency as the 3D plots), or the built-in bus + solar panel model.
+
+Outputs:
+- the drag area CdA over a body-frame attitude sweep of the flow direction
+  (map plot with the ram (+x) attitude marked, plus the tumbling average),
+- CdA along the orbit for a nadir-fixed spacecraft (+x flight direction; the
+  molecular speed ratio follows the altitude through an NRLMSISE-class mean
+  composition and temperature profile),
+- a recommended `<DragArea>`/`<DragCd>` pair for the HPOP force model and the
+  orb_/sat_ analyses, logged and dumped to CSV.
+
+Note that satellites with large surfaces flying edge-on (solar panels) genuinely
+show Cd well above the classic 2.2 — the grazing thermal flux on those surfaces is
+real free-molecular drag. The energy accommodation coefficient dominates the model
+uncertainty (order 10-20% on Cd); surfaces covered by adsorbed atomic oxygen below
+~500 km are nearly fully diffuse (accommodation 0.9-1.0).
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>sat_drag_coefficient</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+    <SatelliteModelFile>../input/satellite.stl</SatelliteModelFile>
+    <SatelliteModelScale>1.0</SatelliteModelScale>
+    <AccommodationCoefficient>0.93</AccommodationCoefficient>
+    <WallTemperature>300</WallTemperature>
+    <ExosphericTemperature>1000</ExosphericTemperature>
+    <AttitudeStep>15</AttitudeStep>
+    <Shadowing>True</Shadowing>
+    <MaxFacets>5000</MaxFacets>
+```
+- ConstellationID/SatelliteID: select the satellite (default: the first satellite).
+- SatelliteModelFile: STL mesh in metres (default: the built-in bus + panel model);
+  SatelliteModelScale rescales STL units to metres.
+- AccommodationCoefficient: energy accommodation of the gas-surface interaction
+  (default 0.93).
+- WallTemperature: spacecraft surface temperature in K for the re-emission term
+  (default 300).
+- ExosphericTemperature: atmosphere temperature scale in K (default 1000).
+- AttitudeStep: attitude sweep resolution in degrees (default 15).
+- Shadowing: ray-cast panel-on-panel shadowing (default True; switch off for speed
+  on convex shapes).
+- MaxFacets: larger meshes are decimated to this facet count (default 5000).
+
+<img src="/docs/sat_drag_coefficient.png" alt="sat_drag_coefficient"/>
+<img src="/docs/sat_drag_coefficient_orbit.png" alt="sat_drag_coefficient_orbit"/>
 
 
 

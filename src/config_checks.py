@@ -89,6 +89,10 @@ ANALYSIS_PARAMS = {
     'sat_aocs': {'ConstellationID', 'SatelliteID', 'InertiaXX', 'InertiaYY', 'InertiaZZ',
                  'MaxPointingOffset', 'ResidualDipole', 'DragArea', 'DragCoefficient',
                  'SrpArea', 'Reflectivity', 'CopOffset', 'WheelMomentum'},
+    'sat_drag_coefficient': {'ConstellationID', 'SatelliteID', 'SatelliteModelFile',
+                             'SatelliteModelScale', 'AccommodationCoefficient',
+                             'WallTemperature', 'ExosphericTemperature',
+                             'AttitudeStep', 'Shadowing', 'MaxFacets'},
 }
 
 # Parameters that must be present per analysis type (their absence crashes the
@@ -207,13 +211,15 @@ FLOAT_TAGS = {'EpochMJD', 'Altitude', 'SemiMajorAxis', 'Eccentricity', 'Inclinat
               'MaxPointingOffset', 'ResidualDipole', 'DragCoefficient', 'SrpArea',
               'Reflectivity', 'CopOffset', 'WheelMomentum', 'DensityScale', 'MaxYears',
               'ReentryAltitude', 'MinDuration', 'ReferenceBandwidth', 'PfdLimit',
-              'MaxOffNadir', 'MinSunElevation', 'MissionYears'}
+              'MaxOffNadir', 'MinSunElevation', 'MissionYears',
+              'AccommodationCoefficient', 'WallTemperature', 'ExosphericTemperature',
+              'AttitudeStep', 'MaxFacets'}
 BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeSpace2SpaceLinks', 'OrbitsFromPreviousRun', 'IncludeRain',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',
              'Plot3D', 'ShowSatellite', 'ShowOrbit', 'MP4', 'EarthClouds',
              'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack',
-             'Coastlines', 'Report',
+             'Coastlines', 'Report', 'Shadowing',
              'Geopotential', 'EarthPoleRotation', 'Drag', 'SolarRadiationPressure',
              'ThirdBodySun', 'ThirdBodyMoon', 'ThirdBodyPlanets', 'SolidTides',
              'OceanTides', 'Relativity'}

@@ -16,7 +16,7 @@ from astropy.time import Time
 import astropy.units as u
 
 # Project modules
-from constants import R_EARTH, GM_EARTH, SOLAR_FLUX, SOLAR_PRESSURE, ALPHA
+from constants import R_EARTH, GM_EARTH, OMEGA_EARTH, SOLAR_FLUX, SOLAR_PRESSURE, ALPHA
 from analysis import AnalysisBase
 import misc_fn
 import logging_svs as ls
@@ -673,3 +673,281 @@ class AnalysisSatDataLatency(AnalysisBase):
         plt.tight_layout()
         plt.savefig(sm.output_path('sat_data_latency_histogram.png'))
         plt.show()
+
+
+# ---------------------------------------------------------------------------
+# Aerodynamic drag coefficient from the satellite geometry (free molecular
+# flow): Sentman panel method over the satellite mesh
+# ---------------------------------------------------------------------------
+
+# Mean molar mass of the upper atmosphere [g/mol] versus altitude [km]
+# (NRLMSISE-class mean solar activity profile): atomic oxygen dominates the
+# 300-700 km range, helium and hydrogen take over above
+_ATMO_MOLAR_TABLE = np.array([
+    [150, 24.1], [200, 21.3], [250, 19.4], [300, 17.9], [350, 17.0],
+    [400, 16.2], [450, 15.6], [500, 15.0], [600, 13.6], [700, 11.9],
+    [800, 9.6], [900, 7.3], [1000, 5.4], [1200, 3.7]])
+R_GAS = 8.314462  # Universal gas constant [J/mol/K]
+
+
+def sentman_cda(gamma, areas, speed_ratio, v_ratio):
+    """Total drag area Cd*A [m^2] of flat panels in free-molecular flow with
+    diffuse re-emission (Sentman 1961, in the formulation of Doornbos 2012):
+    gamma is the cosine between each panel's outward normal and the flight
+    direction, areas the panel areas [m^2], speed_ratio the molecular speed
+    ratio s = V/sqrt(2*R_specific*T) and v_ratio the re-emitted to incident
+    velocity ratio from the energy accommodation and wall temperature."""
+    from scipy.special import erf
+    big_g = 1.0 / (2.0 * speed_ratio ** 2)
+    big_p = np.exp(-gamma ** 2 * speed_ratio ** 2) / speed_ratio
+    big_z = 1.0 + erf(gamma * speed_ratio)
+    cd = (big_p / np.sqrt(np.pi) + gamma * (1.0 + big_g) * big_z +
+          gamma * v_ratio / 2.0 * (gamma * np.sqrt(np.pi) * big_z + big_p))
+    return float(np.sum(cd * areas))
+
+
+class AnalysisSatDragCoefficient(AnalysisBase):
+    """Aerodynamic drag coefficient of the satellite estimated from its
+    geometry with the Sentman free-molecular panel method (the flow regime at
+    orbital altitudes - no CFD involved): every mesh facet contributes drag
+    from the analytic diffuse-reflection gas-surface interaction, with
+    ray-cast shadowing between panels. The mesh is the <SatelliteModelFile>
+    STL (true dimensions, metres) or the built-in bus + solar panel model.
+
+    Outputs: the drag area Cd*A over a body-frame attitude sweep of the flow
+    direction (map + tumbling average), Cd*A along the orbit for the
+    nadir-fixed attitude (+x flight direction; the speed ratio follows the
+    altitude through an NRLMSISE-class mean composition/temperature profile),
+    and a recommended <DragArea>/<DragCd> pair for HPOP and the orb_/sat_
+    analyses. The energy accommodation coefficient dominates the +/-10-20%
+    model uncertainty; atomic-oxygen covered surfaces below ~500 km are
+    nearly fully diffuse (alpha ~0.9-1.0)."""
+
+    def __init__(self):
+        super().__init__()
+        self.constellation_id = 0  # Optional selection
+        self.satellite_id = 0  # Optional selection
+        self.model_file = None  # STL in metres (default: built-in model)
+        self.model_scale = 1.0  # Metres per STL unit
+        self.accommodation = 0.93  # Energy accommodation coefficient [-]
+        self.wall_temp = 300.0  # Spacecraft surface temperature [K]
+        self.t_exo = 1000.0  # Exospheric temperature [K]
+        self.attitude_step = 15.0  # Attitude sweep step [deg]
+        self.shadowing = True  # Ray-cast panel-on-panel shadowing
+        self.max_facets = 5000  # Mesh decimated above this facet count
+        self.enabled = True
+        self.idx_found_satellite = 0
+        self.metric = None  # (num_epoch, 5): alt_km, v_rel, s, CdA, Cd
+
+    def read_config(self, node):
+        if node.find('ConstellationID') is not None:
+            self.constellation_id = int(node.find('ConstellationID').text)
+        if node.find('SatelliteID') is not None:
+            self.satellite_id = int(node.find('SatelliteID').text)
+        if node.find('SatelliteModelFile') is not None:
+            self.model_file = node.find('SatelliteModelFile').text
+        if node.find('SatelliteModelScale') is not None:
+            self.model_scale = float(node.find('SatelliteModelScale').text)
+        if node.find('AccommodationCoefficient') is not None:
+            self.accommodation = float(node.find('AccommodationCoefficient').text)
+        if node.find('WallTemperature') is not None:
+            self.wall_temp = float(node.find('WallTemperature').text)
+        if node.find('ExosphericTemperature') is not None:
+            self.t_exo = float(node.find('ExosphericTemperature').text)
+        if node.find('AttitudeStep') is not None:
+            self.attitude_step = float(node.find('AttitudeStep').text)
+        if node.find('Shadowing') is not None:
+            self.shadowing = misc_fn.str2bool(node.find('Shadowing').text)
+        if node.find('MaxFacets') is not None:
+            self.max_facets = int(float(node.find('MaxFacets').text))
+
+    def _load_mesh(self):
+        """Triangulated satellite mesh in the body frame with per-facet
+        outward normals, areas and centroids (real dimensions in metres)."""
+        import pyvista as pv
+        if self.model_file:
+            mesh = pv.read(misc_fn.resolve_path(self.model_file))
+            if self.model_scale != 1.0:
+                mesh = mesh.scale(self.model_scale)
+        else:
+            # Built-in model of plot_3d (bus + two solar panels), taken as
+            # metres: a ~1 m class satellite with a 5.4 m panel span
+            bus = pv.Cube(x_length=0.9, y_length=0.9, z_length=1.4)
+            panel1 = pv.Cube(center=(0.0, 1.6, 0.0), x_length=0.9,
+                             y_length=2.2, z_length=0.04)
+            panel2 = pv.Cube(center=(0.0, -1.6, 0.0), x_length=0.9,
+                             y_length=2.2, z_length=0.04)
+            mesh = bus.merge(panel1).merge(panel2)
+        mesh = mesh.triangulate()
+        if mesh.n_cells > self.max_facets:
+            mesh = mesh.decimate(1.0 - self.max_facets / mesh.n_cells)
+            ls.logger.info(f'{self.type}: mesh decimated to {mesh.n_cells} facets '
+                           f'(MaxFacets {self.max_facets})')
+        # Cell normals as oriented in the file/constructed solids (STL files
+        # carry outward facet normals by convention)
+        mesh = mesh.compute_normals(cell_normals=True, point_normals=False,
+                                    consistent_normals=False)
+        self._normals = np.asarray(mesh.cell_data['Normals'], dtype=float)
+        self._areas = np.asarray(
+            mesh.compute_cell_sizes(length=False, area=True, volume=False)
+            .cell_data['Area'], dtype=float)
+        self._centroids = np.asarray(mesh.cell_centers().points, dtype=float)
+        self._mesh_length = float(mesh.length)
+        self._obb = None
+        if self.shadowing:
+            import vtk
+            self._obb = vtk.vtkOBBTree()
+            self._obb.SetDataSet(mesh)
+            self._obb.BuildLocator()
+        return mesh.n_cells
+
+    def _incidence(self, direction):
+        """(gamma, areas) of the panels contributing for a body-frame flight
+        direction: shadowed ram-facing panels are excluded by a ray from the
+        panel centroid towards the incoming stream."""
+        gamma = self._normals @ np.asarray(direction, dtype=float)
+        visible = np.ones(len(gamma), dtype=bool)
+        if self._obb is not None:
+            import vtk
+            points = vtk.vtkPoints()
+            for i in np.flatnonzero(gamma > 1e-6):
+                origin = self._centroids[i] + direction * (1e-4 * self._mesh_length)
+                end = self._centroids[i] + direction * (2.0 * self._mesh_length)
+                points.Reset()
+                if self._obb.IntersectWithLine(origin, end, points, None):
+                    visible[i] = False
+        return gamma[visible], self._areas[visible]
+
+    def _atmosphere(self, altitude_m, v_rel):
+        """(speed ratio s, re-emission velocity ratio) at altitude from the
+        mean-activity molar mass profile and the exospheric temperature."""
+        h_km = altitude_m / 1000.0
+        molar = np.interp(h_km, _ATMO_MOLAR_TABLE[:, 0], _ATMO_MOLAR_TABLE[:, 1])
+        r_specific = R_GAS / (molar * 1e-3)
+        temp = self.t_exo * (1.0 - 0.85 * np.exp(-0.015 * (h_km - 100.0)))
+        speed_ratio = v_rel / np.sqrt(2.0 * r_specific * temp)
+        v_ratio = np.sqrt(0.5 * (1.0 + self.accommodation *
+                                 (4.0 * r_specific * self.wall_temp / v_rel ** 2 - 1.0)))
+        return speed_ratio, v_ratio
+
+    def before_loop(self, sm):
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if self.constellation_id > 0 and \
+                    satellite.constellation_id != self.constellation_id:
+                continue
+            if self.satellite_id > 0 and satellite.sat_id != self.satellite_id:
+                continue
+            self.idx_found_satellite = idx_sat
+            break
+        try:
+            n_facets = self._load_mesh()
+        except ImportError:
+            ls.logger.error(f'{self.type} needs pyvista for the satellite mesh '
+                            f'(pip install -e .[plot3d]). Analysis disabled.')
+            self.enabled = False
+            return
+        # Nadir-fixed attitude: the flow comes head-on along body +x (flight
+        # direction); the panel geometry is fixed, only the gas state varies
+        self._gamma_ram, self._areas_ram = self._incidence(np.array([1.0, 0.0, 0.0]))
+        self._ram_area = float(np.sum(np.clip(self._gamma_ram, 0.0, None)
+                                      * self._areas_ram))
+        self.metric = np.zeros((sm.num_epoch, 5))
+        ls.logger.info(f'{self.type}: {n_facets} facets, ram-projected area '
+                       f'{self._ram_area:.2f} m2, accommodation '
+                       f'{self.accommodation}, shadowing {self.shadowing}')
+
+    def in_loop(self, sm):
+        if not self.enabled:
+            return
+        satellite = sm.satellites[self.idx_found_satellite]
+        satellite.det_lla()
+        pos = np.asarray(satellite.pos_eci, dtype=float)
+        vel = np.asarray(satellite.vel_eci, dtype=float)
+        if sm.orbit_propagator == 'HPOP':
+            v_rel_vec = vel  # HPOP tool-frame velocity is already Earth-relative
+        else:  # Subtract the co-rotating atmosphere
+            v_rel_vec = vel - np.cross([0.0, 0.0, OMEGA_EARTH], pos)
+        v_rel = float(np.linalg.norm(v_rel_vec))
+        altitude = float(np.linalg.norm(pos)) - misc_fn.earth_radius_lat(satellite.lla[0])
+        speed_ratio, v_ratio = self._atmosphere(altitude, v_rel)
+        cda = sentman_cda(self._gamma_ram, self._areas_ram, speed_ratio, v_ratio)
+        self.metric[sm.cnt_epoch] = [altitude / 1000.0, v_rel, speed_ratio,
+                                     cda, cda / self._ram_area]
+
+    def after_loop(self, sm):
+        if not self.enabled:
+            return
+        times = np.asarray(self.times_f_doy)
+        mean_s = float(np.mean(self.metric[:, 2]))
+        mean_v_ratio_inputs = (float(np.mean(self.metric[:, 0])) * 1000.0,
+                               float(np.mean(self.metric[:, 1])))
+        _, mean_v_ratio = self._atmosphere(*mean_v_ratio_inputs)
+
+        # Attitude sweep: flow direction over the body-frame sphere at the
+        # orbit-average gas state (azimuth from +x in the x/y plane, elevation
+        # towards +z)
+        azimuths = np.arange(-180.0, 180.0 + 1e-9, self.attitude_step)
+        elevations = np.arange(-90.0, 90.0 + 1e-9, self.attitude_step)
+        cda_map = np.zeros((len(elevations), len(azimuths)))
+        for i, el in enumerate(np.radians(elevations)):
+            for j, az in enumerate(np.radians(azimuths)):
+                direction = np.array([np.cos(el) * np.cos(az),
+                                      np.cos(el) * np.sin(az), np.sin(el)])
+                gamma, areas = self._incidence(direction)
+                cda_map[i, j] = sentman_cda(gamma, areas, mean_s, mean_v_ratio)
+        weights = np.cos(np.radians(elevations))[:, None] * np.ones(len(azimuths))
+        tumbling_cda = float(np.sum(cda_map * weights) / np.sum(weights))
+
+        ram_cda = float(np.mean(self.metric[:, 3]))
+        ram_cd = float(np.mean(self.metric[:, 4]))
+        ls.logger.info(f'{self.type}: nadir-fixed (+x ram) CdA {ram_cda:.3f} m2, '
+                       f'Cd {ram_cd:.3f} on {self._ram_area:.2f} m2 projected area '
+                       f'(speed ratio {mean_s:.1f})')
+        ls.logger.info(f'{self.type}: attitude sweep CdA {cda_map.min():.3f} .. '
+                       f'{cda_map.max():.3f} m2, tumbling average {tumbling_cda:.3f} m2')
+        ls.logger.info(f'{self.type}: suggested config values '
+                       f'<DragArea>{self._ram_area:.3f}</DragArea> '
+                       f'<DragCd>{ram_cd:.3f}</DragCd> (nadir-fixed), or '
+                       f'DragArea*DragCd = {tumbling_cda:.3f} m2 (tumbling)')
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        mesh_plot = ax.pcolormesh(azimuths, elevations, cda_map, shading='auto',
+                                  cmap=plt.cm.viridis)
+        ax.plot(0.0, 0.0, 'r^', markersize=10, markeredgecolor='white')
+        ax.annotate('ram (+x)', (0.0, 0.0), xytext=(6, 6),
+                    textcoords='offset points', color='white', fontsize=9)
+        ax.set_xlabel('Flow azimuth in body frame [deg]')
+        ax.set_ylabel('Flow elevation in body frame [deg]')
+        ax.set_xlim(-180, 180)
+        ax.set_ylim(-90, 90)
+        ax.set_title(f'Drag area CdA over attitude (tumbling average '
+                     f'{tumbling_cda:.2f} m2)')
+        plt.colorbar(mesh_plot, ax=ax, shrink=0.85, label='CdA [m2]')
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+        ax1.plot(times, self.metric[:, 3], '-', color='C0', linewidth=1.0)
+        ax1.set_xlabel('Day of Year (DOY)')
+        ax1.set_ylabel('Drag area CdA [m2]', color='C0')
+        ax1.tick_params(axis='y', labelcolor='C0')
+        ax1.grid(True, alpha=0.4)
+        ax2 = ax1.twinx()
+        ax2.plot(times, self.metric[:, 0], '-', color='C1', linewidth=0.9)
+        ax2.set_ylabel('Altitude [km]', color='C1')
+        ax2.tick_params(axis='y', labelcolor='C1')
+        ax1.set_title(f'Nadir-fixed drag area along the orbit '
+                      f'(Cd {ram_cd:.2f} on {self._ram_area:.2f} m2)')
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_orbit.png'))
+        plt.show()
+
+        self.write_csv(sm, ['doy', 'alt_km', 'v_rel_ms', 'speed_ratio',
+                            'cd_a_m2', 'cd'],
+                       np.column_stack([times, self.metric]))
+        az_grid, el_grid = np.meshgrid(azimuths, elevations)
+        self.write_csv(sm, ['az_deg', 'el_deg', 'cd_a_m2'],
+                       np.column_stack([az_grid.ravel(), el_grid.ravel(),
+                                        cda_map.ravel()]),
+                       suffix='attitude')

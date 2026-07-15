@@ -617,6 +617,18 @@ write_test('orb_lifetime', config(
     '      <DensityScale>1.0</DensityScale>\n'
     '      <MaxYears>100</MaxYears>'))
 
+write_test('sat_drag_coefficient', config(
+    # 500 km SSO with the built-in bus + solar panel model: free-molecular
+    # Sentman panel drag with shadowing, attitude sweep at 30 deg for speed
+    sso_constellation(sma=6878137, incl=97.4, raan=140.0),
+    ground_segment(['Svalbard']), static_users(DELFT), *FEB26, 300,
+    '      <Type>sat_drag_coefficient</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <AccommodationCoefficient>0.93</AccommodationCoefficient>\n'
+    '      <WallTemperature>300</WallTemperature>\n'
+    '      <AttitudeStep>30</AttitudeStep>'))
+
 write_test('orb_environment', config(
     # 800 km SSO: SAA proton crossings, outer-belt electron horns at high
     # latitude, and a representative AO/micrometeoroid environment
