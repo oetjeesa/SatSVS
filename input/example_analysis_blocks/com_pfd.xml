@@ -1,0 +1,16 @@
+<!-- Power flux density at the ground versus elevation against an ITU-R
+     Article 21 style limit mask (PfdLimit to 5 deg, +0.5 dB/deg to 25 deg,
+     +10 dB above). The satellite antenna is nadir-pointed: pattern file gain
+     at the epoch's off-nadir angle, or the fixed TransmitGaindB. -->
+<Analysis>
+    <Type>com_pfd</Type>
+    <GroundStationID>1</GroundStationID>    <!-- Optional: default first station -->
+    <CarrierFrequency>8025e6</CarrierFrequency>  <!-- [Hz] -->
+    <TransmitPowerW>20</TransmitPowerW>
+    <TransmitLossesdB>1</TransmitLossesdB>  <!-- Optional, default 0 -->
+    <BandWidth>300e6</BandWidth>            <!-- Occupied bandwidth [Hz] the power is spread over -->
+    <ReferenceBandwidth>4000</ReferenceBandwidth> <!-- Optional ITU reference BW [Hz], default 4 kHz -->
+    <TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>
+    <!-- Or a fixed gain instead of the pattern file: <TransmitGaindB>5</TransmitGaindB> -->
+    <PfdLimit>-150</PfdLimit>               <!-- Optional limit at low elevation [dB(W/m2) in ref BW], default -150 -->
+</Analysis>

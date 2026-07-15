@@ -1,0 +1,11 @@
+<!-- Space environment along the orbit, SPENVIS-style summary: trapped radiation (SAA and
+     polar horn crossings, fluences, dose vs aluminium shielding), atomic oxygen fluence and
+     kapton erosion, and Gruen micrometeoroid flux/impact counts. First-order engineering
+     models - use SPENVIS/IRENE for design values. -->
+<Analysis>
+    <Type>orb_environment</Type>
+    <ConstellationID>1</ConstellationID>    <!-- Optional: satellite selection (default first satellite) -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional -->
+    <MissionYears>5</MissionYears>          <!-- Optional: fluence/erosion/impact accumulation period (default 5) -->
+    <SurfaceArea>20</SurfaceArea>           <!-- Optional: area exposed to micrometeoroids [m^2] (default 10) -->
+</Analysis>

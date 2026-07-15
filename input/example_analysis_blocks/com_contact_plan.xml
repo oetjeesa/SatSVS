@@ -1,0 +1,11 @@
+<!-- Ground station contact plan: AOS/LOS pass table (CSV + readable .txt),
+     pass duration, max elevation, downlinkable volume and station-conflict
+     flags (overlapping passes at one station), plus a pass timeline plot
+     with one sub-lane per satellite. -->
+<Analysis>
+    <Type>com_contact_plan</Type>
+    <GroundStationID>0</GroundStationID>    <!-- Optional: 0/omit = all stations -->
+    <ConstellationID>0</ConstellationID>    <!-- Optional: 0/omit = all constellations -->
+    <MinDuration>60</MinDuration>           <!-- Optional: drop passes shorter than this [s] -->
+    <DownlinkRateMbps>1070</DownlinkRateMbps> <!-- Optional: adds the Gbit/pass volume column -->
+</Analysis>

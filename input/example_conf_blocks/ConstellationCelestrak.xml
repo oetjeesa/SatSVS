@@ -1,0 +1,16 @@
+<!-- Constellation with the latest TLE force-downloaded from CelesTrak before every run.
+     <TLEFromCelestrak> is a NORAD catalog number (all digits) or a satellite name (a
+     name query may match several satellites - all are loaded). With <TLEFileName> the
+     download overwrites that file (offline copy); without it the TLE is cached as
+     tle_celestrak_<identifier>.txt next to the Config.xml. On download failure the
+     previously downloaded file is used with a warning. -->
+<SpaceSegment>
+  <Constellation>
+    <ConstellationID>1</ConstellationID>
+    <NumOfSatellites>1</NumOfSatellites>
+    <NumOfPlanes>1</NumOfPlanes>
+    <ConstellationName>TerraSAR-X</ConstellationName>
+    <ReceiverConstellation>1</ReceiverConstellation>
+    <TLEFromCelestrak>31698</TLEFromCelestrak>
+  </Constellation>
+</SpaceSegment>

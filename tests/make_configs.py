@@ -139,6 +139,23 @@ def grid_users(step, mask=5):
   </UserSegment>"""
 
 
+def polygon_users(name, points, step, mask=5):
+    """Grid users clipped to a polygon: the AOI of the obs_aoi_revisit test.
+    points is a string of (lon, lat) tuples as documented in readme.md."""
+    return f"""<UserSegment>
+    <User>
+      <Type>Polygon</Type>
+      <Name>{name}</Name>
+      <PolygonList>{points}</PolygonList>
+      <LatStep>{step}</LatStep>
+      <LonStep>{step}</LonStep>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>{mask}</ElevationMask>
+    </User>
+  </UserSegment>"""
+
+
 def config(space, ground, users, start, stop, step, analysis,
            propagator='Keplerian', gr2sp=True, usr2sp=True, sp2sp=False, extra_sim=''):
     if isinstance(analysis, str):  # One or a list of <Analysis> block contents
@@ -303,6 +320,33 @@ write_test('obs_sza_subsat', config(
     '      <Plot3D>True</Plot3D>',
     propagator='SGP4'), tle='sentinel-1.txt')
 
+IBERIA_FRANCE = ('(-10.0, 36.0),(3.5, 36.0),(8.0, 43.0),(8.0, 49.0),'
+                 '(2.0, 51.0),(-2.0, 49.0),(-10.0, 44.0)')
+
+write_test('obs_aoi_revisit', config(
+    # 3 days so most AOI points collect several push-broom passes (revisit gaps)
+    sso_constellation(extra=SWATH_PB), ground_segment(['Svalbard']),
+    polygon_users('IberiaFrance', IBERIA_FRANCE, 1.0, mask=0),
+    '2026-02-01 00:00:00', '2026-02-04 00:00:00', 60,
+    '      <Type>obs_aoi_revisit</Type>\n'
+    '      <Statistic>Max</Statistic>',
+    usr2sp=False))
+
+write_test('obs_target_imaging', config(
+    # RAAN 140 gives a noon/midnight orbit in Feb 2026: the dayside passes
+    # clear the MinSunElevation daylight constraint at the mid-latitude
+    # targets (Longyearbyen stays in polar night - zero opportunities)
+    sso_constellation(raan=140.0), ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-02-01 00:00:00', '2026-02-03 00:00:00', 30,
+    '      <Type>obs_target_imaging</Type>\n'
+    '      <MaxOffNadir>45</MaxOffNadir>\n'
+    '      <MinSunElevation>10</MinSunElevation>\n'
+    '      <Target>Rome, 41.9, 12.5</Target>\n'
+    '      <Target>Delft, 52.0, 4.36</Target>\n'
+    '      <Target>Longyearbyen, 78.2, 15.6</Target>\n'
+    '      <Target>SaoPaulo, -23.5, -46.6</Target>\n'
+    '      <Target>Sydney, -33.9, 151.2</Target>'))
+
 # ------------------------------------------------------------- communication
 write_test('com_gr2sp_budget', config(
     tle_constellation('TerraSAR-X', 'terrasarx.txt', 'com_gr2sp_budget'),
@@ -378,6 +422,29 @@ write_test('com_doppler', config(
     '      <CarrierFrequency>8.025e9</CarrierFrequency>',
     propagator='SGP4'), tle='terrasarx.txt')
 
+write_test('com_contact_plan', config(
+    # 2 co-planar SSO satellites 10 deg apart in mean anomaly: their passes
+    # overlap at every station, exercising the conflict detection
+    sso_constellation(num_sat=2, delta_ma_deg=10.0),
+    ground_segment(['Svalbard', 'Inuvik']), static_users(DELFT), *FEB26, 30,
+    '      <Type>com_contact_plan</Type>\n'
+    '      <MinDuration>60</MinDuration>\n'
+    '      <DownlinkRateMbps>1070</DownlinkRateMbps>'))
+
+write_test('com_pfd', config(
+    tle_constellation('TerraSAR-X', 'terrasarx.txt', 'com_pfd'),
+    ground_segment(['Svalbard'], mask=0), static_users(DELFT), *FEB26, 30,
+    '      <Type>com_pfd</Type>\n'
+    '      <GroundStationID>1</GroundStationID>\n'
+    '      <CarrierFrequency>8025e6</CarrierFrequency>\n'
+    '      <TransmitPowerW>20</TransmitPowerW>\n'
+    '      <TransmitLossesdB>1</TransmitLossesdB>\n'
+    '      <BandWidth>300e6</BandWidth>\n'
+    '      <ReferenceBandwidth>4000</ReferenceBandwidth>\n'
+    '      <TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>\n'
+    '      <PfdLimit>-150</PfdLimit>',
+    propagator='SGP4'), tle='terrasarx.txt')
+
 # ---------------------------------------------------------------- navigation
 write_test('nav_dilution_of_precision', config(
     gps_constellation(), ground_segment(['Kourou']), grid_users(10), *FEB26, 300,
@@ -396,9 +463,9 @@ write_test('nav_accuracy', config(
     '      <ShowSatellite>False</ShowSatellite>'))
 
 # -------------------------------------------------------------------- power
-write_test('pow_battery_depth_discharge', config(
+write_test('sat_battery_depth_discharge', config(
     sso_constellation(ltan=True), ground_segment(['Svalbard']), static_users(DELFT), *FEB26, 60,
-    '      <Type>pow_battery_depth_discharge</Type>\n'
+    '      <Type>sat_battery_depth_discharge</Type>\n'
     '      <BatteryCapacityWh>500</BatteryCapacityWh>\n'
     '      <InitialSoC>1.0</InitialSoC>\n'
     '      <SolarPanelArea>5.0</SolarPanelArea>\n'
@@ -407,17 +474,17 @@ write_test('pow_battery_depth_discharge', config(
     '      <InstrumentPowerDrawW>400</InstrumentPowerDrawW>\n'
     '      <PayloadLatitudeLimit>60</PayloadLatitudeLimit>'))
 
-write_test('pow_eclipse_duration', config(
+write_test('sat_eclipse_duration', config(
     # RAAN 140 puts the orbit plane close to the Feb sun direction (beta ~ 0),
     # giving maximum-length eclipses every orbit; RAAN 50 would be eclipse-free
     sso_constellation(raan=140.0), ground_segment(['Svalbard']), static_users(DELFT),
     '2026-02-01 00:00:00', '2026-02-03 00:00:00', 30,
-    '      <Type>pow_eclipse_duration</Type>'))
+    '      <Type>sat_eclipse_duration</Type>'))
 
 # ------------------------------------------------------------- data handling
-write_test('dat_storage', config(
+write_test('sat_data_storage', config(
     sso_constellation(), ground_segment(['Svalbard', 'Inuvik']), static_users(DELFT), *FEB26, 30,
-    '      <Type>dat_storage</Type>\n'
+    '      <Type>sat_data_storage</Type>\n'
     '      <SSRCapacityGbits>2000</SSRCapacityGbits>\n'
     '      <InitialFillGbits>100</InitialFillGbits>\n'
     '      <InstrumentRateMbps>60</InstrumentRateMbps>\n'
@@ -519,6 +586,43 @@ write_test('orb_kepler_elements', config(
     propagator='HPOP', gr2sp=False, usr2sp=False,
     extra_sim=hpop_block(mass=500.0, area=3.2)))
 
+write_test('orb_beta_angle', config(
+    # ISS-like inclination propagated with SGP4 (J2 nodal regression) over
+    # 4 months: the classic ~60-day beta beat cycle with eclipse-free peaks
+    sso_constellation(sma=6798137, incl=51.6, raan=0.0,
+                      extra='      <FrontalArea>3.2</FrontalArea>\n'
+                            '      <Mass>500</Mass>\n'),
+    ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-02-01 00:00:00', '2026-06-01 00:00:00', 3600,
+    '      <Type>orb_beta_angle</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>',
+    propagator='SGP4'))
+
+write_test('orb_lifetime', config(
+    # 500 km SSO: a few years of drag decay with the accelerating knee visible
+    sso_constellation(sma=6878137, incl=97.4, raan=140.0),
+    ground_segment(['Svalbard']), static_users(DELFT), *FEB26, 60,
+    '      <Type>orb_lifetime</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <Mass>500</Mass>\n'
+    '      <DragArea>3.2</DragArea>\n'
+    '      <DragCoefficient>2.2</DragCoefficient>\n'
+    '      <DensityScale>1.0</DensityScale>\n'
+    '      <MaxYears>100</MaxYears>'))
+
+write_test('orb_environment', config(
+    # 800 km SSO: SAA proton crossings, outer-belt electron horns at high
+    # latitude, and a representative AO/micrometeoroid environment
+    sso_constellation(sma=7178137, incl=98.6, raan=140.0),
+    ground_segment(['Svalbard']), static_users(DELFT), *FEB26, 60,
+    '      <Type>orb_environment</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <MissionYears>5</MissionYears>\n'
+    '      <SurfaceArea>20</SurfaceArea>'))
+
 write_test('hpop_benchmark', config(
     tle_constellation('TerraSAR-X', 'terrasarx.txt', 'hpop_benchmark'),
     ground_segment(['Kiruna']), static_users(DELFT), *FEB26, 60,
@@ -541,9 +645,9 @@ with open(os.path.join(TESTS, 'hpop_benchmark', 'Config_sgp4_reference.xml'), 'w
 print('wrote hpop_benchmark/Config_sgp4_reference.xml')
 
 # ------------------------------------------------------------- data handling
-write_test('dat_latency', config(
+write_test('sat_data_latency', config(
     sso_constellation(), ground_segment(['Svalbard', 'Inuvik']), static_users(DELFT), *FEB26, 30,
-    '      <Type>dat_latency</Type>\n'
+    '      <Type>sat_data_latency</Type>\n'
     '      <SSRCapacityGbits>2000</SSRCapacityGbits>\n'
     '      <InitialFillGbits>100</InitialFillGbits>\n'
     '      <InstrumentRateMbps>60</InstrumentRateMbps>\n'
@@ -553,7 +657,7 @@ write_test('dat_latency', config(
 
 # --------------------------------------------------------- satellite platform
 write_test('sat_thermal', config(
-    # Same SSO/eclipse scenario as pow_eclipse_duration: the eclipses drive
+    # Same SSO/eclipse scenario as sat_eclipse_duration: the eclipses drive
     # the per-orbit temperature saw-tooth
     sso_constellation(raan=140.0), ground_segment(['Svalbard']), static_users(DELFT),
     *FEB26, 60,

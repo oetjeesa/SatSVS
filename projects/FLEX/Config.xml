@@ -4,8 +4,8 @@
     Representative public orbit and instrument values; reduce the user grid or
     the simulation window for quick looks.-->
 <!--Earth Explorer mission analysis run: cov_ground_track, cov_satellite_contour,
-    cov_pass_time, obs_swath_push_broom, pow_battery_depth_discharge,
-    pow_eclipse_duration, dat_storage, dat_latency, orb_deltav_element.
+    cov_pass_time, obs_swath_push_broom, sat_battery_depth_discharge,
+    sat_eclipse_duration, sat_data_storage, sat_data_latency, orb_deltav_element.
     HPOP propagation so the station-keeping delta-v analysis shows real drift.
     Data/power values are representative; assumptions:
       - FLORIS vegetation fluorescence: SSR 512 Gbit, 25 Mbps effective rate (sunlit land only) and X-band 520 Mbps are assumptions
@@ -132,7 +132,7 @@
       <Statistic>Mean</Statistic>
     </Analysis>
     <Analysis>
-      <Type>pow_battery_depth_discharge</Type>
+      <Type>sat_battery_depth_discharge</Type>
       <BatteryCapacityWh>1500</BatteryCapacityWh>
       <InitialSoC>1.0</InitialSoC>
       <SolarPanelArea>5.0</SolarPanelArea>
@@ -142,10 +142,10 @@
       <PayloadLatitudeLimit>60</PayloadLatitudeLimit>
     </Analysis>
     <Analysis>
-      <Type>pow_eclipse_duration</Type>
+      <Type>sat_eclipse_duration</Type>
     </Analysis>
     <Analysis>
-      <Type>dat_storage</Type>
+      <Type>sat_data_storage</Type>
       <SSRCapacityGbits>512</SSRCapacityGbits>
       <InitialFillGbits>0</InitialFillGbits>
       <InstrumentRateMbps>25</InstrumentRateMbps>
@@ -153,7 +153,7 @@
       <PayloadLatitudeLimit>75</PayloadLatitudeLimit>
     </Analysis>
     <Analysis>
-      <Type>dat_latency</Type>
+      <Type>sat_data_latency</Type>
       <SSRCapacityGbits>512</SSRCapacityGbits>
       <InitialFillGbits>0</InitialFillGbits>
       <InstrumentRateMbps>25</InstrumentRateMbps>

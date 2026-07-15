@@ -1,0 +1,12 @@
+<!-- Imaging opportunities for a list of point targets: imaged when the target lies within
+     the MaxOffNadir pointing cone and (optionally) the Sun is above MinSunElevation at the
+     target. Targets inline as "Name, lat_deg, lon_deg" or via a <TargetFile> CSV. -->
+<Analysis>
+    <Type>obs_target_imaging</Type>
+    <MaxOffNadir>45</MaxOffNadir>           <!-- Pointing agility cone half-angle [deg] -->
+    <MinSunElevation>10</MinSunElevation>   <!-- Optional: daylight constraint at the target [deg] -->
+    <ConstellationID>1</ConstellationID>    <!-- Optional: restrict to one constellation (default all) -->
+    <Target>Rome, 41.9, 12.5</Target>
+    <Target>Delft, 52.0, 4.36</Target>
+    <!-- <TargetFile>../input/targets.csv</TargetFile>  lines "Name, lat_deg, lon_deg" -->
+</Analysis>

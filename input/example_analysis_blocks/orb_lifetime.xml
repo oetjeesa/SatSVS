@@ -1,0 +1,16 @@
+<!-- Orbital lifetime under atmospheric drag: the mean semi-major axis at the
+     end of the simulation is decayed semi-analytically (piecewise-exponential
+     atmosphere) until re-entry or the MaxYears horizon. Reports 25-year
+     debris-mitigation rule compliance, the immediate-deorbit delta-v and,
+     when non-compliant, the delta-v to a 25-year compliant orbit. -->
+<Analysis>
+    <Type>orb_lifetime</Type>
+    <ConstellationID>1</ConstellationID>    <!-- Optional: first matching satellite is analysed -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional -->
+    <Mass>500</Mass>                        <!-- [kg]; default constellation Mass -->
+    <DragArea>3.2</DragArea>                <!-- [m2]; default constellation FrontalArea -->
+    <DragCoefficient>2.2</DragCoefficient>  <!-- Optional, default 2.2 -->
+    <DensityScale>1.0</DensityScale>        <!-- Optional: ~0.5 solar min, ~2 solar max, default 1 -->
+    <MaxYears>100</MaxYears>                <!-- Optional integration horizon, default 100 -->
+    <ReentryAltitude>120000</ReentryAltitude> <!-- Optional re-entry interface [m], default 120 km -->
+</Analysis>

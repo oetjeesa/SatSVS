@@ -3,6 +3,8 @@ from math import ceil, radians
 from astropy.time import Time
 from sgp4.api import Satrec, WGS84
 import os
+import urllib.parse
+import urllib.request
 import matplotlib.pyplot as plt
 from geopandas import GeoSeries, GeoDataFrame
 from shapely.geometry import Point, Polygon
@@ -15,15 +17,45 @@ from analysis_cov import *
 from analysis_obs import *
 from analysis_com import *
 from analysis_nav import *
-from analysis_pow import *
-from analysis_dat import *
 from analysis_orb import *
-from analysis_sat import *
+from analysis_sat import *  # sat_ platform subsystem analyses (thermal, AOCS, power, data)
 
 from segments import Constellation, Satellite, Station, User, Ground2SpaceLink, User2SpaceLink, Space2SpaceLink
 import logging_svs as ls
 import misc_fn
 import copy
+
+
+def fetch_celestrak_tle(identifier, dest_file):
+    """Download the latest TLE set for a satellite from CelesTrak into
+    dest_file. The identifier is a NORAD catalog number (all digits, CATNR
+    query) or a satellite name (NAME query, which may return several
+    satellites - all are written and loaded). Returns True on success; on
+    any failure (offline, unknown satellite) a warning is logged and False
+    returned so the caller can fall back to a previously downloaded file."""
+    if identifier.isdigit():
+        query = f'CATNR={identifier}'
+    else:
+        query = 'NAME=' + urllib.parse.quote(identifier)
+    url = f'https://celestrak.org/NORAD/elements/gp.php?{query}&FORMAT=TLE'
+    try:
+        with urllib.request.urlopen(url, timeout=20) as response:
+            text = response.read().decode('ascii', errors='replace')
+    except Exception as e:
+        ls.logger.warning(f'CelesTrak TLE download failed for "{identifier}": {e}')
+        return False
+    text = text.replace('\r\n', '\n').strip('\n')
+    if 'No GP data found' in text or len(text.splitlines()) < 3:
+        ls.logger.warning(f'CelesTrak returned no TLE for "{identifier}": '
+                          f'{text.splitlines()[0] if text else "empty response"}')
+        return False
+    dest_dir = os.path.dirname(dest_file)
+    if dest_dir:
+        os.makedirs(dest_dir, exist_ok=True)
+    with open(dest_file, 'w') as f:
+        f.write(text + '\n')
+    return True
+
 
 class AppConfig:
     
@@ -107,6 +139,28 @@ class AppConfig:
             # Now some optional parameters
             if constellation.find('TLEFileName') is not None:
                 const.tle_file_name = constellation.find('TLEFileName').text
+            if constellation.find('TLEFromCelestrak') is not None:
+                # Force-download the latest TLE from CelesTrak before the run;
+                # the identifier is a NORAD catalog number or a satellite name
+                identifier = constellation.find('TLEFromCelestrak').text.strip()
+                if const.tle_file_name is not None:
+                    dest = misc_fn.resolve_path(const.tle_file_name)
+                else:  # No TLE file configured: cache next to the Config.xml
+                    safe = ''.join(c if c.isalnum() or c in '-_' else '_'
+                                   for c in identifier)
+                    dest = os.path.join(misc_fn.config_dir(),
+                                        f'tle_celestrak_{safe}.txt')
+                    const.tle_file_name = dest
+                if fetch_celestrak_tle(identifier, dest):
+                    ls.logger.info(f'Downloaded latest TLE for "{identifier}" '
+                                   f'from CelesTrak into {dest}')
+                elif os.path.isfile(dest):
+                    ls.logger.warning(f'Using the existing TLE file {dest} instead')
+                else:
+                    ls.logger.error(f'No TLE available for "{identifier}": the '
+                                    f'CelesTrak download failed and there is no '
+                                    f'previously downloaded file {dest}')
+                    exit()
             if constellation.find('ObsIncidenceAngleStart') is not None:
                 const.obs_inci_angle_start = radians(float(constellation.find('ObsIncidenceAngleStart').text))
             if constellation.find('ObsIncidenceAngleStop') is not None:
@@ -183,8 +237,13 @@ class AppConfig:
                         sat.kepler.right_ascension)
                 ls.logger.info(sat.__dict__)
                 self.satellites.append(sat)
-            for item in constellation.iter('TLEFileName'):
-                with open(misc_fn.resolve_path(item.text)) as file:
+            # TLE files to load: the <TLEFileName> element(s), or the file
+            # downloaded from CelesTrak when only <TLEFromCelestrak> is given
+            tle_files = [item.text for item in constellation.iter('TLEFileName')]
+            if not tle_files and const.tle_file_name is not None:
+                tle_files = [const.tle_file_name]
+            for tle_file in tle_files:
+                with open(misc_fn.resolve_path(tle_file)) as file:
                     cnt = 0
                     for line in file:
                         if cnt == 0:
@@ -505,6 +564,10 @@ class AppConfig:
                     analysis = AnalysisObsSzaPushBroom()
                 if type_str == 'obs_sza_subsat':
                     analysis = AnalysisObsSzaSubSat()
+                if type_str == 'obs_aoi_revisit':
+                    analysis = AnalysisObsAoiRevisit()
+                if type_str == 'obs_target_imaging':
+                    analysis = AnalysisObsTargetImaging()
                 if type_str == 'com_gr2sp_budget':
                     analysis = AnalysisComGr2SpBudget()
                 if type_str == 'com_sp2sp_budget':
@@ -513,17 +576,21 @@ class AppConfig:
                     analysis = AnalysisComDoppler()
                 if type_str == 'com_gr2sp_budget_interference':
                     analysis = AnalysisComGr2SpBudgetInterference()
+                if type_str == 'com_contact_plan':
+                    analysis = AnalysisComContactPlan()
+                if type_str == 'com_pfd':
+                    analysis = AnalysisComPfd()
                 if type_str == 'nav_dilution_of_precision':
                     analysis = AnalysisNavDOP()
                 if type_str == 'nav_accuracy':
                     analysis = AnalysisNavAccuracy()
-                if type_str == 'pow_battery_depth_discharge':
-                    analysis = AnalysisPowDepthDischarge()
-                if type_str == 'pow_eclipse_duration':
-                    analysis = AnalysisPowEclipseDuration()
-                if type_str == 'dat_storage':
+                if type_str == 'sat_battery_depth_discharge':
+                    analysis = AnalysisSatBatteryDepthDischarge()
+                if type_str == 'sat_eclipse_duration':
+                    analysis = AnalysisSatEclipseDuration()
+                if type_str == 'sat_data_storage':
                     analysis = AnalysisSatDataStorage()
-                if type_str == 'dat_latency':
+                if type_str == 'sat_data_latency':
                     analysis = AnalysisSatDataLatency()
                 if type_str == 'orb_kepler_elements':
                     analysis = AnalysisOrbKeplerElements()
@@ -535,6 +602,12 @@ class AppConfig:
                     analysis = AnalysisOrbPoleWobble()
                 if type_str == 'orb_deltav_element':
                     analysis = AnalysisOrbDeltaVElement()
+                if type_str == 'orb_beta_angle':
+                    analysis = AnalysisOrbBetaAngle()
+                if type_str == 'orb_lifetime':
+                    analysis = AnalysisOrbLifetime()
+                if type_str == 'orb_environment':
+                    analysis = AnalysisOrbEnvironment()
                 if type_str == 'sat_thermal':
                     analysis = AnalysisSatThermal()
                 if type_str == 'sat_aocs':

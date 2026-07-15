@@ -43,6 +43,12 @@ def resolve_path(path):
     return path
 
 
+def config_dir():
+    """Directory of the Config.xml being loaded (for files written next to
+    the scenario, e.g. the CelesTrak TLE download cache)."""
+    return _CONFIG_DIR
+
+
 def benchmark(func):
     """
     A decorator that prints the time a function takes to execute.

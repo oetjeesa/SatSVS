@@ -4,8 +4,8 @@
     Representative public orbit and instrument values; reduce the user grid or
     the simulation window for quick looks.-->
 <!--Copernicus Sentinel mission analysis run: cov_ground_track, cov_satellite_contour,
-    cov_pass_time, obs_swath_push_broom, pow_battery_depth_discharge,
-    pow_eclipse_duration, dat_storage, dat_latency, orb_deltav_element.
+    cov_pass_time, obs_swath_push_broom, sat_battery_depth_discharge,
+    sat_eclipse_duration, sat_data_storage, sat_data_latency, orb_deltav_element.
     HPOP propagation so the station-keeping delta-v analysis shows real drift.
     Data/power values are representative; assumptions:
       - SSR 384 Gbit and X-band 2x260=520 Mbps are public Sentinel-3 values
@@ -143,7 +143,7 @@
       <Statistic>Mean</Statistic>
     </Analysis>
     <Analysis>
-      <Type>pow_battery_depth_discharge</Type>
+      <Type>sat_battery_depth_discharge</Type>
       <BatteryCapacityWh>2500</BatteryCapacityWh>
       <InitialSoC>1.0</InitialSoC>
       <SolarPanelArea>6.5</SolarPanelArea>
@@ -153,10 +153,10 @@
       <PayloadLatitudeLimit>90</PayloadLatitudeLimit>
     </Analysis>
     <Analysis>
-      <Type>pow_eclipse_duration</Type>
+      <Type>sat_eclipse_duration</Type>
     </Analysis>
     <Analysis>
-      <Type>dat_storage</Type>
+      <Type>sat_data_storage</Type>
       <SSRCapacityGbits>384</SSRCapacityGbits>
       <InitialFillGbits>0</InitialFillGbits>
       <InstrumentRateMbps>35</InstrumentRateMbps>
@@ -164,7 +164,7 @@
       <PayloadLatitudeLimit>90</PayloadLatitudeLimit>
     </Analysis>
     <Analysis>
-      <Type>dat_latency</Type>
+      <Type>sat_data_latency</Type>
       <SSRCapacityGbits>384</SSRCapacityGbits>
       <InitialFillGbits>0</InitialFillGbits>
       <InstrumentRateMbps>35</InstrumentRateMbps>

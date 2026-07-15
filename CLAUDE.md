@@ -109,8 +109,9 @@ instead of re-propagating.
 (`sm.output_path('<type>.png')`) and the CSV data dump of the plotted metric
 (`AnalysisBase.write_csv`, compared by the regression tests) are produced.
 Concrete analyses live grouped by domain in `analysis_cov.py`, `analysis_obs.py`,
-`analysis_com.py`, `analysis_nav.py`, `analysis_pow.py`, `analysis_dat.py`,
-`analysis_orb.py`, `analysis_sat.py`;
+`analysis_com.py`, `analysis_nav.py`, `analysis_orb.py` and `analysis_sat.py`
+(the sat_ platform subsystem analyses incl. the power and data handling types,
+e.g. `sat_battery_depth_discharge`, `sat_data_storage`);
 `analysis.py` also holds the cartopy map helpers (`make_map_cyl`, `make_map_polar`)
 and shared plotting mixins (e.g. `AnalysisObs` swath/revisit plotting on a map).
 `misc_fn.py` holds geometry/time helpers (MJD/GMST, coordinate

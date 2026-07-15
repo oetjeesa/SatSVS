@@ -87,23 +87,27 @@ Analysis can be added as wished, the baseline of analysis available are below
 - __obs_swath_pushbroom__: Swath coverage for satellite(s)
 - __obs_sza_push_broom__: Solar Zenith Angle (SZA) within the push broom swath of satellite(s)
 - __obs_sza_subsat__: Solar Zenith Angle (SZA) for all satellite(s) sub satellite point
+- __obs_aoi_revisit__: Revisit and coverage build-up statistics over a polygon area of interest
+- __obs_target_imaging__: Imaging opportunities for point targets within a pointing agility cone (optional daylight constraint)
 
 ### Communication
 - __com_gr2sp_budget__: For station-satellite received power, losses and C/N0
 - __com_sp2sp_budget__: For satellite-satellite received power, losses and C/N0
 - __com_doppler__: For satellite-station elevation and doppler
+- __com_contact_plan__: Ground station pass table (AOS/LOS/duration/volume) with conflict detection
+- __com_pfd__: Power flux density at the ground vs. ITU-R Article 21 style limit mask
 
 ### Navigation
 - __nav_dillution_of_precision__: DOP values for user(s) (also spacecraft user)
 - __nav_accuracy__: Navigation accuracy (UERE*DOP) values for user(s) (also spacecraft user)
 
 ### Satellite power
-- __pow_battery_depth_discharge__: Battery state-of-charge / depth-of-discharge and power generation vs. draw over orbit
-- __pow_eclipse_duration__: Eclipse duration per orbit over the simulation
+- __sat_battery_depth_discharge__: Battery state-of-charge / depth-of-discharge and power generation vs. draw over orbit
+- __sat_eclipse_duration__: Eclipse duration per orbit over the simulation
 
 ### Data handling
-- __dat_storage__: Solid State Recorder (SSR) fill level over orbit (recording vs. downlink)
-- __dat_latency__: Data latency statistics from acquisition to ground reception
+- __sat_data_storage__: Solid State Recorder (SSR) fill level over orbit (recording vs. downlink)
+- __sat_data_latency__: Data latency statistics from acquisition to ground reception
 
 ### Orbit
 - __orb_kepler_elements__: Evolution of the osculating Kepler elements over time
@@ -113,10 +117,16 @@ Analysis can be added as wished, the baseline of analysis available are below
 - __orb_deltav_element__: Station-keeping delta-v to hold one orbit element in a deadband
   (semi-major axis, eccentricity, inclination, RAAN, argument of perigee, mean
   anomaly), e.g. the orbital decay under atmospheric drag with the HPOP propagator
+- __orb_beta_angle__: Solar beta angle and analytic eclipse fraction over time
+- __orb_lifetime__: Orbital lifetime under drag, 25-year rule compliance and deorbit delta-v
+- __orb_environment__: Space environment along the orbit (trapped radiation/SAA, dose vs. shielding, atomic oxygen, micrometeoroids)
 
 ### Satellite platform
 - __sat_thermal__: Single-node thermal balance over orbit (solar/albedo/Earth IR/eclipses)
 - __sat_aocs__: AOCS disturbance torques and momentum buildup over orbit
+- __sat_battery_depth_discharge__ / __sat_eclipse_duration__ and __sat_data_storage__ /
+  __sat_data_latency__ above also belong to the satellite platform domain (power and
+  data handling subsystems; implemented together in `analysis_sat.py`)
 
 ## Configuration file
 The configuration file is found in the input directory under the name __config.xml__. 
@@ -183,6 +193,26 @@ Orbit parameters are either Keplerian or can be defined as a list of satellites 
     <TLEFileName>input/tle.txt</TLEFileName>
 </Constellation>
 ```
+
+With the optional `<TLEFromCelestrak>` tag the latest TLE is force-downloaded from
+CelesTrak before every run. The satellite is identified by its NORAD catalog number
+(all digits) or by name (a name query may match several satellites — all are loaded):
+```
+<Constellation>
+    <NumOfPlanes>1</NumOfPlanes>
+    <NumOfSatellites>1</NumOfSatellites>
+    <ConstellationID>1</ConstellationID>
+    <ConstellationName>TerraSAR-X</ConstellationName>
+    <TLEFromCelestrak>31698</TLEFromCelestrak>   <!-- or a name, e.g. TERRASAR-X -->
+    <TLEFileName>../input/terrasarx.txt</TLEFileName>
+</Constellation>
+```
+- When `<TLEFileName>` is also given, the downloaded TLE overwrites that file (which
+  then doubles as the offline copy). Without it, the TLE is cached as
+  `tle_celestrak_<identifier>.txt` next to the Config.xml.
+- If the download fails (offline, unknown satellite), a warning is logged and the
+  previously downloaded file is used instead; the run only stops when no file
+  exists at all.
 
 ### Ground segment
 The following xml is used to setup the ground segment:
@@ -452,7 +482,10 @@ relative size.
 The specific parameters for the existing analysis are given here below:
 
 ### cov_ground_track
-Plots the ground track of one or more satellites over simulation time. The following parameters are needed, to plot the ground track of satellites in a constellation:
+Plots the ground track of one or more satellites over simulation time as a
+continuous line (broken cleanly at the date line, matching the 3D view). The
+following parameters are needed, to plot the ground track of satellites in a
+constellation:
 ```
 <Type>cov_ground_track</Type>
 <ConstellationID>1</ConstellationID>
@@ -770,6 +803,71 @@ Optional in the analysis part are:
 <img src="/docs/obs_sza_subsat_lat_year.png" alt="obs_sza_subsat_lat_year"/>    
 
 
+### obs_aoi_revisit
+Revisit and coverage build-up statistics over an area of interest. The AOI is the
+configured user segment — typically a Type Polygon user (a grid clipped to an inline
+`<PolygonList>` or a `<PolygonFile>` shapefile, see the user segment section), but a
+regional Grid works too. The instrument is the push-broom swath defined in the
+`<Constellation>` block (ObsSwathStart/Stop or ObsIncidenceAngleStart/Stop), evaluated
+with the same machinery as obs_swath_push_broom. Produces a map of the revisit
+statistic per AOI grid point zoomed to the AOI, the fraction of the AOI covered at
+least once versus time (fill-up curve), and aggregate numbers in the log (coverage
+percentage, time to 50/90/99% coverage, mean and worst revisit gap).
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>obs_aoi_revisit</Type>
+</Analysis>
+```
+
+Optional in the analysis part is:
+```
+    <Statistic>Max</Statistic>
+```
+- Statistic: min / mean / max / std / median revisit interval shown on the map (default max).
+
+<img src="/docs/obs_aoi_revisit.png" alt="obs_aoi_revisit"/>
+<img src="/docs/obs_aoi_revisit_coverage.png" alt="obs_aoi_revisit_coverage"/>
+
+
+### obs_target_imaging
+Imaging opportunities over a list of point targets for an agile satellite: a target
+can be imaged when it lies within MaxOffNadir degrees of the satellite nadir direction
+(the pointing agility cone) and, optionally, while the Sun is at least MinSunElevation
+degrees above the target horizon (optical imaging daylight constraint). The log reports
+the opportunity windows per target (start, duration, best off-nadir angle) and the
+per-target counts and revisit gaps; the plot shows the targets coloured by opportunity
+count. The CSV dumps contain the opportunity table and the per-target statistics.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>obs_target_imaging</Type>
+    <MaxOffNadir>45</MaxOffNadir>
+    <Target>Rome, 41.9, 12.5</Target>
+    <Target>Delft, 52.0, 4.36</Target>
+</Analysis>
+```
+Parameters are:
+- MaxOffNadir: pointing agility cone half-angle in degrees.
+- Target: one per target, "Name, latitude_deg, longitude_deg" (repeat the tag per target).
+
+Optional in the analysis part are:
+```
+    <MinSunElevation>10</MinSunElevation>
+    <ConstellationID>1</ConstellationID>
+    <TargetFile>../input/targets.csv</TargetFile>
+```
+- MinSunElevation: minimum Sun elevation at the target in degrees (default: no
+  daylight constraint).
+- ConstellationID: restrict the imaging satellites to one constellation (default all).
+- TargetFile: CSV file with one "Name, lat_deg, lon_deg" line per target, as an
+  alternative (or in addition) to inline `<Target>` tags.
+
+<img src="/docs/obs_target_imaging.png" alt="obs_target_imaging"/>
+
+
 ### Antenna patterns for the com analyses (GRASP .cut/.grd)
 The link-budget analyses (com_gr2sp_budget, com_sp2sp_budget,
 com_gr2sp_budget_interference) can use real antenna patterns instead of the
@@ -992,6 +1090,82 @@ Parameters are:
 <img src="/docs/com_doppler.png" alt="com_doppler"/>
 
 
+### com_contact_plan
+Ground station contact plan: every station-satellite pass over the simulation
+window as a table with AOS, LOS, duration, maximum elevation, downlinkable data
+volume and a station-conflict flag when two passes overlap at the same station
+(one antenna cannot track two satellites). Three outputs are produced: the CSV
+data dump, a human-readable pass table __output/com_contact_plan.txt__ with UTC
+times, and a pass-timeline plot (one lane per station with a sub-lane per
+satellite; overlapping passes are edged in red). The log summarises the number
+of passes, contact minutes per day, mean/max pass duration, data volume per day
+and the number of conflicts per station.
+
+All parameters are optional:
+```
+<Analysis>
+    <Type>com_contact_plan</Type>
+    <GroundStationID>0</GroundStationID>
+    <ConstellationID>0</ConstellationID>
+    <MinDuration>60</MinDuration>
+    <DownlinkRateMbps>1070</DownlinkRateMbps>
+</Analysis>
+```
+- GroundStationID/ConstellationID: restrict the plan to one station and/or one
+  constellation (0 or omitted: all).
+- MinDuration: passes shorter than this many seconds are dropped (default 0).
+- DownlinkRateMbps: when given, each pass carries its downlinkable volume
+  (duration x rate) in Gbit and the log reports Gbit/day per station.
+
+<img src="/docs/com_contact_plan.png" alt="com_contact_plan"/>
+
+### com_pfd
+Power flux density produced at the ground by the satellite emissions, versus
+elevation, against an ITU-R Article 21 style limit mask — the classic
+regulatory compliance check of a downlink. Per epoch the PFD at the ground
+station is the EIRP spectral density (transmit power spread over BandWidth,
+taken in the ReferenceBandwidth) plus the satellite antenna gain at the
+epoch's off-nadir angle (nadir-pointed GRASP pattern file, or a fixed gain)
+minus the spreading loss 10log10(4 pi d^2); with several satellites in view
+the worst margin is kept. The limit mask follows the standard Article 21
+shape: PfdLimit up to 5 deg elevation, +0.5 dB per degree between 5 and 25
+deg, PfdLimit+10 above 25 deg. Atmospheric attenuation is not credited
+(conservative, as in the Radio Regulations). The log reports the worst margin
+and the elevation where it occurs.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>com_pfd</Type>
+    <CarrierFrequency>8025e6</CarrierFrequency>
+    <TransmitPowerW>20</TransmitPowerW>
+    <BandWidth>300e6</BandWidth>
+    <TransmitAntennaPatternFile>../input/example_antenna_patterns/isoflux_x_band.cut</TransmitAntennaPatternFile>
+</Analysis>
+```
+- CarrierFrequency: carrier frequency in Hz (only used for reporting).
+- TransmitPowerW: transmit power in W.
+- BandWidth: occupied bandwidth in Hz the transmit power is spread over.
+- TransmitAntennaPatternFile or TransmitGaindB: satellite antenna gain, either
+  a GRASP .cut/.grd pattern evaluated at the off-nadir angle or a fixed dBi value.
+
+Optional are:
+```
+    <GroundStationID>1</GroundStationID>
+    <TransmitLossesdB>1</TransmitLossesdB>
+    <ReferenceBandwidth>4000</ReferenceBandwidth>
+    <PfdLimit>-150</PfdLimit>
+```
+- GroundStationID: measurement point (default: the first ground station).
+- TransmitLossesdB: losses between amplifier and antenna (default 0).
+- ReferenceBandwidth: ITU reference bandwidth in Hz (default 4000, i.e. 4 kHz
+  as applicable below 15 GHz; use 1e6 above).
+- PfdLimit: the low-elevation limit in dB(W/m2) in the reference bandwidth
+  (default -150, the Article 21 value for the 8025-8400 MHz EESS band).
+
+<img src="/docs/com_pfd.png" alt="com_pfd"/>
+
+
 ### nav_dilution_of_precision
 Plots navigation dilution of precision for a user grid. 
 
@@ -1042,7 +1216,7 @@ the 3D plots section for all parameters):
 <img src="/docs/nav_accuracy_3d.png" alt="nav_accuracy_3d"/>
 
 
-### pow_battery_depth_discharge
+### sat_battery_depth_discharge
 Models the satellite power subsystem over the simulation: it determines for each epoch whether the
 satellite is in eclipse (geometric Earth-shadow check against the Sun direction), computes the solar
 power generated, subtracts the bus and payload power draw, and integrates the battery state-of-charge.
@@ -1052,7 +1226,7 @@ The analysis uses the first satellite defined in the space segment.
 The following parameters are needed:
 ```
 <Analysis>
-    <Type>pow_battery_depth_discharge</Type>
+    <Type>sat_battery_depth_discharge</Type>
     <BatteryCapacityWh>500</BatteryCapacityWh>
     <InitialSoC>1.0</InitialSoC>
     <SolarPanelArea>5.0</SolarPanelArea>
@@ -1076,10 +1250,10 @@ Optional in the analysis part is:
 - PayloadLatitudeLimit: The payload only draws power when the satellite is below this absolute
   latitude in degrees (default 90, i.e. always on).
 
-<img src="/docs/pow_depth_discharge.png" alt="pow_battery_depth_discharge"/>
+<img src="/docs/sat_battery_depth_discharge.png" alt="sat_battery_depth_discharge"/>
 
 
-### pow_eclipse_duration
+### sat_eclipse_duration
 Detects eclipse entry/exit for the first satellite using the same geometric Earth-shadow check and
 plots the duration in minutes of each eclipse over the simulation (day-of-year on the x-axis).
 A small time step is recommended so eclipse transitions are captured accurately.
@@ -1087,14 +1261,14 @@ A small time step is recommended so eclipse transitions are captured accurately.
 The following parameters are needed:
 ```
 <Analysis>
-    <Type>pow_eclipse_duration</Type>
+    <Type>sat_eclipse_duration</Type>
 </Analysis>
 ```
 
-<img src="/docs/pow_eclipse_duration.png" alt="pow_eclipse_duration"/>
+<img src="/docs/sat_eclipse_duration.png" alt="sat_eclipse_duration"/>
 
 
-### dat_storage
+### sat_data_storage
 Models the on-board Solid State Recorder (SSR). At each epoch data is recorded when the satellite is
 below the payload latitude limit, and downlinked when a ground station is in view (using the
 station-to-space links, so IncludeStation2SpaceLinks must be True). The SSR fill level is integrated
@@ -1104,7 +1278,7 @@ The analysis uses the first satellite defined in the space segment.
 The following parameters are needed:
 ```
 <Analysis>
-    <Type>dat_storage</Type>
+    <Type>sat_data_storage</Type>
     <SSRCapacityGbits>2000</SSRCapacityGbits>
     <InitialFillGbits>0</InitialFillGbits>
     <InstrumentRateMbps>500</InstrumentRateMbps>
@@ -1124,11 +1298,11 @@ Optional in the analysis part is:
 - PayloadLatitudeLimit: The instrument only records when the satellite is below this absolute
   latitude in degrees (default 90, i.e. always recording).
 
-<img src="/docs/dat_storage.png" alt="dat_storage"/>
+<img src="/docs/sat_data_storage.png" alt="sat_data_storage"/>
 
 
-### dat_latency
-Extends the SSR model of dat_storage with a first-in-first-out data queue to compute the latency
+### sat_data_latency
+Extends the SSR model of sat_data_storage with a first-in-first-out data queue to compute the latency
 between data acquisition and reception on the ground (orbit time until downlink plus a fixed ground
 processing delay). It plots the latency time series and a histogram, and reports mean, 95th
 percentile and the percentage of data received within 2 hours.
@@ -1138,14 +1312,14 @@ links to be enabled.
 The following parameters are needed:
 ```
 <Analysis>
-    <Type>dat_latency</Type>
+    <Type>sat_data_latency</Type>
     <SSRCapacityGbits>2000</SSRCapacityGbits>
     <InitialFillGbits>0</InitialFillGbits>
     <InstrumentRateMbps>500</InstrumentRateMbps>
     <DownlinkRateMbps>1200</DownlinkRateMbps>
 </Analysis>
 ```
-Parameters are the same as for dat_storage.
+Parameters are the same as for sat_data_storage.
 
 Optional in the analysis part are:
 ```
@@ -1156,7 +1330,7 @@ Optional in the analysis part are:
   latitude in degrees (default 90).
 - GroundProcessingMin: Fixed ground processing delay in minutes added to each latency value (default 0).
 
-<img src="/docs/dat_latency_stats.png" alt="dat_latency"/>
+<img src="/docs/sat_data_latency_stats.png" alt="sat_data_latency"/>
 
 
 ### orb_kepler_elements
@@ -1292,10 +1466,125 @@ Optional are:
 
 <img src="/docs/orb_deltav_element.png" alt="orb_deltav_element"/>
 
+### orb_beta_angle
+Solar beta angle (the angle between the Sun direction and the orbit plane)
+over the simulation time, together with the analytic eclipse fraction of a
+circular orbit at that beta angle. Beta drives the eclipse pattern, the
+thermal hot/cold cases and the power sizing, so this analysis ties the
+sat_ platform analyses together; run it over months to see the seasonal cycle
+(e.g. the classic ~60-day beat of an ISS-type orbit, or the near-constant
+beta of a sun-synchronous orbit). The eclipse fraction drops to zero while
+|beta| exceeds the shadow half-angle asin(R/r) — the eclipse-free season. The
+log reports the beta range and the maximum eclipse minutes per orbit.
+
+Note on propagators: Keplerian elements have no J2 nodal regression, so for
+non-sun-synchronous orbits use SGP4 or HPOP (or an LTAN-defined SSO orbit) to
+capture the full beta cycle.
+
+All parameters are optional:
+```
+<Analysis>
+    <Type>orb_beta_angle</Type>
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+</Analysis>
+```
+- ConstellationID/SatelliteID: select the satellite(s); omitted or 0 means all.
+
+<img src="/docs/orb_beta_angle.png" alt="orb_beta_angle"/>
+
+### orb_lifetime
+Orbital lifetime under atmospheric drag. The mean semi-major axis at the end
+of the simulation window is decayed semi-analytically (da/dt = -rho Cd A/m
+sqrt(mu a), circular-orbit approximation, piecewise-exponential atmosphere
+scaled by DensityScale for solar activity) until the re-entry altitude or the
+MaxYears horizon. The analysis reports compliance with the 25-year
+debris-mitigation lifetime rule, the delta-v of an immediate deorbit burn
+(perigee lowered to the re-entry altitude) and, when the orbit is not
+compliant, the circular disposal altitude with a 25-year lifetime and the
+Hohmann delta-v to reach it. Works with any propagator — with HPOP the
+projection starts from the actually decayed state at the end of the window.
+Note the exponential atmosphere is a static mid-activity model: treat the
+lifetime as an order-of-magnitude figure and bracket it with DensityScale
+(~0.5 solar minimum, ~2 solar maximum).
+
+The following parameters are needed (both fall back to the constellation's
+Mass/FrontalArea when present there):
+```
+<Analysis>
+    <Type>orb_lifetime</Type>
+    <Mass>500</Mass>
+    <DragArea>3.2</DragArea>
+</Analysis>
+```
+- Mass: satellite mass in kg.
+- DragArea: aerodynamic cross section in m^2.
+
+Optional are:
+```
+    <DragCoefficient>2.2</DragCoefficient>
+    <DensityScale>1.0</DensityScale>
+    <MaxYears>100</MaxYears>
+    <ReentryAltitude>120000</ReentryAltitude>
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
+- DragCoefficient: drag coefficient Cd (default 2.2).
+- DensityScale: multiplier on the atmosphere density for solar activity
+  (default 1).
+- MaxYears: integration horizon (default 100); an orbit that has not decayed
+  by then is reported as "> MaxYears".
+- ReentryAltitude: re-entry interface altitude in m (default 120 km).
+- ConstellationID/SatelliteID: select the satellite (the first match is analysed).
+
+<img src="/docs/orb_lifetime.png" alt="orb_lifetime"/>
+
+### orb_environment
+Space environment along the orbit, as a SPENVIS-style summary sheet with six panels:
+- Trapped radiation: the geomagnetic field is modelled as an eccentric tilted dipole
+  (the offset dipole centre is what creates the South Atlantic Anomaly), giving the
+  McIlwain L-shell and field strength B along the orbit. AE8/AP8-style parametrisations
+  of the trapped proton (>10 MeV) and electron (>1 MeV) omnidirectional fluxes — a
+  Gaussian belt profile in L, an off-equator attenuation in B/B_eq and a drift-loss
+  gate that confines the inner belts to the SAA at LEO altitudes — produce the SAA and
+  polar horn crossings on the map, the flux time series and the annual fluences.
+- Total ionizing dose versus aluminium shielding thickness (dose-depth curve) from the
+  annual fluences with fluence-to-dose conversion factors (electrons dominating behind
+  thin shielding, protons behind thick).
+- Atomic oxygen: number density at the orbit altitude (MSIS-class mean-activity
+  profile), ram fluence and kapton-equivalent erosion depth over the mission.
+- Micrometeoroids: Gruen (1985) cumulative flux versus particle mass with Earth
+  shielding and gravitational focusing, and the expected impact count on the
+  spacecraft area over the mission.
+
+All models are first-order engineering estimates that place the SAA/horn geometry
+correctly and give order-of-magnitude fluxes and doses — use SPENVIS or IRENE
+(AE9/AP9) for design and qualification values.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_environment</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+    <MissionYears>5</MissionYears>
+    <SurfaceArea>20</SurfaceArea>
+```
+- ConstellationID/SatelliteID: select the satellite (default: the first satellite).
+- MissionYears: accumulation period for fluences, erosion and impact counts (default 5).
+- SurfaceArea: area exposed to micrometeoroids in m^2 (default 10).
+
+<img src="/docs/orb_environment.png" alt="orb_environment"/>
+
 ### sat_thermal
 Single-node spacecraft thermal balance over the orbit. Per time step the heat
 inputs — direct solar flux (zero in the Earth shadow, same eclipse model as the
-pow_ analyses), Earth albedo (scaled with the sun elevation over the subsatellite
+power analyses), Earth albedo (scaled with the sun elevation over the subsatellite
 point and the Earth view factor), Earth infrared and the internal electrical
 dissipation — are balanced against the radiated heat (epsilon sigma A T^4) and
 integrated to a temperature history. The plot shows the temperature (left axis)

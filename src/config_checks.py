@@ -40,6 +40,9 @@ ANALYSIS_PARAMS = {
     'obs_swath_push_broom': {'PolarView', 'Revisit', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS,
     'obs_sza_push_broom': {'PolarView', 'Statistic', 'SaveOutput'} | PLOT3D_PARAMS,
     'obs_sza_subsat': {'PolarView', 'SaveOutput', 'RangeLatitude'} | PLOT3D_PARAMS,
+    'obs_aoi_revisit': {'Statistic'},
+    'obs_target_imaging': {'Target', 'TargetFile', 'MaxOffNadir', 'MinSunElevation',
+                           'ConstellationID'},
     'com_gr2sp_budget': COM_GR2SP_PARAMS,
     'com_gr2sp_budget_interference': COM_GR2SP_PARAMS | {
         'BandWidth', 'TransmitGainManualdB', 'TransmitAntennaDiameter',
@@ -50,22 +53,31 @@ ANALYSIS_PARAMS = {
         'ReceiveTempK', 'ModulationType', 'BitErrorRate', 'DataRateBitPerSec',
         'TransmitAntennaPatternFile', 'ReceiveAntennaPatternFile'},
     'com_doppler': {'StationID', 'CarrierFrequency'},
+    'com_contact_plan': {'GroundStationID', 'ConstellationID', 'MinDuration',
+                         'DownlinkRateMbps'},
+    'com_pfd': {'GroundStationID', 'CarrierFrequency', 'TransmitPowerW',
+                'TransmitLossesdB', 'BandWidth', 'ReferenceBandwidth',
+                'TransmitGaindB', 'TransmitAntennaPatternFile', 'PfdLimit'},
     'nav_dilution_of_precision': {'Direction', 'Statistic'} | PLOT3D_PARAMS,
     'nav_accuracy': {'Direction', 'Statistic'} | PLOT3D_PARAMS,
-    'pow_battery_depth_discharge': {
+    'sat_battery_depth_discharge': {
         'BatteryCapacityWh', 'InitialSoC', 'SolarPanelArea', 'PanelEfficiency',
         'BasePowerDrawW', 'InstrumentPowerDrawW', 'PayloadLatitudeLimit'},
-    'pow_eclipse_duration': set(),
-    'dat_storage': {'SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
-                    'DownlinkRateMbps', 'PayloadLatitudeLimit'},
-    'dat_latency': {'SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
-                    'DownlinkRateMbps', 'PayloadLatitudeLimit', 'GroundProcessingMin'},
+    'sat_eclipse_duration': set(),
+    'sat_data_storage': {'SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
+                         'DownlinkRateMbps', 'PayloadLatitudeLimit'},
+    'sat_data_latency': {'SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
+                         'DownlinkRateMbps', 'PayloadLatitudeLimit', 'GroundProcessingMin'},
     'orb_kepler_elements': {'ConstellationID', 'SatelliteID'},
     'orb_air_density': {'ConstellationID', 'SatelliteID'},
     'orb_disturbance_forces': {'ConstellationID', 'SatelliteID'},
     'orb_pole_wobble': set(),
     'orb_deltav_element': {'ConstellationID', 'SatelliteID', 'TargetType',
                            'TargetValue', 'DeadBand'},
+    'orb_beta_angle': {'ConstellationID', 'SatelliteID'},
+    'orb_lifetime': {'ConstellationID', 'SatelliteID', 'Mass', 'DragArea',
+                     'DragCoefficient', 'DensityScale', 'MaxYears', 'ReentryAltitude'},
+    'orb_environment': {'ConstellationID', 'SatelliteID', 'MissionYears', 'SurfaceArea'},
     'sat_thermal': {'ConstellationID', 'SatelliteID', 'SurfaceArea', 'CrossSectionSun',
                     'CrossSectionEarth', 'Absorptivity', 'Emissivity', 'InternalPowerW',
                     'HeatCapacity', 'InitialTemperature'},
@@ -98,15 +110,17 @@ ANALYSIS_REQUIRED = {
                          'TransmitPowerW', 'TransmitLossesdB', 'ReceiveLossesdB',
                          'ReceiveTempK'],
     'com_doppler': ['StationID', 'CarrierFrequency'],
+    'com_pfd': ['CarrierFrequency', 'TransmitPowerW', 'BandWidth'],
     'nav_dilution_of_precision': ['Direction', 'Statistic'],
     'nav_accuracy': ['Direction', 'Statistic'],
-    'pow_battery_depth_discharge': ['BatteryCapacityWh', 'InitialSoC', 'SolarPanelArea',
+    'obs_target_imaging': ['MaxOffNadir'],
+    'sat_battery_depth_discharge': ['BatteryCapacityWh', 'InitialSoC', 'SolarPanelArea',
                                     'PanelEfficiency', 'BasePowerDrawW',
                                     'InstrumentPowerDrawW'],
-    'dat_storage': ['SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
-                    'DownlinkRateMbps'],
-    'dat_latency': ['SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
-                    'DownlinkRateMbps'],
+    'sat_data_storage': ['SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
+                         'DownlinkRateMbps'],
+    'sat_data_latency': ['SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
+                         'DownlinkRateMbps'],
     'orb_deltav_element': ['DeadBand'],
     'sat_thermal': ['SurfaceArea', 'HeatCapacity'],
     'sat_aocs': ['InertiaXX', 'InertiaYY', 'InertiaZZ'],
@@ -123,6 +137,8 @@ ANALYSIS_ANY_OF = {
         ('ReceiveGaindB', 'ReceiveAntennaPatternFile'),
         ('TransmitAntennaDiameter', 'TransmitGainManualdB', 'TransmitAntennaPatternFile'),
         ('ReceiveAntennaDiameter', 'ReceiveAntennaPatternFile')],
+    'com_pfd': [('TransmitGaindB', 'TransmitAntennaPatternFile')],
+    'obs_target_imaging': [('Target', 'TargetFile')],
 }
 
 # Allowed children per structural block
@@ -131,6 +147,7 @@ SCHEMA = {
     'SpaceSegment': {'Constellation'},
     'Constellation': {'ConstellationID', 'NumOfSatellites', 'NumOfPlanes',
                       'ConstellationName', 'ReceiverConstellation', 'TLEFileName',
+                      'TLEFromCelestrak',
                       'ObsIncidenceAngleStart', 'ObsIncidenceAngleStop', 'ObsSwathStart',
                       'ObsSwathStop', 'ElevationMask', 'ElevationMaskMaximum', 'UERE',
                       'FrontalArea', 'Mass', 'Satellite'},
@@ -183,7 +200,9 @@ FLOAT_TAGS = {'EpochMJD', 'Altitude', 'SemiMajorAxis', 'Eccentricity', 'Inclinat
               'CrossSectionEarth', 'Absorptivity', 'Emissivity', 'InternalPowerW',
               'HeatCapacity', 'InitialTemperature', 'InertiaXX', 'InertiaYY', 'InertiaZZ',
               'MaxPointingOffset', 'ResidualDipole', 'DragCoefficient', 'SrpArea',
-              'Reflectivity', 'CopOffset', 'WheelMomentum'}
+              'Reflectivity', 'CopOffset', 'WheelMomentum', 'DensityScale', 'MaxYears',
+              'ReentryAltitude', 'MinDuration', 'ReferenceBandwidth', 'PfdLimit',
+              'MaxOffNadir', 'MinSunElevation', 'MissionYears'}
 BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeSpace2SpaceLinks', 'OrbitsFromPreviousRun', 'IncludeRain',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',
@@ -274,8 +293,10 @@ def validate_config(file_name):
             except ValueError:
                 pass
         satellites = list(const.iter('Satellite'))
-        if not satellites and _text(const, 'TLEFileName') is None:
-            errors.append(f'{path}: needs either <Satellite> block(s) or a <TLEFileName>')
+        if not satellites and _text(const, 'TLEFileName') is None \
+                and _text(const, 'TLEFromCelestrak') is None:
+            errors.append(f'{path}: needs either <Satellite> block(s), a '
+                          f'<TLEFileName> or a <TLEFromCelestrak>')
         for j, sat in enumerate(satellites):
             sat_path = f'{path}/Satellite[{j + 1}]'
             _check_children(sat, sat_path, SCHEMA['Satellite'], warnings)

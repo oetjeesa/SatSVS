@@ -1,8 +1,12 @@
 """
-Satellite platform analyses: single-node thermal balance (sat_thermal) and
-AOCS disturbance torques / momentum buildup (sat_aocs). Both work with any
-orbit propagator; sat_aocs samples the HPOP atmosphere model when available
-and falls back to a built-in exponential atmosphere otherwise.
+Satellite platform (subsystem) analyses:
+- sat_thermal: single-node thermal balance over the orbit
+- sat_aocs: AOCS disturbance torques and momentum buildup
+- sat_battery_depth_discharge / sat_eclipse_duration: electrical power
+- sat_data_storage / sat_data_latency: data handling (SSR fill state, latency)
+
+All work with any orbit propagator; sat_aocs samples the HPOP atmosphere
+model when available and falls back to a built-in exponential atmosphere.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,7 +56,7 @@ def air_density_exponential(altitude_m):
 
 def sun_direction_and_eclipse(satellite, time_mjd):
     """Unit vector to the Sun in ECI and the cylindrical-shadow eclipse flag
-    for the satellite (same shadow test as the pow_ analyses)."""
+    for the satellite (same shadow test as the power analyses)."""
     t = Time(time_mjd, format='mjd')
     sun_pos_eci = get_sun(t).cartesian.xyz.to(u.m).value
     sun_dir = sun_pos_eci / np.linalg.norm(sun_pos_eci)
@@ -359,3 +363,308 @@ class AnalysisSatAocs(AnalysisBase, _SelectSatellite):
                             'torque_srp_nm', 'torque_magnetic_nm', 'torque_total_nm',
                             'momentum_nms'],
                        np.column_stack([times, self.metric]))
+
+
+# ---------------------------------------------------------------------------
+# Power subsystem analyses (historically the pow_* types in analysis_pow.py)
+# ---------------------------------------------------------------------------
+
+class AnalysisSatBatteryDepthDischarge(AnalysisBase):
+    def __init__(self):
+        super().__init__()
+        self.battery_capacity_wh = 0
+        self.initial_soc = 1.0
+        self.panel_area = 0
+        self.efficiency = 0
+        self.p_bus_w = 0
+        self.p_payload_w = 0
+        self.metric = None # Stores [Time, SoC, P_gen, Eclipse_Status]
+
+    def read_config(self, node):
+        self.battery_capacity_wh = float(node.find('BatteryCapacityWh').text)
+        self.initial_soc = float(node.find('InitialSoC').text)
+        self.panel_area = float(node.find('SolarPanelArea').text)
+        self.efficiency = float(node.find('PanelEfficiency').text)
+        self.p_bus_w = float(node.find('BasePowerDrawW').text)
+        self.p_payload_w = float(node.find('InstrumentPowerDrawW').text)
+        # Read the latitude limit from XML
+        if node.find('PayloadLatitudeLimit') is not None:
+            self.lat_limit = float(node.find('PayloadLatitudeLimit').text)
+        else:
+            self.lat_limit = 90.0 # Default to "always on" if not specified
+
+    def before_loop(self, sm):
+        # Initialize metric array: [Time, SoC, Generation, PowerDraw]
+        self.metric = np.zeros((sm.num_epoch, 4))
+        self.current_soc = self.initial_soc
+        ls.logger.info("Power Analysis Initialized")
+
+    def in_loop(self, sm):
+        # 1. Determine Sun Visibility (shared cylindrical-shadow eclipse test)
+        satellite = sm.satellites[0]
+        sun_dir, in_eclipse = sun_direction_and_eclipse(satellite, sm.time_mjd)
+
+        # 2. Power Generation
+        solar_constant = 1361.0 # W/m^2
+        p_gen = 0 if in_eclipse else (solar_constant * self.panel_area * self.efficiency)
+
+        # 3. Power Consumption: instrument only active below the latitude limit
+        is_active = abs(np.degrees(satellite.lla[0])) <= self.lat_limit
+        p_draw = self.p_bus_w + (self.p_payload_w if is_active else 0)
+
+        # 4. Update SoC (Wh)
+        delta_hours = sm.time_step / 3600.0
+        energy_balance_wh = (p_gen - p_draw) * delta_hours
+
+        # Convert capacity to Wh and update
+        self.current_soc += energy_balance_wh / self.battery_capacity_wh
+        self.current_soc = np.clip(self.current_soc, 0, 1) # Keep between 0% and 100%
+
+        self.metric[sm.cnt_epoch, :] = [self.times_f_doy[-1], self.current_soc, p_gen, p_draw]
+
+    def after_loop(self, sm):
+        dod = (1.0 - self.metric[:, 1]) * 100
+
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+        ax1.set_xlabel('Day of Year (DOY)')
+        ax1.set_ylabel('Depth of Discharge DOD (%)', color='tab:red')
+        ax1.plot(self.metric[:, 0], dod, color='tab:red', label='DoD %')
+        ax1.grid(True)
+
+        ax2 = ax1.twinx()
+        ax2.set_ylabel('Power Generated-Blue Draw-Green (W)', color='tab:blue')
+        ax2.step(self.metric[:, 0], self.metric[:, 2], color='tab:blue', label='P_Gen', where='post')
+        ax2.step(self.metric[:, 0], self.metric[:, 3], color='tab:green', label='P_Draw', where='post')
+
+        fig.tight_layout()
+        plt.savefig(sm.output_path('sat_battery_depth_discharge.png'))
+        plt.show()
+
+        self.write_csv(sm, ['doy', 'state_of_charge', 'power_generated_w', 'power_draw_w'],
+                       self.metric)
+
+
+class AnalysisSatEclipseDuration(AnalysisBase):
+    def __init__(self):
+        super().__init__()
+        self.eclipse_durations = [] # List of (Time, Duration_minutes)
+        self.in_eclipse_prev = False
+        self.eclipse_start_time = 0
+
+    def read_config(self, node):
+        # No specific config needed for this, but could add altitude-specific masks if desired
+        pass
+
+    def before_loop(self, sm):
+        self.eclipse_durations = []
+        self.in_eclipse_prev = False
+        ls.logger.info("Eclipse Duration Analysis Initialized")
+
+    def in_loop(self, sm):
+        satellite = sm.satellites[0]
+        sun_dir, in_eclipse_now = sun_direction_and_eclipse(satellite, sm.time_mjd)
+
+        # Detect transition from sunlight to eclipse (Entry)
+        if in_eclipse_now and not self.in_eclipse_prev:
+            self.eclipse_start_time = sm.time_mjd
+
+        # Detect transition from eclipse to sunlight (Exit)
+        elif not in_eclipse_now and self.in_eclipse_prev:
+            duration_days = sm.time_mjd - self.eclipse_start_time
+            duration_minutes = duration_days * 24 * 60
+            self.eclipse_durations.append([self.times_f_doy[-1], duration_minutes])
+
+        self.in_eclipse_prev = in_eclipse_now
+
+    def after_loop(self, sm):
+        self.write_csv(sm, ['doy', 'eclipse_duration_min'], self.eclipse_durations)
+        if not self.eclipse_durations:
+            ls.logger.warning("No eclipse events detected during the simulation. No plot produced.")
+            return
+
+        data = np.array(self.eclipse_durations)
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(data[:, 0], data[:, 1], 'k.', markersize=2, label='Eclipse Duration')
+        ax.set_xlabel('Day of Year (DOY)')
+        ax.set_ylabel('Eclipse Duration [minutes]')
+        ax.set_title(f'Eclipse Duration per Orbit')
+        ax.grid(True, which='both', linestyle='--', alpha=0.5)
+
+        plt.savefig(sm.output_path('sat_eclipse_duration.png'))
+        plt.show()
+
+
+# ---------------------------------------------------------------------------
+# Data handling subsystem analyses (historically the dat_* types in analysis_dat.py)
+# ---------------------------------------------------------------------------
+
+class AnalysisSatDataStorage(AnalysisBase):
+    def __init__(self):
+        super().__init__()
+        self.ssr_capacity_gbits = 0
+        self.initial_fill_gbits = 0
+        self.instrument_rate_mbps = 0
+        self.downlink_rate_mbps = 0
+        self.lat_limit = 90.0
+        self.metric = None # Stores [Time, SSR_Level_Gbits, Is_Downlinking, Is_Recording]
+
+    def read_config(self, node):
+        self.ssr_capacity_gbits = float(node.find('SSRCapacityGbits').text)
+        self.initial_fill_gbits = float(node.find('InitialFillGbits').text)
+        self.instrument_rate_mbps = float(node.find('InstrumentRateMbps').text)
+        self.downlink_rate_mbps = float(node.find('DownlinkRateMbps').text)
+        if node.find('PayloadLatitudeLimit') is not None:
+            self.lat_limit = float(node.find('PayloadLatitudeLimit').text)
+
+    def before_loop(self, sm):
+        self.metric = np.zeros((sm.num_epoch, 4))
+        self.current_fill = self.initial_fill_gbits
+        ls.logger.info("Data Storage Analysis Initialized")
+
+    def in_loop(self, sm):
+        sat = sm.satellites[0]
+        sat.det_lla()
+
+        # 1. Recording Logic (matching the Power module latitude trigger)
+        is_recording = abs(np.degrees(sat.lla[0])) <= self.lat_limit
+
+        # 2. Downlinking Logic (Ground Station in view)
+        is_downlinking = len(sat.idx_stat_in_view) > 0
+
+        # 3. Data Budget Calculation (Mbps * sec / 1000 = Gbits)
+        inflow = (self.instrument_rate_mbps / 1000.0) * sm.time_step if is_recording else 0
+        outflow = (self.downlink_rate_mbps / 1000.0) * sm.time_step if is_downlinking else 0
+
+        self.current_fill += (inflow - outflow)
+
+        # Constraints: Cannot be negative, cannot exceed capacity
+        self.current_fill = np.clip(self.current_fill, 0, self.ssr_capacity_gbits)
+
+        # Store [DOY, Fill Level, Downlink Status, Record Status]
+        self.metric[sm.cnt_epoch, :] = [self.times_f_doy[-1], self.current_fill,
+                                        float(is_downlinking), float(is_recording)]
+
+    def after_loop(self, sm):
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+        ax1.plot(self.metric[:, 0], self.metric[:, 1], 'g-', label='SSR Fill Level')
+        ax1.set_ylabel('Data Stored (Gbits)')
+        ax1.set_xlabel('Day of Year (DOY)')
+
+        # Shade regions to show activity for visual debugging
+        ax1.fill_between(self.metric[:, 0], 0, self.ssr_capacity_gbits,
+                        where=self.metric[:, 2] > 0, color='blue', alpha=0.1, label='Downlink Active')
+
+        plt.grid(True)
+        plt.legend()
+        plt.savefig(sm.output_path('sat_data_storage.png'))
+        plt.show()
+
+        self.write_csv(sm, ['doy', 'ssr_fill_gbits', 'is_downlinking', 'is_recording'],
+                       self.metric)
+
+
+class AnalysisSatDataLatency(AnalysisBase):
+    def __init__(self):
+        super().__init__()
+        self.ssr_capacity_gbits = 0
+        self.initial_fill_gbits = 0
+        self.instrument_rate_mbps = 0
+        self.downlink_rate_mbps = 0
+        self.lat_limit = 90.0
+        self.ground_proc_min = 0 # x minutes for ground processing
+
+        self.data_queue = []
+        self.latency_metrics = []
+        self.metric = None
+
+    def read_config(self, node):
+        self.ssr_capacity_gbits = float(node.find('SSRCapacityGbits').text)
+        self.initial_fill_gbits = float(node.find('InitialFillGbits').text)
+        self.instrument_rate_mbps = float(node.find('InstrumentRateMbps').text)
+        self.downlink_rate_mbps = float(node.find('DownlinkRateMbps').text)
+        if node.find('PayloadLatitudeLimit') is not None:
+            self.lat_limit = float(node.find('PayloadLatitudeLimit').text)
+        # Load the ground processing delay (x) from XML
+        if node.find('GroundProcessingMin') is not None:
+            self.ground_proc_min = float(node.find('GroundProcessingMin').text)
+
+    def before_loop(self, sm):
+        self.metric = np.zeros((sm.num_epoch, 4))
+        self.current_fill = self.initial_fill_gbits
+        if self.initial_fill_gbits > 0:
+            self.data_queue.append([sm.time_mjd, self.initial_fill_gbits])
+        ls.logger.info(f"Data Analysis Initialized with {self.ground_proc_min}min ground delay")
+
+    def in_loop(self, sm):
+        sat = sm.satellites[0]
+        sat.det_lla()
+
+        is_recording = abs(np.degrees(sat.lla[0])) <= self.lat_limit
+        if is_recording:
+            generated_gbits = (self.instrument_rate_mbps / 1000.0) * sm.time_step
+            self.data_queue.append([sm.time_mjd, generated_gbits])
+            self.current_fill += generated_gbits
+
+        is_downlinking = len(sat.idx_stat_in_view) > 0
+        if is_downlinking and self.current_fill > 0:
+            downlink_capacity = (self.downlink_rate_mbps / 1000.0) * sm.time_step
+
+            while downlink_capacity > 0 and len(self.data_queue) > 0:
+                packet_time, packet_size = self.data_queue[0]
+
+                if packet_size <= downlink_capacity:
+                    # Latency = (Time on Orbit) + (Ground Processing x)
+                    latency_h = ((sm.time_mjd - packet_time) * 24.0) + (self.ground_proc_min / 60.0)
+                    self.latency_metrics.append([self.times_f_doy[-1], latency_h])
+                    downlink_capacity -= packet_size
+                    self.current_fill -= packet_size
+                    self.data_queue.pop(0)
+                else:
+                    self.data_queue[0][1] -= downlink_capacity
+                    self.current_fill -= downlink_capacity
+                    latency_h = ((sm.time_mjd - packet_time) * 24.0) + (self.ground_proc_min / 60.0)
+                    self.latency_metrics.append([self.times_f_doy[-1], latency_h])
+                    downlink_capacity = 0
+
+        self.current_fill = np.clip(self.current_fill, 0, self.ssr_capacity_gbits)
+        self.metric[sm.cnt_epoch, :] = [self.times_f_doy[-1], self.current_fill,
+                                        float(is_downlinking), float(is_recording)]
+
+    def after_loop(self, sm):
+        self.write_csv(sm, ['doy', 'latency_hours'], self.latency_metrics)
+        if not self.latency_metrics:
+            return
+
+        lat_data = np.array(self.latency_metrics)
+        latencies = lat_data[:, 1]
+
+        # Calculate statistics
+        mean_lat = np.mean(latencies)
+        p95_lat = np.percentile(latencies, 95)
+        max_lat = np.max(latencies)
+
+        # Calculate percentage < 2 hours
+        pct_under_2h = (np.sum(latencies < 2.0) / len(latencies)) * 100
+
+        fig, (ax2, ax3) = plt.subplots(2, 1, figsize=(12, 16))
+
+        # --- Latency Time Series ---
+        ax2.scatter(lat_data[:, 0], latencies, c='red', s=5, alpha=0.3)
+        ax2.axhline(2.0, color='black', linestyle=':', label='2h Threshold')
+        ax2.set_ylabel('Latency (Hours)')
+        ax2.set_title(f'{pct_under_2h:.1f}% of data received in < 2 hours')
+        ax2.legend()
+        ax2.grid(True)
+
+        # --- Histogram ---
+        ax3.hist(latencies, bins=50, color='skyblue', edgecolor='black', alpha=0.7)
+        ax3.axvline(mean_lat, color='blue', linestyle='--', label=f'Mean: {mean_lat:.2f}h')
+        ax3.axvline(p95_lat, color='orange', linestyle='--', label=f'95%: {p95_lat:.2f}h')
+        ax3.set_xlabel('Latency (Hours)')
+        ax3.legend()
+        ax3.grid(axis='y', alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(sm.output_path('sat_data_latency_stats.png'))
+        plt.show()

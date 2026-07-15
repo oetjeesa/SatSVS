@@ -6,6 +6,7 @@ from numpy.linalg import norm
 from math import sin, cos, asin, degrees, radians
 import xarray as xr
 from astropy import time
+from astropy.coordinates import get_sun, ITRS
 import pandas as pd
 
 # Project modules
@@ -594,3 +595,227 @@ class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
         plt.grid()
         plt.savefig(sm.output_path(self.type + '_lat_year.png'))
         plt.show()
+
+
+class AnalysisObsAoiRevisit(AnalysisObsSwathPushBroom):
+    """Revisit and coverage build-up statistics over an area of interest.
+    The AOI is the configured user segment - typically Type Polygon (a grid
+    clipped to an inline polygon or a shapefile), but a regional Grid works
+    too. The instrument is the push-broom swath defined in the
+    <Constellation> block, evaluated with the same machinery as
+    obs_swath_push_broom. Produces a map of the revisit statistic per AOI
+    grid point (zoomed to the AOI), the fraction of the AOI covered versus
+    time (fill-up curve), and aggregate revisit numbers in the log."""
+
+    def __init__(self):
+        super().__init__()
+        self.statistic = 'max'
+
+    def read_config(self, node):
+        if node.find('Statistic') is not None:
+            self.statistic = node.find('Statistic').text.lower()
+
+    def after_loop(self, sm):
+        if not sm.users:
+            ls.logger.error(f'{self.type} needs a user segment (Type Polygon or '
+                            f'Grid) as the area of interest. No plot produced.')
+            return
+        lons = np.array([degrees(user.lla[1]) for user in sm.users])
+        lats = np.array([degrees(user.lla[0]) for user in sm.users])
+        covered = self.user_metric > 0  # (num_user, num_epoch)
+
+        # Per-point pass count and revisit gaps (hours between successive passes)
+        num_passes = np.array([int(c[0]) + int((c[1:] & ~c[:-1]).sum()) for c in covered])
+        gaps_list = self.revisit_gaps_hours(self.user_metric, sm.time_step)
+        stat_fn = {'min': np.min, 'mean': np.mean, 'max': np.max,
+                   'std': np.std, 'median': np.median}.get(self.statistic, np.max)
+        stat_gap = np.array([stat_fn(g) if len(g) else np.nan for g in gaps_list])
+        mean_gap = np.array([np.mean(g) if len(g) else np.nan for g in gaps_list])
+        max_gap = np.array([np.max(g) if len(g) else np.nan for g in gaps_list])
+
+        # AOI fill-up: fraction of the AOI points seen at least once up to t
+        fraction = (np.cumsum(covered, axis=1) > 0).mean(axis=0)
+        times = np.asarray(self.times_f_doy)
+        name = getattr(sm.users[0], 'name', '') or 'AOI'
+        ls.logger.info(f'{self.type}: {name} {len(sm.users)} grid points, '
+                       f'{fraction[-1] * 100:.1f}% covered at the end of the run')
+        for level in (0.5, 0.9, 0.99):
+            reached = np.flatnonzero(fraction >= level)
+            if reached.size:
+                hours = reached[0] * sm.time_step / 3600.0
+                ls.logger.info(f'{self.type}: {level * 100:.0f}% of the AOI covered '
+                               f'after {hours:.1f} h')
+        if np.isfinite(mean_gap).any():
+            ls.logger.info(f'{self.type}: revisit over the AOI: mean of mean gaps '
+                           f'{np.nanmean(mean_gap):.1f} h, worst max gap '
+                           f'{np.nanmax(max_gap):.1f} h')
+
+        # Map of the revisit statistic, zoomed to the AOI with a margin
+        # (regional map with automatic gridline spacing instead of the fixed
+        # 60/30 degree global-map locators)
+        fig = plt.figure(figsize=(8, 6), layout='constrained')
+        ax = plt.axes(projection=ccrs.PlateCarree())
+        margin = 5.0
+        ax.set_extent([lons.min() - margin, lons.max() + margin,
+                       max(lats.min() - margin, -90.0), min(lats.max() + margin, 90.0)],
+                      ccrs.PlateCarree())
+        gl = ax.gridlines(draw_labels=True, linewidth=0.5, color='gray')
+        gl.top_labels = False
+        gl.right_labels = False
+        ax.coastlines()
+        if np.isfinite(stat_gap).any():
+            sc = ax.scatter(lons, lats, s=14, marker='s', cmap=plt.cm.jet, c=stat_gap,
+                            transform=ccrs.PlateCarree())
+            cb = plt.colorbar(sc, ax=ax, shrink=0.85)
+            cb.set_label(f'{self.statistic.capitalize()} Revisit Interval [hours]',
+                         fontsize=10)
+        else:  # No point with two passes yet: show the pass count instead
+            sc = ax.scatter(lons, lats, s=14, marker='s', cmap=plt.cm.jet, c=num_passes,
+                            transform=ccrs.PlateCarree())
+            cb = plt.colorbar(sc, ax=ax, shrink=0.85)
+            cb.set_label('Number of Passes [-]', fontsize=10)
+        ax.set_title(f'{name}: revisit over the area of interest')
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        # AOI coverage fill-up curve
+        fig = plt.figure(figsize=(10, 5))
+        plt.plot((times - times[0]) * 24.0, fraction * 100.0, 'b-')
+        plt.xlabel('Elapsed time [hours]')
+        plt.ylabel('AOI covered at least once [%]')
+        plt.ylim(0, 105)
+        plt.grid()
+        plt.savefig(sm.output_path(self.type + '_coverage.png'))
+        plt.show()
+
+        self.write_csv(sm, ['lon_deg', 'lat_deg', 'num_passes', 'mean_gap_hours',
+                            'max_gap_hours'],
+                       np.column_stack([lons, lats, num_passes, mean_gap, max_gap]))
+        self.write_csv(sm, ['doy', 'covered_fraction'],
+                       np.column_stack([times, fraction]), suffix='coverage')
+
+
+class AnalysisObsTargetImaging(AnalysisBase):
+    """Imaging opportunities over a list of point targets for an agile
+    satellite: a target can be imaged when it lies within MaxOffNadir degrees
+    of the satellite nadir direction (the pointing agility cone) and,
+    optionally, while the Sun is at least MinSunElevation degrees above the
+    target horizon (optical imaging daylight constraint). Reports the
+    opportunity windows per target (start, duration, best off-nadir angle),
+    the per-target opportunity counts and revisit gaps, and a map of the
+    targets coloured by opportunity count."""
+
+    def __init__(self):
+        super().__init__()
+        self.constellation_id = 0  # Optional selection (0 = all satellites)
+        self.max_off_nadir = 0.0  # Mandatory, pointing agility cone [rad]
+        self.min_sun_elevation = None  # Optional daylight constraint [rad]
+        self.target_names = []
+        self.target_lla = []  # Per target [lat, lon] in radians
+        self.target_pos_ecf = None
+        self.metric = None  # (num_target, num_epoch) best off-nadir [deg], -1 = not imaged
+
+    def read_config(self, node):
+        if node.find('ConstellationID') is not None:
+            self.constellation_id = int(node.find('ConstellationID').text)
+        self.max_off_nadir = radians(float(node.find('MaxOffNadir').text))
+        if node.find('MinSunElevation') is not None:
+            self.min_sun_elevation = radians(float(node.find('MinSunElevation').text))
+        for target in node.findall('Target'):  # "Name, lat_deg, lon_deg"
+            name, lat, lon = [v.strip() for v in target.text.split(',')]
+            self.target_names.append(name)
+            self.target_lla.append([radians(float(lat)), radians(float(lon))])
+        if node.find('TargetFile') is not None:  # CSV lines "Name, lat_deg, lon_deg"
+            with open(misc_fn.resolve_path(node.find('TargetFile').text)) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    name, lat, lon = [v.strip() for v in line.split(',')]
+                    self.target_names.append(name)
+                    self.target_lla.append([radians(float(lat)), radians(float(lon))])
+
+    def before_loop(self, sm):
+        num_target = len(self.target_lla)
+        self.target_pos_ecf = np.zeros((num_target, 3))
+        for i, (lat, lon) in enumerate(self.target_lla):
+            self.target_pos_ecf[i] = misc_fn.lla2xyz(np.array([lat, lon, 0.0]))
+        self.metric = np.full((num_target, sm.num_epoch), -1.0)
+        ls.logger.info(f'{self.type}: {num_target} targets, max off-nadir '
+                       f'{degrees(self.max_off_nadir):.1f} deg')
+
+    def in_loop(self, sm):
+        # Optional daylight constraint: one Sun direction (ECF) per epoch,
+        # elevation over the target horizon from a dot product per target
+        sun_ok = np.ones(len(self.target_pos_ecf), dtype=bool)
+        if self.min_sun_elevation is not None:
+            epoch = time.Time(sm.time_mjd, format='mjd')
+            epoch.delta_ut1_utc = 0.0
+            sun_itrs = get_sun(epoch).transform_to(ITRS(obstime=epoch))
+            sun_dir = np.array([sun_itrs.x.value, sun_itrs.y.value, sun_itrs.z.value])
+            sun_dir /= norm(sun_dir)
+            for i, (lat, lon) in enumerate(self.target_lla):
+                up = np.array([cos(lat) * cos(lon), cos(lat) * sin(lon), sin(lat)])
+                sun_ok[i] = np.dot(up, sun_dir) >= sin(self.min_sun_elevation)
+
+        for satellite in sm.satellites:
+            if self.constellation_id > 0 and \
+                    satellite.constellation_id != self.constellation_id:
+                continue
+            sat_pos = np.asarray(satellite.pos_ecf, dtype=float)
+            norm_sat = norm(sat_pos)
+            for i, target in enumerate(self.target_pos_ecf):
+                if not sun_ok[i]:
+                    continue
+                to_target = target - sat_pos
+                off_nadir = misc_fn.angle_two_vectors(-sat_pos, to_target,
+                                                      norm_sat, norm(to_target))
+                # Within the agility cone and above the target horizon
+                if off_nadir <= self.max_off_nadir and np.dot(target, -to_target) > 0:
+                    off_nadir_deg = degrees(off_nadir)
+                    if self.metric[i, sm.cnt_epoch] < 0 or \
+                            off_nadir_deg < self.metric[i, sm.cnt_epoch]:
+                        self.metric[i, sm.cnt_epoch] = off_nadir_deg
+
+    def after_loop(self, sm):
+        times = np.asarray(self.times_f_doy)
+        opportunities = []  # [target_id, doy_start, duration_min, min_off_nadir_deg]
+        target_rows = []  # [target_id, lat, lon, num_opps, total_min, mean/max gap_h]
+        for i, name in enumerate(self.target_names):
+            imaged = self.metric[i] >= 0
+            edges = np.diff(np.concatenate(([False], imaged, [False])).astype(np.int8))
+            starts = np.flatnonzero(edges == 1)
+            ends = np.flatnonzero(edges == -1) - 1
+            for s, e in zip(starts, ends):
+                opportunities.append([i + 1, times[s], (e - s + 1) * sm.time_step / 60.0,
+                                      self.metric[i, s:e + 1].min()])
+            gaps_h = ((starts[1:] - ends[:-1] - 1) * sm.time_step / 3600.0
+                      if len(starts) > 1 else np.array([]))
+            target_rows.append([i + 1, degrees(self.target_lla[i][0]),
+                                degrees(self.target_lla[i][1]), len(starts),
+                                imaged.sum() * sm.time_step / 60.0,
+                                np.mean(gaps_h) if gaps_h.size else np.nan,
+                                np.max(gaps_h) if gaps_h.size else np.nan])
+            gap_str = (f'mean/max gap {gaps_h.mean():.1f}/{gaps_h.max():.1f} h'
+                       if gaps_h.size else 'single or no opportunity')
+            ls.logger.info(f'{self.type}: target {name}: {len(starts)} opportunities, '
+                           f'{imaged.sum() * sm.time_step / 60.0:.1f} min total, {gap_str}')
+        target_rows = np.array(target_rows)
+
+        fig, ax = make_map_cyl()
+        sc = ax.scatter(target_rows[:, 2], target_rows[:, 1], s=60, marker='^',
+                        cmap=plt.cm.jet, c=target_rows[:, 3], edgecolors='black',
+                        linewidths=0.5, transform=ccrs.PlateCarree(), zorder=5)
+        for i, name in enumerate(self.target_names):
+            ax.annotate(name, (target_rows[i, 2], target_rows[i, 1]),
+                        xytext=(4, 4), textcoords='offset points', fontsize=8)
+        cb = plt.colorbar(sc, ax=ax, shrink=0.85)
+        cb.set_label('Number of Imaging Opportunities [-]', fontsize=10)
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['target_id', 'doy_start', 'duration_min', 'min_off_nadir_deg'],
+                       opportunities)
+        self.write_csv(sm, ['target_id', 'lat_deg', 'lon_deg', 'num_opportunities',
+                            'total_duration_min', 'mean_gap_hours', 'max_gap_hours'],
+                       target_rows, suffix='targets')

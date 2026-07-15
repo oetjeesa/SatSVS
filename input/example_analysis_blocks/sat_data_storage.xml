@@ -1,0 +1,8 @@
+<Analysis>
+    <Type>sat_data_storage</Type>                <!-- On-board SSR fill level with recording and downlink windows -->
+    <SSRCapacityGbits>2000</SSRCapacityGbits>
+    <InitialFillGbits>100</InitialFillGbits>
+    <InstrumentRateMbps>60</InstrumentRateMbps>
+    <DownlinkRateMbps>1070</DownlinkRateMbps>
+    <PayloadLatitudeLimit>60</PayloadLatitudeLimit>  <!-- Instrument recording below this |latitude| in deg -->
+</Analysis>

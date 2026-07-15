@@ -1,0 +1,9 @@
+<!-- Solar beta angle (Sun vs orbit plane) over the simulation time plus the
+     analytic eclipse fraction of the orbit - drives eclipses, thermal
+     hot/cold cases and power sizing. Run over months for the seasonal cycle;
+     use SGP4/HPOP (or an LTAN-defined SSO) so the J2 nodal regression is in. -->
+<Analysis>
+    <Type>orb_beta_angle</Type>
+    <ConstellationID>1</ConstellationID>    <!-- Optional selection -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional -->
+</Analysis>

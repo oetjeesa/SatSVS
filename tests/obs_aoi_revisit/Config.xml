@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Simulation Scenario-->
+<Scenario>
+  <SpaceSegment>
+    <Constellation>
+      <ConstellationID>1</ConstellationID>
+      <NumOfSatellites>1</NumOfSatellites>
+      <NumOfPlanes>1</NumOfPlanes>
+      <ConstellationName>LEO-SSO</ConstellationName>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ObsSwathStart>250000.0</ObsSwathStart>
+      <ObsSwathStop>650000.0</ObsSwathStop>
+      <Satellite>
+        <SatelliteID>1</SatelliteID>
+        <Plane>1</Plane>
+        <EpochMJD>61072.0</EpochMJD>
+        <SemiMajorAxis>7078137</SemiMajorAxis>
+        <Eccentricity>0.001</Eccentricity>
+        <Inclination>98.19</Inclination>
+        <RAAN>50.0</RAAN>
+        <ArgOfPerigee>0.0</ArgOfPerigee>
+        <MeanAnomaly>0.0</MeanAnomaly>
+      </Satellite>
+    </Constellation>
+  </SpaceSegment>
+  <GroundSegment>
+    <Network>
+      <NumStation>1</NumStation>
+      <NetworkName>Net1</NetworkName>
+    <GroundStation>
+      <Type>Downlink</Type>
+      <ConstellationID>1</ConstellationID>
+      <GroundStationID>1</GroundStationID>
+      <GroundStationName>Svalbard</GroundStationName>
+      <Latitude>77.875</Latitude>
+      <Longitude>20.9752</Longitude>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>5</ElevationMask>
+    </GroundStation>
+    </Network>
+  </GroundSegment>
+  <UserSegment>
+    <User>
+      <Type>Polygon</Type>
+      <Name>IberiaFrance</Name>
+      <PolygonList>(-10.0, 36.0),(3.5, 36.0),(8.0, 43.0),(8.0, 49.0),(2.0, 51.0),(-2.0, 49.0),(-10.0, 44.0)</PolygonList>
+      <LatStep>1.0</LatStep>
+      <LonStep>1.0</LonStep>
+      <Height>0</Height>
+      <ReceiverConstellation>1</ReceiverConstellation>
+      <ElevationMask>0</ElevationMask>
+    </User>
+  </UserSegment>
+  <SimulationManager>
+    <StartDate>2026-02-01 00:00:00</StartDate>
+    <StopDate>2026-02-04 00:00:00</StopDate>
+    <TimeStep>60</TimeStep>
+    <IncludeStation2SpaceLinks>True</IncludeStation2SpaceLinks>
+    <IncludeUser2SpaceLinks>False</IncludeUser2SpaceLinks>
+    <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
+    <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
+    <OrbitPropagator>Keplerian</OrbitPropagator>
+    <Analysis>
+      <Type>obs_aoi_revisit</Type>
+      <Statistic>Max</Statistic>
+    </Analysis>
+  </SimulationManager>
+</Scenario>

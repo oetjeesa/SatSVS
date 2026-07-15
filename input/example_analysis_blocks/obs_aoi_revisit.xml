@@ -1,0 +1,9 @@
+<!-- The area of interest is the user segment: use a Type Polygon user (grid clipped to an
+     inline <PolygonList> or a <PolygonFile> shapefile, see readme.md) or a regional Grid.
+     The instrument is the push-broom swath in the <Constellation> block:
+     <ObsSwathStart>250000.0</ObsSwathStart> / <ObsSwathStop>650000.0</ObsSwathStop> (m) or
+     <ObsIncidenceAngleStart> / <ObsIncidenceAngleStop> (deg) -->
+<Analysis>
+    <Type>obs_aoi_revisit</Type>
+    <Statistic>Max</Statistic>              <!-- Optional: min / mean / max / std / median revisit map (default max) -->
+</Analysis>

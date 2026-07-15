@@ -1,0 +1,6 @@
+target_id,lat_deg,lon_deg,num_opportunities,total_duration_min,mean_gap_hours,max_gap_hours
+1,41.9,12.5,1,4,nan,nan
+2,52,4.36,2,4,23.025,23.025
+3,78.2,15.6,0,0,nan,nan
+4,-23.5,-46.6,1,2.5,nan,nan
+5,-33.9,151.2,2,5,23.01666667,23.01666667

@@ -1,30 +1,30 @@
-2026-07-13 19:51:01,257 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\cov_ground_track\Config.xml validated: 0 warning(s), no errors
-2026-07-13 19:51:01,257 - main - INFO - {'constellation_id': 1, 'constellation_name': 'TerraSAR-X', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/cov_ground_track/terrasarx.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
-2026-07-13 19:51:01,270 - main - INFO - ['Found satellite:', '31698', 'Kepler Elements', "{'epoch_mjd': 61068.089894, 'semi_major_axis': 6886575.424946125, 'eccentricity': 0.000195, 'inclination': 1.7007360896058743, 'right_ascension': 0.6596297374987369, 'arg_perigee': 1.4079920141688655, 'mean_anomaly': 4.877706567133592}"]
-2026-07-13 19:51:01,461 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Kiruna', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([2262086.29894541,  842161.29705744, 5883964.06989648]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.18385683, 0.35639623, 0.        ]), 'idx_sat_in_view': []}
-2026-07-13 19:51:01,462 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x00000247BD4FC690>}
-2026-07-13 19:51:01,463 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
-2026-07-13 19:51:01,464 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-13 19:51:01,464 - main - INFO - Loaded 1 number of User to Spacecraft links
-2026-07-13 19:51:01,464 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-13 19:51:01,464 - main - INFO - Finished reading configuration file
-2026-07-13 19:51:01,476 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
-2026-07-13 19:51:01,523 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
-2026-07-13 19:51:01,528 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
-2026-07-13 19:51:01,530 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
-2026-07-13 19:51:01,533 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
-2026-07-13 19:51:01,535 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
-2026-07-13 19:51:01,537 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
-2026-07-13 19:51:01,539 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
-2026-07-13 19:51:01,541 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
-2026-07-13 19:51:01,543 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
-2026-07-13 19:51:01,544 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
-2026-07-13 19:51:01,546 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
-2026-07-13 19:51:01,548 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
-2026-07-13 19:51:01,550 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
-2026-07-13 19:51:01,552 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
-2026-07-13 19:51:01,553 - main - INFO - Plotting analysis cov_ground_track
-2026-07-13 19:51:01,822 - main - INFO - Written data dump cov_ground_track.csv (1440 rows)
-2026-07-13 19:51:37,476 - main - INFO - Saved 2D movie to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_cov_ground_track__h7dicnv\cov_ground_track_2d.mp4
-2026-07-13 19:51:50,633 - main - INFO - Saved 3D movie to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_cov_ground_track__h7dicnv\cov_ground_track_3d.mp4
-2026-07-13 19:51:51,400 - main - INFO - Saved 3D plot to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_cov_ground_track__h7dicnv\cov_ground_track_3d.png
+2026-07-14 13:46:34,445 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\cov_ground_track\Config.xml validated: 0 warning(s), no errors
+2026-07-14 13:46:34,448 - main - INFO - {'constellation_id': 1, 'constellation_name': 'TerraSAR-X', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/cov_ground_track/terrasarx.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-14 13:46:34,454 - main - INFO - ['Found satellite:', '31698', 'Kepler Elements', "{'epoch_mjd': 61068.089894, 'semi_major_axis': 6886575.424946125, 'eccentricity': 0.000195, 'inclination': 1.7007360896058743, 'right_ascension': 0.6596297374987369, 'arg_perigee': 1.4079920141688655, 'mean_anomaly': 4.877706567133592}"]
+2026-07-14 13:46:35,597 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Kiruna', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([2262086.29894541,  842161.29705744, 5883964.06989648]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.18385683, 0.35639623, 0.        ]), 'idx_sat_in_view': []}
+2026-07-14 13:46:35,604 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x0000026ED8FB0690>}
+2026-07-14 13:46:35,612 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61073.0, size time steps in sec: 60.0
+2026-07-14 13:46:35,613 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-14 13:46:35,613 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-14 13:46:35,614 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-14 13:46:35,614 - main - INFO - Finished reading configuration file
+2026-07-14 13:46:35,705 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-14 13:46:36,070 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 100
+2026-07-14 13:46:36,089 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 200
+2026-07-14 13:46:36,106 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 300
+2026-07-14 13:46:36,129 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 400
+2026-07-14 13:46:36,150 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 500
+2026-07-14 13:46:36,166 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 600
+2026-07-14 13:46:36,182 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 700
+2026-07-14 13:46:36,198 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 800
+2026-07-14 13:46:36,213 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 900
+2026-07-14 13:46:36,229 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 1000
+2026-07-14 13:46:36,245 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 1100
+2026-07-14 13:46:36,263 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 1200
+2026-07-14 13:46:36,280 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 1300
+2026-07-14 13:46:36,297 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 1400
+2026-07-14 13:46:36,305 - main - INFO - Plotting analysis cov_ground_track
+2026-07-14 13:46:38,716 - main - INFO - Written data dump cov_ground_track.csv (1440 rows)
+2026-07-14 13:49:08,957 - main - INFO - Saved 2D movie to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_cov_ground_track_p4yeq6_v\cov_ground_track_2d.mp4
+2026-07-14 13:49:50,101 - main - INFO - Saved 3D movie to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_cov_ground_track_p4yeq6_v\cov_ground_track_3d.mp4
+2026-07-14 13:49:51,749 - main - INFO - Saved 3D plot to C:\Users\MICHEL~1\AppData\Local\Temp\satsvs_cov_ground_track_p4yeq6_v\cov_ground_track_3d.png

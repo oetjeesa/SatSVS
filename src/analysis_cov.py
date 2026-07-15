@@ -12,6 +12,14 @@ from constants import PI
 from analysis import AnalysisBase, AnalysisPlot3D, make_map_cyl, map_pcolormesh, get_user_grid_shape
 
 
+def track_with_gaps(lon, lat):
+    """Ground track as one continuous line: NaN breaks inserted at the
+    +/-180 deg longitude wraps, so the line does not cross the whole map at
+    every date line passage."""
+    jumps = np.flatnonzero(np.abs(np.diff(lon)) > 180.0) + 1
+    return np.insert(lon, jumps, np.nan), np.insert(lat, jumps, np.nan)
+
+
 class AnalysisCovDepthOfCoverage(AnalysisBase, AnalysisPlot3D):
 
     def __init__(self):
@@ -109,16 +117,20 @@ class AnalysisCovGroundTrack(AnalysisBase, AnalysisPlot3D):
     def after_loop(self, sm):
 
         fig, ax = make_map_cyl()
-        if self.satellite_id > 0:  # Only for one satellite
-            for idx_sat, satellite in enumerate(sm.satellites):
-                if self._selected(satellite):
-                    y, x = self.sat_metric[idx_sat, :, 0], self.sat_metric[idx_sat, :, 1]
-                    ax.plot(x, y, 'r.', transform=ccrs.PlateCarree())
-        else:
-            for idx_sat, satellite in enumerate(sm.satellites):
-                y, x = self.sat_metric[idx_sat, :, 0], self.sat_metric[idx_sat, :, 1]
-                ax.plot(x, y, '+', label=str(satellite.sat_id), transform=ccrs.PlateCarree())
-            ax.legend(fontsize=8)
+        # Continuous track line (like the 3D view), broken at the date line
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if not self._selected(satellite):
+                continue
+            x, y = track_with_gaps(self.sat_metric[idx_sat, :, 1],
+                                   self.sat_metric[idx_sat, :, 0])
+            if self.satellite_id > 0:  # Only for one satellite
+                ax.plot(x, y, 'r-', linewidth=1.0, transform=ccrs.PlateCarree())
+            else:
+                ax.plot(x, y, '-', linewidth=1.0, label=str(satellite.sat_id),
+                        transform=ccrs.PlateCarree())
+        if self.satellite_id == 0:
+            # loc='best' would wander to the map centre on a dense track
+            ax.legend(fontsize=8, loc='lower left')
         plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
 

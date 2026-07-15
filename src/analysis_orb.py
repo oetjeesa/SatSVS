@@ -1,11 +1,16 @@
-from math import degrees, radians
+from math import cos, degrees, radians, sin
 
 import numpy as np
 import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+from astropy.coordinates import get_sun
+from astropy.time import Time
+import astropy.units as u
 
 # Project modules
 from constants import GM_EARTH, OMEGA_EARTH, R_EARTH
 from analysis import AnalysisBase
+from analysis_sat import air_density_exponential
 import misc_fn
 import logging_svs as ls
 
@@ -609,3 +614,604 @@ class AnalysisOrbDeltaVElement(AnalysisBase):
         self.write_csv(sm, ['doy', f'uncontrolled_{key}', f'controlled_{key}',
                             'cumulative_deltav_ms'],
                        np.column_stack([times, series, controlled, dv_cum]))
+
+
+class AnalysisOrbBetaAngle(AnalysisBase):
+    """Solar beta angle (angle between the Sun direction and the orbit plane)
+    over the simulation time, together with the analytic eclipse fraction of a
+    circular orbit at that beta angle. Beta drives the eclipse pattern, the
+    thermal hot/cold cases and the power sizing, so this analysis ties the
+    sat_ platform analyses together; run it over months to see the seasonal cycle.
+    Works with any propagator - note that Keplerian elements have no J2 nodal
+    regression, so for non-sun-synchronous orbits use SGP4 or HPOP (or an
+    LTAN-defined SSO orbit) to capture the full beta cycle."""
+
+    def __init__(self):
+        super().__init__()
+        self.constellation_id = 0  # Optional selection
+        self.satellite_id = 0  # Optional selection
+        self.sat_metric = None  # (num_sat, num_epoch, 2): beta [rad], eclipse fraction
+
+    def read_config(self, node):
+        if node.find('ConstellationID') is not None:
+            self.constellation_id = int(node.find('ConstellationID').text)
+        if node.find('SatelliteID') is not None:
+            self.satellite_id = int(node.find('SatelliteID').text)
+
+    def _selected(self, satellite):
+        if self.constellation_id > 0 and satellite.constellation_id != self.constellation_id:
+            return False
+        if self.satellite_id > 0 and satellite.sat_id != self.satellite_id:
+            return False
+        return True
+
+    def before_loop(self, sm):
+        self.sat_metric = np.full((sm.num_sat, sm.num_epoch, 2), np.nan)
+
+    def in_loop(self, sm):
+        # One Sun direction per epoch, shared by all satellites
+        sun_pos_eci = get_sun(Time(sm.time_mjd, format='mjd')).cartesian.xyz.to(u.m).value
+        sun_dir = sun_pos_eci / np.linalg.norm(sun_pos_eci)
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if not self._selected(satellite):
+                continue
+            pos = np.asarray(satellite.pos_eci, dtype=float)
+            vel = np.asarray(satellite.vel_eci, dtype=float)
+            if sm.orbit_propagator == 'HPOP':
+                # Earth-relative tool-frame velocity -> inertial (see orb_kepler_elements)
+                vel = vel + OMEGA_EARTH * np.array([-pos[1], pos[0], 0.0])
+            h_vec = np.cross(pos, vel)
+            beta = np.arcsin(np.clip(np.dot(h_vec / np.linalg.norm(h_vec), sun_dir),
+                                     -1.0, 1.0))
+            # Analytic eclipse fraction of a circular orbit (cylindrical shadow):
+            # eclipse exists while |beta| < asin(R/r), with arc half-angle from
+            # the shadow cylinder cross section
+            r = np.linalg.norm(pos)
+            if abs(beta) < np.arcsin(min(R_EARTH / r, 1.0)):
+                fraction = np.arccos(np.clip(np.sqrt(r ** 2 - R_EARTH ** 2) /
+                                             (r * np.cos(beta)), -1.0, 1.0)) / np.pi
+            else:
+                fraction = 0.0
+            self.sat_metric[idx_sat, sm.cnt_epoch] = [beta, fraction]
+
+    def after_loop(self, sm):
+        times = np.asarray(self.times_f_doy)
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+        ax2 = ax1.twinx()
+        plotted = False
+        cnt_plotted = 0
+        csv_rows = []
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if not self._selected(satellite):
+                continue
+            used = ~np.isnan(self.sat_metric[idx_sat, :, 0])
+            if not used.any():
+                continue
+            beta_deg = np.degrees(self.sat_metric[idx_sat, used, 0])
+            fraction = self.sat_metric[idx_sat, used, 1]
+            period = 2.0 * np.pi * np.sqrt(np.linalg.norm(satellite.pos_eci) ** 3 / GM_EARTH)
+            ls.logger.info(f'{self.type}: satellite {satellite.sat_id} beta '
+                           f'{beta_deg.min():.1f} .. {beta_deg.max():.1f} deg, max eclipse '
+                           f'{fraction.max() * period / 60.0:.1f} min/orbit '
+                           f'({fraction.max() * 100:.1f}% of the orbit)')
+            # Both twin axes start their colour cycle at C0, so pair the
+            # colours explicitly: beta and eclipse of the same satellite in
+            # contrasting cycle colours (C0/C1, C2/C3, ...)
+            ax1.plot(times[used], beta_deg, '-', linewidth=1.0,
+                     color=f'C{2 * cnt_plotted % 10}',
+                     label=f'Beta Sat {satellite.sat_id}')
+            ax2.plot(times[used], fraction * 100.0, '--', linewidth=0.9,
+                     color=f'C{(2 * cnt_plotted + 1) % 10}',
+                     label=f'Eclipse Sat {satellite.sat_id}')
+            cnt_plotted += 1
+            csv_rows.append(np.column_stack([times[used],
+                                             np.full(used.sum(), satellite.sat_id),
+                                             beta_deg, fraction]))
+            plotted = True
+        if not plotted:
+            ls.logger.error(f'No satellite matched ConstellationID {self.constellation_id} / '
+                            f'SatelliteID {self.satellite_id}. No plot produced.')
+            return
+        ax1.axhline(0.0, color='gray', linewidth=0.6)
+        ax1.set_xlabel('DOY [-]')
+        ax1.set_ylabel('Solar beta angle [deg]')
+        ax2.set_ylabel('Eclipse fraction of the orbit [%]')
+        ax2.set_ylim(bottom=0)
+        ax1.grid(True)
+        ax1.legend(loc='upper left', fontsize=8)
+        ax2.legend(loc='upper right', fontsize=8)
+        fig.suptitle('Solar beta angle and analytic eclipse fraction')
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['doy', 'sat_id', 'beta_deg', 'eclipse_fraction'],
+                       np.vstack(csv_rows))
+
+
+class AnalysisOrbLifetime(AnalysisBase):
+    """Orbital lifetime under atmospheric drag: the mean semi-major axis at
+    the end of the simulation window is decayed semi-analytically
+    (da/dt = -rho * Cd*A/m * sqrt(mu*a), circular orbit approximation, with a
+    piecewise-exponential atmosphere scaled by DensityScale for solar
+    activity) until the re-entry altitude or the MaxYears horizon. Reports
+    compliance with the 25-year debris-mitigation rule, the delta-v of an
+    immediate deorbit burn (perigee lowered to the re-entry altitude) and,
+    when non-compliant, the delta-v to move to a 25-year compliant circular
+    orbit. Works with any propagator - with HPOP the projection starts from
+    the actually decayed state at the end of the window."""
+
+    REENTRY_ALTITUDE = 120e3  # Re-entry interface altitude [m]
+    RULE_YEARS = 25.0  # Debris-mitigation lifetime rule
+
+    def __init__(self):
+        super().__init__()
+        self.constellation_id = 0  # Optional selection
+        self.satellite_id = 0  # Optional selection (first match is analysed)
+        self.idx_found_satellite = None
+        self.mass = None  # [kg]; default constellation Mass
+        self.drag_area = None  # [m2]; default constellation FrontalArea
+        self.drag_cd = 2.2
+        self.density_scale = 1.0  # ~0.5 solar minimum, ~2 solar maximum
+        self.max_years = 100.0  # Integration horizon
+        self.reentry_altitude = self.REENTRY_ALTITUDE
+        self.sat_metric = None  # (num_epoch, 6): ECI pos + vel of the satellite
+        self.enabled = True
+
+    def read_config(self, node):
+        if node.find('ConstellationID') is not None:
+            self.constellation_id = int(node.find('ConstellationID').text)
+        if node.find('SatelliteID') is not None:
+            self.satellite_id = int(node.find('SatelliteID').text)
+        if node.find('Mass') is not None:
+            self.mass = float(node.find('Mass').text)
+        if node.find('DragArea') is not None:
+            self.drag_area = float(node.find('DragArea').text)
+        if node.find('DragCoefficient') is not None:
+            self.drag_cd = float(node.find('DragCoefficient').text)
+        if node.find('DensityScale') is not None:
+            self.density_scale = float(node.find('DensityScale').text)
+        if node.find('MaxYears') is not None:
+            self.max_years = float(node.find('MaxYears').text)
+        if node.find('ReentryAltitude') is not None:
+            self.reentry_altitude = float(node.find('ReentryAltitude').text)
+
+    def _selected(self, satellite):
+        if self.constellation_id > 0 and satellite.constellation_id != self.constellation_id:
+            return False
+        if self.satellite_id > 0 and satellite.sat_id != self.satellite_id:
+            return False
+        return True
+
+    def before_loop(self, sm):
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if self._selected(satellite):
+                self.idx_found_satellite = idx_sat
+                break
+        if self.idx_found_satellite is None:
+            ls.logger.error(f'No satellite matched ConstellationID {self.constellation_id} / '
+                            f'SatelliteID {self.satellite_id}. Analysis skipped.')
+            self.enabled = False
+            return
+        satellite = sm.satellites[self.idx_found_satellite]
+        if self.mass is None:
+            self.mass = satellite.mass
+        if self.drag_area is None:
+            self.drag_area = satellite.frontal_area
+        if self.mass is None or self.drag_area is None:
+            ls.logger.error(f'{self.type} needs <Mass> and <DragArea> (in the Analysis '
+                            f'block or as Mass/FrontalArea of the constellation). '
+                            f'Analysis skipped.')
+            self.enabled = False
+            return
+        self.sat_metric = np.full((sm.num_epoch, 6), np.nan)
+
+    def in_loop(self, sm):
+        if not self.enabled:
+            return
+        satellite = sm.satellites[self.idx_found_satellite]
+        self.sat_metric[sm.cnt_epoch, 0:3] = satellite.pos_eci
+        vel = np.asarray(satellite.vel_eci, dtype=float)
+        if sm.orbit_propagator == 'HPOP':
+            # Earth-relative tool-frame velocity -> inertial (see orb_kepler_elements)
+            pos = satellite.pos_eci
+            vel = vel + OMEGA_EARTH * np.array([-pos[1], pos[0], 0.0])
+        self.sat_metric[sm.cnt_epoch, 3:6] = vel
+
+    def _decay_profile(self, sma_start):
+        """Semi-analytic decay of the circular-orbit radius from sma_start
+        down to the re-entry altitude, capped at max_years. Returns times
+        [years] and altitudes [m]. Step size adapts to ~500 m of decay per
+        step, bounded to [60 s, 10 days]."""
+        ballistic = self.drag_cd * self.drag_area / self.mass  # Cd*A/m [m2/kg]
+        reentry_r = R_EARTH + self.reentry_altitude
+        max_seconds = self.max_years * 365.25 * 86400.0
+        a, t = float(sma_start), 0.0
+        times, alts = [0.0], [a - R_EARTH]
+        while a > reentry_r and t < max_seconds and len(times) < 2_000_000:
+            rho = air_density_exponential(a - R_EARTH) * self.density_scale
+            da_dt = rho * ballistic * np.sqrt(GM_EARTH * a)
+            dt = min(max(500.0 / da_dt if da_dt > 0 else 10 * 86400.0, 60.0), 10 * 86400.0)
+            a -= da_dt * dt
+            t += dt
+            times.append(t / (365.25 * 86400.0))
+            alts.append(max(a - R_EARTH, self.reentry_altitude))
+        return np.asarray(times), np.asarray(alts)
+
+    def _lifetime_years(self, sma_start):
+        times, alts = self._decay_profile(sma_start)
+        return times[-1] if alts[-1] <= self.reentry_altitude else np.inf
+
+    def _hohmann_dv(self, a_from, a_to):
+        """Delta-v [m/s] of a two-burn Hohmann transfer between circular orbits."""
+        dv1 = np.sqrt(GM_EARTH / a_from) * abs(np.sqrt(2 * a_to / (a_from + a_to)) - 1.0)
+        dv2 = np.sqrt(GM_EARTH / a_to) * abs(1.0 - np.sqrt(2 * a_from / (a_from + a_to)))
+        return dv1 + dv2
+
+    def after_loop(self, sm):
+        if not self.enabled:
+            return
+        # Start from the per-orbit mean semi-major axis at the end of the window
+        elements = rv2kepler(self.sat_metric[:, 0:3], self.sat_metric[:, 3:6])
+        period = 2.0 * np.pi * np.sqrt(np.nanmean(elements['sma']) ** 3 / GM_EARTH)
+        win = min(max(1, int(round(period / sm.time_step))), len(elements['sma']))
+        sma_start = float(np.nanmean(elements['sma'][-win:]))
+
+        times, alts = self._decay_profile(sma_start)
+        decayed = alts[-1] <= self.reentry_altitude
+        lifetime = times[-1] if decayed else np.inf
+        compliant = lifetime <= self.RULE_YEARS
+
+        # Immediate deorbit: perigee lowered to the re-entry altitude
+        reentry_r = R_EARTH + self.reentry_altitude
+        v_c = np.sqrt(GM_EARTH / sma_start)
+        dv_deorbit = v_c * (1.0 - np.sqrt(2.0 * reentry_r / (sma_start + reentry_r)))
+        lifetime_str = f'{lifetime:.2f} years' if decayed else f'> {self.max_years:.0f} years'
+        ls.logger.info(f'{self.type}: start altitude {(sma_start - R_EARTH) / 1000:.1f} km, '
+                       f'Cd*A/m {self.drag_cd * self.drag_area / self.mass:.4f} m2/kg, '
+                       f'density scale {self.density_scale}: lifetime {lifetime_str} '
+                       f'-> {self.RULE_YEARS:.0f}-year rule '
+                       f'{"COMPLIANT" if compliant else "NOT met"}; immediate deorbit '
+                       f'(perigee {self.reentry_altitude / 1000:.0f} km) delta-v '
+                       f'{dv_deorbit:.1f} m/s')
+
+        dv_25y, sma_25y = 0.0, sma_start
+        if not compliant:
+            # Circular disposal altitude with a 25-year lifetime, by bisection
+            lo, hi = reentry_r, sma_start
+            for _ in range(40):
+                mid = 0.5 * (lo + hi)
+                if self._lifetime_years(mid) > self.RULE_YEARS:
+                    hi = mid
+                else:
+                    lo = mid
+            sma_25y = lo
+            dv_25y = self._hohmann_dv(sma_start, sma_25y)
+            ls.logger.info(f'{self.type}: {self.RULE_YEARS:.0f}-year compliant circular '
+                           f'altitude {(sma_25y - R_EARTH) / 1000:.1f} km, transfer '
+                           f'delta-v {dv_25y:.1f} m/s')
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(times, alts / 1000.0, 'b-', linewidth=1.2, label='Predicted decay')
+        ax.axhline(self.reentry_altitude / 1000.0, color='red', linestyle=':',
+                   linewidth=1.0, label=f'Re-entry ({self.reentry_altitude / 1000:.0f} km)')
+        if not compliant:
+            ax.axhline((sma_25y - R_EARTH) / 1000.0, color='green', linestyle='--',
+                       linewidth=1.0,
+                       label=f'{self.RULE_YEARS:.0f}-year altitude '
+                             f'({(sma_25y - R_EARTH) / 1000:.0f} km, {dv_25y:.0f} m/s)')
+        ax.set_xlabel('Time after simulation start [years]')
+        ax.set_ylabel('Circular-orbit altitude [km]')
+        ax.grid(True)
+        ax.legend(fontsize=9)
+        sat_id = sm.satellites[self.idx_found_satellite].sat_id
+        fig.suptitle(f'Orbital lifetime, satellite {sat_id}: {lifetime_str} '
+                     f'({self.RULE_YEARS:.0f}-year rule '
+                     f'{"compliant" if compliant else "NOT met"}), '
+                     f'deorbit delta-v {dv_deorbit:.0f} m/s')
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['years', 'altitude_m'], np.column_stack([times, alts]))
+
+
+# ---------------------------------------------------------------------------
+# Space environment models (orb_environment). First-order engineering
+# parametrisations calibrated to published model outputs (AE8/AP8 LEO maps,
+# MSIS mean-activity atomic oxygen, Gruen 1985 micrometeoroids); they place
+# the SAA and the polar horns correctly and give order-of-magnitude fluxes
+# and doses. For design/qualification numbers run SPENVIS or IRENE (AE9/AP9).
+# ---------------------------------------------------------------------------
+
+# Eccentric tilted dipole of the geomagnetic field: axis toward the
+# geomagnetic north pole (IGRF-13 2020) and the dipole centre displaced from
+# the Earth centre toward the west Pacific - the displacement is what makes
+# the field anomalously weak over the South Atlantic (the SAA).
+_DIPOLE_B0 = 3.12e-5  # [T] surface field at the magnetic equator (SMAD)
+_DIPOLE_POLE = (radians(80.7), radians(-72.7))  # geomagnetic north pole lat, lon
+_DIPOLE_OFFSET_M = 560e3  # [m] eccentric dipole centre displacement
+_DIPOLE_OFFSET_DIR = (radians(22.5), radians(141.5))  # displacement direction lat, lon
+
+# Trapped-particle flux parametrisation, omnidirectional integral flux
+# [cm^-2 s^-1]: a Gaussian radial belt profile in L, a power-law decay in
+# B/B_eq (off-equator attenuation along the field line) and a drift-loss
+# gate - inner-belt particles survive only where their drift shell stays
+# above the atmosphere at the weakest-field longitude, which the eccentric
+# dipole offset turns into the South Atlantic Anomaly. Calibrated to AE8/AP8
+# LEO maps: protons >10 MeV ~1e3 in the SAA core at 800 km, electrons >1 MeV
+# a few 1e4 in the polar horns.
+_PROTON_PEAK = 2.0e3   # >10 MeV low-x amplitude of the inner belt (L=1.45)
+_ELECTRON_INNER = 2.0e5  # >1 MeV inner belt amplitude at L=1.55
+_ELECTRON_OUTER = 5.0e6  # >1 MeV outer belt equatorial peak at L=4.8
+_FLUX_FLOOR = 1.0  # [cm^-2 s^-1] fluxes below this are reported as zero
+
+# Fluence-to-dose conversion behind aluminium shielding [rad cm^2 /particle]:
+# protons >10 MeV penetrate several mm with slow attenuation, electrons
+# >1 MeV are stopped in the first few mm (residual = bremsstrahlung floor).
+_SHIELD_MM = np.array([0.5, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 15.0, 20.0])
+_DOSE_PER_PROTON = lambda t_mm: 2.0e-7 * np.exp(-t_mm / 12.0)
+_DOSE_PER_ELECTRON = lambda t_mm: 8.0e-8 * np.exp(-t_mm / 0.8) + 1.0e-10 * np.exp(-t_mm / 40.0)
+
+# Atomic oxygen number density [m^-3] versus altitude [km], mean solar
+# activity (MSIS-class mean profile), log-interpolated between the nodes
+_AO_TABLE = np.array([
+    [150, 3.0e16], [200, 5.0e15], [250, 1.2e15], [300, 3.5e14], [350, 1.1e14],
+    [400, 3.5e13], [450, 1.3e13], [500, 5.0e12], [550, 2.0e12], [600, 9.0e11],
+    [650, 4.0e11], [700, 1.8e11], [750, 8.0e10], [800, 3.5e10], [900, 8.0e9],
+    [1000, 2.0e9]])
+_AO_KAPTON_YIELD = 3.0e-24  # [cm^3/atom] kapton erosion yield (LEO standard)
+
+
+def dipole_l_b(pos_ecf):
+    """McIlwain L-shell [-], field strength B [T] and distance to the dipole
+    centre [m] at an ECF position, from the eccentric tilted dipole (the
+    offset centre is what creates the SAA)."""
+    pole_lat, pole_lon = _DIPOLE_POLE
+    m_hat = np.array([cos(pole_lat) * cos(pole_lon),
+                      cos(pole_lat) * sin(pole_lon), sin(pole_lat)])
+    off_lat, off_lon = _DIPOLE_OFFSET_DIR
+    centre = _DIPOLE_OFFSET_M * np.array([cos(off_lat) * cos(off_lon),
+                                          cos(off_lat) * sin(off_lon), sin(off_lat)])
+    r_vec = np.asarray(pos_ecf, dtype=float) - centre
+    r = np.linalg.norm(r_vec)
+    sin_maglat = np.clip(np.dot(r_vec / r, m_hat), -1.0, 1.0)
+    cos2_maglat = max(1.0 - sin_maglat ** 2, 1e-6)
+    l_shell = (r / R_EARTH) / cos2_maglat
+    b_field = _DIPOLE_B0 * (R_EARTH / r) ** 3 * np.sqrt(1.0 + 3.0 * sin_maglat ** 2)
+    return l_shell, b_field, r
+
+
+def trapped_flux(l_shell, b_field, r_dipole):
+    """AE8/AP8-style omnidirectional integral flux estimates [cm^-2 s^-1]:
+    (protons >10 MeV, electrons >1 MeV) at a point (l_shell, b_field) at
+    distance r_dipole from the dipole centre. The drift-loss gate keeps
+    inner-belt flux only where the drift shell clears the atmosphere at the
+    weakest-field longitude: the same field point sits an offset-distance
+    lower over the SAA side, so at LEO only the SAA region (and a smooth
+    fringe) sees the inner belts. First-order engineering model."""
+    b_eq = _DIPOLE_B0 / l_shell ** 3  # equatorial field on the drift shell
+    x = max(b_field / b_eq, 1.0)  # off-equator attenuation parameter
+    # Minimum geodetic altitude of this drift shell (weakest-field longitude);
+    # smooth 100..300 km ramp instead of a hard atmospheric cutoff
+    drift_alt_min_km = (r_dipole - _DIPOLE_OFFSET_M - R_EARTH) / 1000.0
+    gate = min(max((drift_alt_min_km - 100.0) / 200.0, 0.0), 1.0)
+    j_proton = _PROTON_PEAK * np.exp(-0.5 * ((l_shell - 1.45) / 0.25) ** 2) * x ** -3.0 * gate
+    j_electron = (_ELECTRON_INNER * np.exp(-0.5 * ((l_shell - 1.55) / 0.30) ** 2) * x ** -3.0 * gate +
+                  _ELECTRON_OUTER * np.exp(-0.5 * ((l_shell - 4.80) / 0.80) ** 2) * x ** -0.9)
+    if j_proton < _FLUX_FLOOR:
+        j_proton = 0.0
+    if j_electron < _FLUX_FLOOR:
+        j_electron = 0.0
+    return j_proton, j_electron
+
+
+def atomic_oxygen_density(altitude_m):
+    """Atomic oxygen number density [m^-3] at altitude, mean solar activity
+    (log-interpolation of an MSIS-class mean profile)."""
+    h_km = altitude_m / 1000.0
+    if h_km <= _AO_TABLE[0, 0]:
+        return _AO_TABLE[0, 1]
+    if h_km >= _AO_TABLE[-1, 0]:  # extrapolate with the last scale height
+        h0, h1 = _AO_TABLE[-2, 0], _AO_TABLE[-1, 0]
+        scale = (h1 - h0) / np.log(_AO_TABLE[-2, 1] / _AO_TABLE[-1, 1])
+        return _AO_TABLE[-1, 1] * np.exp(-(h_km - h1) / scale)
+    return float(np.exp(np.interp(h_km, _AO_TABLE[:, 0], np.log(_AO_TABLE[:, 1]))))
+
+
+def gruen_flux(mass_g):
+    """Gruen et al. (1985) interplanetary micrometeoroid flux: cumulative
+    number of particles with mass > mass_g [g] per m^2 per second at 1 AU
+    (random tumbling plate)."""
+    m = np.asarray(mass_g, dtype=float)
+    return ((2.2e3 * m ** 0.306 + 15.0) ** -4.38 +
+            1.3e-9 * (m + 1.0e11 * m ** 2 + 1.0e27 * m ** 4) ** -0.36 +
+            1.3e-16 * (m + 1.0e6 * m ** 2) ** -0.85)
+
+
+class AnalysisOrbEnvironment(AnalysisBase):
+    """Space environment along the orbit, SPENVIS-style summary sheet:
+    trapped radiation (eccentric-dipole L/B with AE8/AP8-style flux
+    estimates, SAA and polar horn crossings, annual fluences and a total
+    ionizing dose versus aluminium shielding curve), atomic oxygen (density
+    at the orbit altitude, ram fluence and kapton erosion over the mission)
+    and Gruen micrometeoroid flux with the expected impact count on the
+    spacecraft area over the mission. All models are first-order engineering
+    estimates - use SPENVIS/IRENE for design values."""
+
+    def __init__(self):
+        super().__init__()
+        self.constellation_id = 0  # Optional selection
+        self.satellite_id = 0  # Optional selection
+        self.mission_years = 5.0  # Fluence/erosion/impact accumulation period
+        self.surface_area = 10.0  # [m^2] area exposed to micrometeoroids
+        self.idx_found_satellite = 0
+        self.metric = None  # (num_epoch, 8): lat, lon, alt, L, B, j_p, j_e, n_AO
+
+    def read_config(self, node):
+        if node.find('ConstellationID') is not None:
+            self.constellation_id = int(node.find('ConstellationID').text)
+        if node.find('SatelliteID') is not None:
+            self.satellite_id = int(node.find('SatelliteID').text)
+        if node.find('MissionYears') is not None:
+            self.mission_years = float(node.find('MissionYears').text)
+        if node.find('SurfaceArea') is not None:
+            self.surface_area = float(node.find('SurfaceArea').text)
+
+    def before_loop(self, sm):
+        self.idx_found_satellite = 0
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if self.constellation_id > 0 and \
+                    satellite.constellation_id != self.constellation_id:
+                continue
+            if self.satellite_id > 0 and satellite.sat_id != self.satellite_id:
+                continue
+            self.idx_found_satellite = idx_sat
+            break
+        self.metric = np.zeros((sm.num_epoch, 8))
+
+    def in_loop(self, sm):
+        satellite = sm.satellites[self.idx_found_satellite]
+        satellite.det_lla()
+        pos_ecf = np.asarray(satellite.pos_ecf, dtype=float)
+        altitude = np.linalg.norm(pos_ecf) - misc_fn.earth_radius_lat(satellite.lla[0])
+        l_shell, b_field, r_dipole = dipole_l_b(pos_ecf)
+        j_proton, j_electron = trapped_flux(l_shell, b_field, r_dipole)
+        self.metric[sm.cnt_epoch] = [degrees(satellite.lla[0]), degrees(satellite.lla[1]),
+                                     altitude / 1000.0, l_shell, b_field,
+                                     j_proton, j_electron,
+                                     atomic_oxygen_density(altitude)]
+
+    def after_loop(self, sm):
+        times = np.asarray(self.times_f_doy)
+        lat, lon, alt_km = self.metric[:, 0], self.metric[:, 1], self.metric[:, 2]
+        l_shell, b_gauss = self.metric[:, 3], self.metric[:, 4] * 1e4
+        j_p, j_e = self.metric[:, 5], self.metric[:, 6]
+        n_ao = self.metric[:, 7]
+        seconds_per_year = 365.25 * 86400.0
+
+        # Annual fluences from the orbit-average fluxes, dose vs shielding
+        fluence_p_yr = j_p.mean() * seconds_per_year
+        fluence_e_yr = j_e.mean() * seconds_per_year
+        dose_p = fluence_p_yr * _DOSE_PER_PROTON(_SHIELD_MM)
+        dose_e = fluence_e_yr * _DOSE_PER_ELECTRON(_SHIELD_MM)
+        dose_total = dose_p + dose_e
+
+        # Atomic oxygen: ram flux [cm^-2 s^-1] at orbital velocity, mission
+        # fluence and kapton erosion depth
+        v_orbit = np.sqrt(GM_EARTH / (R_EARTH + alt_km.mean() * 1000.0))
+        ao_flux = n_ao.mean() * v_orbit * 1e-4  # [cm^-2 s^-1]
+        ao_fluence_mission = ao_flux * self.mission_years * seconds_per_year
+        ao_erosion_um = ao_fluence_mission * _AO_KAPTON_YIELD * 1e4
+
+        # Micrometeoroids: Gruen flux with Earth shielding and gravitational
+        # focusing at the orbit altitude, expected impacts over the mission
+        r_orbit = R_EARTH + alt_km.mean() * 1000.0
+        sin_eta = min((R_EARTH + 100e3) / r_orbit, 1.0)  # Earth + atmosphere shield
+        shielding = (1.0 + np.sqrt(1.0 - sin_eta ** 2)) / 2.0
+        focusing = 1.0 + R_EARTH / r_orbit * 0.76  # v_esc^2/v_inf^2 ~ 0.76 R/r (20 km/s)
+        masses = np.logspace(-9, 0, 46)
+        mm_flux_m2yr = gruen_flux(masses) * shielding * focusing * seconds_per_year
+        mm_impacts = mm_flux_m2yr * self.surface_area * self.mission_years
+
+        # In the SAA when the inner-belt proton flux is substantial (an order
+        # of magnitude below the core value, i.e. not the drift-loss fringe)
+        in_saa = (j_p > 100.0) & (np.abs(lat) < 45.0)
+        saa_fraction = in_saa.mean() * 100.0
+        idx_4mm = int(np.argmin(np.abs(_SHIELD_MM - 4.0)))
+        impacts_1ug = float(np.interp(1e-6, masses, mm_impacts))
+        ls.logger.info(f'{self.type}: SAA crossings {saa_fraction:.1f}% of the time, '
+                       f'orbit-average flux protons >10 MeV {j_p.mean():.1f}, '
+                       f'electrons >1 MeV {j_e.mean():.1f} /cm2/s')
+        ls.logger.info(f'{self.type}: annual fluence protons {fluence_p_yr:.2e}, '
+                       f'electrons {fluence_e_yr:.2e} /cm2/yr, TID behind 4 mm Al '
+                       f'{dose_total[idx_4mm]:.0f} rad/yr '
+                       f'({dose_total[idx_4mm] * self.mission_years / 1000.0:.1f} krad '
+                       f'over {self.mission_years:.0f} years)')
+        ls.logger.info(f'{self.type}: atomic oxygen {n_ao.mean():.2e} /m3, ram fluence '
+                       f'{ao_fluence_mission:.2e} /cm2 over the mission, kapton erosion '
+                       f'{ao_erosion_um:.1f} um')
+        ls.logger.info(f'{self.type}: micrometeoroid impacts >1 ug over the mission on '
+                       f'{self.surface_area:.0f} m2: {impacts_1ug:.1f}')
+
+        fig = plt.figure(figsize=(16, 9))
+        ax1 = fig.add_subplot(2, 3, 1, projection=ccrs.PlateCarree())
+        ax1.set_global()
+        ax1.coastlines(linewidth=0.5)
+        total_flux = j_p + j_e
+        quiet = total_flux <= 0
+        ax1.scatter(lon[quiet], lat[quiet], s=1, c='lightgrey',
+                    transform=ccrs.PlateCarree())
+        sc = ax1.scatter(lon[~quiet], lat[~quiet], s=4, c=np.log10(total_flux[~quiet]),
+                         cmap=plt.cm.jet, transform=ccrs.PlateCarree())
+        plt.colorbar(sc, ax=ax1, shrink=0.7, label='log10 trapped flux [/cm2/s]')
+        ax1.set_title('SAA and polar horn crossings')
+
+        ax2 = fig.add_subplot(2, 3, 2)
+        ax2.semilogy(times, np.where(j_p > 0, j_p, np.nan), 'r.', markersize=2,
+                     label='Protons >10 MeV')
+        ax2.semilogy(times, np.where(j_e > 0, j_e, np.nan), 'b.', markersize=2,
+                     label='Electrons >1 MeV')
+        ax2.set_xlabel('Day of Year (DOY)')
+        ax2.set_ylabel('Flux [/cm2/s]')
+        ax2.set_title('Trapped particle flux')
+        ax2.grid(True, alpha=0.4)
+        ax2.legend(fontsize=8)
+
+        ax3 = fig.add_subplot(2, 3, 3)
+        ax3.plot(times, l_shell, 'g-', linewidth=0.6)
+        ax3.set_xlabel('Day of Year (DOY)')
+        ax3.set_ylabel('L-shell [-]', color='g')
+        ax3.set_ylim(1, min(l_shell.max() * 1.1, 12))
+        ax3.grid(True, alpha=0.4)
+        ax3b = ax3.twinx()
+        ax3b.plot(times, b_gauss, 'm-', linewidth=0.6)
+        ax3b.set_ylabel('B [gauss]', color='m')
+        ax3.set_title('Magnetic drift-shell coordinates')
+
+        ax4 = fig.add_subplot(2, 3, 4)
+        ax4.semilogy(_SHIELD_MM, dose_total, 'k-o', markersize=4, label='Total')
+        ax4.semilogy(_SHIELD_MM, dose_p, 'r--', label='Trapped protons')
+        ax4.semilogy(_SHIELD_MM, dose_e, 'b--', label='Trapped electrons')
+        ax4.set_xlabel('Aluminium shielding [mm]')
+        ax4.set_ylabel('Total ionizing dose [rad/yr]')
+        ax4.set_title('Dose-depth curve')
+        ax4.grid(True, which='both', alpha=0.4)
+        ax4.legend(fontsize=8)
+
+        ax5 = fig.add_subplot(2, 3, 5)
+        years = np.linspace(0.0, self.mission_years, 50)
+        ax5.plot(years, years * ao_erosion_um / self.mission_years, 'g-')
+        ax5.set_xlabel('Mission time [years]')
+        ax5.set_ylabel('Kapton erosion depth [um]')
+        ax5.set_title(f'Atomic oxygen (ram flux {ao_flux:.2e} /cm2/s)')
+        ax5.grid(True, alpha=0.4)
+
+        ax6 = fig.add_subplot(2, 3, 6)
+        ax6.loglog(masses, mm_flux_m2yr, 'b-', label='Flux [/m2/yr]')
+        ax6.loglog(masses, mm_impacts, 'r--',
+                   label=f'Impacts, {self.surface_area:.0f} m2, '
+                         f'{self.mission_years:.0f} yr')
+        ax6.set_xlabel('Particle mass [g]')
+        ax6.set_ylabel('Cumulative flux / impact count')
+        ax6.set_title('Micrometeoroids (Gruen 1985)')
+        ax6.grid(True, which='both', alpha=0.4)
+        ax6.legend(fontsize=8)
+
+        fig.suptitle('Space environment along the orbit - first-order engineering '
+                     'models (use SPENVIS/IRENE for design values)', fontsize=11)
+        fig.tight_layout(rect=(0, 0, 1, 0.96))
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['doy', 'lat_deg', 'lon_deg', 'alt_km', 'l_shell', 'b_gauss',
+                            'proton_flux_cm2s', 'electron_flux_cm2s', 'ao_density_m3'],
+                       np.column_stack([times, lat, lon, alt_km, l_shell, b_gauss,
+                                        j_p, j_e, n_ao]))
+        self.write_csv(sm, ['shielding_mm', 'dose_protons_rad_yr', 'dose_electrons_rad_yr',
+                            'dose_total_rad_yr'],
+                       np.column_stack([_SHIELD_MM, dose_p, dose_e, dose_total]),
+                       suffix='dose')
+        self.write_csv(sm, ['mass_g', 'flux_m2yr', 'impacts_mission'],
+                       np.column_stack([masses, mm_flux_m2yr, mm_impacts]),
+                       suffix='meteoroid')
