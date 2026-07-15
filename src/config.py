@@ -91,6 +91,7 @@ class AppConfig:
         self.include_usr2sp = True
         self.include_sp2sp = True
         self.orbits_from_previous_run = False
+        self.report = False  # <Report>: write report.html at the end of the run
         self.data_orbits = []  # Orbits from previous run
         self.orbit_propagator = ''  # Text with either Keplerian / SGP4 / HPOP
         self.hpop_config = None  # Parsed <HPOP> block (HPOP propagator only)
@@ -519,6 +520,8 @@ class AppConfig:
             self.include_sp2sp = misc_fn.str2bool(sim.find('IncludeSpace2SpaceLinks').text)
             self.orbits_from_previous_run = misc_fn.str2bool(sim.find('OrbitsFromPreviousRun').text)
             self.orbit_propagator = sim.find('OrbitPropagator').text
+            if sim.find('Report') is not None:  # report.html at the end of the run
+                self.report = misc_fn.str2bool(sim.find('Report').text)
 
             if self.orbit_propagator == 'HPOP':
                 # Deferred import: orekit/JVM dependencies only load for HPOP runs

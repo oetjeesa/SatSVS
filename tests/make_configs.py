@@ -696,7 +696,8 @@ write_test('sat_aocs', config(
 
 # ------------------------------------------------- multiple analyses per run
 # Three analyses in one simulation, incl. a repeated type (sky angles for two
-# satellites) whose second output must come out numbered *_2.png
+# satellites) whose second output must come out numbered *_2.png; also the
+# in-run mission report (<Report>) collecting all results in report.html
 write_test('multi_analysis', config(
     gps_constellation(), ground_segment(['Kourou']),
     static_users([(52.0, 4.36), (1.35, 103.82)]), *FEB26, 300,
@@ -706,6 +707,7 @@ write_test('multi_analysis', config(
      '      <SatelliteID>1</SatelliteID>',
      '      <Type>cov_satellite_sky_angles</Type>\n'
      '      <ConstellationID>1</ConstellationID>\n'
-     '      <SatelliteID>7</SatelliteID>']))
+     '      <SatelliteID>7</SatelliteID>'],
+    extra_sim='    <Report>True</Report>\n'))
 
 print('done')

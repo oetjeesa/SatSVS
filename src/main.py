@@ -236,5 +236,9 @@ if __name__ == '__main__':
 
     run_after_time_loop(sm)  # Run the after time loop
 
+    if sm.report:  # <Report>True</Report>: one HTML page with all the results
+        import report
+        ls.logger.info(f'Written mission report {report.write_report_from_sm(sm)}')
+
 # TODO analysis SZA_pushbroom faster...
 # TODO incorporate datashader or geoviews

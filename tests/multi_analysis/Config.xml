@@ -318,6 +318,7 @@
     <IncludeSpace2SpaceLinks>False</IncludeSpace2SpaceLinks>
     <OrbitsFromPreviousRun>False</OrbitsFromPreviousRun>
     <OrbitPropagator>Keplerian</OrbitPropagator>
+    <Report>True</Report>
     <Analysis>
       <Type>cov_satellite_visible</Type>
     </Analysis>
