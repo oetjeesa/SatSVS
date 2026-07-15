@@ -21,6 +21,9 @@ section { background: #fff; border-radius: 6px; padding: 16px 20px 20px;
           margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 h2 { margin: 2px 0 10px; font-size: 20px; border-bottom: 2px solid #0b62a4;
      padding-bottom: 4px; }
+h3 { margin: 16px 0 4px; font-size: 15px; color: #0b62a4; }
+details summary { cursor: pointer; font-size: 13.5px; color: #555;
+                  margin: 4px 0; }
 pre.log { background: #f4f7fa; border-left: 3px solid #0b62a4; padding: 8px 12px;
           font-size: 12.5px; overflow-x: auto; white-space: pre-wrap; }
 pre.warn { background: #fdf3e7; border-left: 3px solid #d9822b; }
@@ -34,7 +37,7 @@ footer { color: #999; font-size: 12px; margin-top: 30px; }
 <body>
 <div class="page">
 <h1>multi_analysis</h1>
-<div class="generated">SatSVS simulation report, generated 2026-07-15 15:59</div>
+<div class="generated">SatSVS simulation report, generated 2026-07-15 16:03</div>
 <table class="meta">
 <tr><td>Scenario</td><td>C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\multi_analysis\Config.xml</td></tr>
 <tr><td>Window</td><td>2026-02-01 00:00:00 to 2026-02-02 00:00:00 UTC, step 300 s (288 epochs)</td></tr>
@@ -42,7 +45,56 @@ footer { color: #999; font-size: 12px; margin-top: 30px; }
 <tr><td>Segments</td><td>24 satellite(s), 1 ground station(s), 2 user(s)</td></tr>
 <tr><td>Analyses</td><td>cov_satellite_visible, cov_satellite_sky_angles, cov_satellite_sky_angles_2</td></tr>
 </table>
-<nav><a href="#cov_satellite_sky_angles">cov_satellite_sky_angles</a> <a href="#cov_satellite_sky_angles_2">cov_satellite_sky_angles_2</a> <a href="#cov_satellite_visible">cov_satellite_visible</a></nav>
+<nav><a href="#scenario">scenario</a> <a href="#cov_satellite_sky_angles">cov_satellite_sky_angles</a> <a href="#cov_satellite_sky_angles_2">cov_satellite_sky_angles_2</a> <a href="#cov_satellite_visible">cov_satellite_visible</a></nav>
+<section id="scenario">
+<h2>Scenario configuration</h2>
+<h3>Simulation</h3>
+<table class="meta"><tr><td>StartDate</td><td>2026-02-01 00:00:00</td></tr><tr><td>StopDate</td><td>2026-02-02 00:00:00</td></tr><tr><td>TimeStep</td><td>300</td></tr><tr><td>IncludeStation2SpaceLinks</td><td>True</td></tr><tr><td>IncludeUser2SpaceLinks</td><td>True</td></tr><tr><td>IncludeSpace2SpaceLinks</td><td>False</td></tr><tr><td>OrbitsFromPreviousRun</td><td>False</td></tr><tr><td>OrbitPropagator</td><td>Keplerian</td></tr><tr><td>Report</td><td>True</td></tr></table>
+<h3>Space segment: GPS</h3>
+<table class="meta"><tr><td>NumOfPlanes</td><td>6</td></tr><tr><td>NumOfSatellites</td><td>24</td></tr><tr><td>ConstellationID</td><td>1</td></tr><tr><td>ConstellationName</td><td>GPS</td></tr><tr><td>ReceiverConstellation</td><td>1111</td></tr></table>
+<details><summary>24 entries (click to expand)</summary>
+<table class="meta"><tr><td>SatelliteID</td><td>Plane</td><td>EpochMJD</td><td>SemiMajorAxis</td><td>Eccentricity</td><td>Inclination</td><td>RAAN</td><td>ArgOfPerigee</td><td>MeanAnomaly</td></tr>
+<tr><td>1</td><td>1</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>272.847</td><td>0.00</td><td>11.676</td></tr>
+<tr><td>2</td><td>1</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>272.847</td><td>0.00</td><td>41.806</td></tr>
+<tr><td>3</td><td>1</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>272.847</td><td>0.00</td><td>161.786</td></tr>
+<tr><td>4</td><td>1</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>272.847</td><td>0.00</td><td>268.126</td></tr>
+<tr><td>5</td><td>2</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>332.847</td><td>0.00</td><td>80.956</td></tr>
+<tr><td>6</td><td>2</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>332.847</td><td>0.00</td><td>173.336</td></tr>
+<tr><td>7</td><td>2</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>332.847</td><td>0.00</td><td>204.376</td></tr>
+<tr><td>8</td><td>2</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>332.847</td><td>0.00</td><td>309.976</td></tr>
+<tr><td>9</td><td>3</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>32.847</td><td>0.00</td><td>111.876</td></tr>
+<tr><td>10</td><td>3</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>32.847</td><td>0.00</td><td>241.556</td></tr>
+<tr><td>11</td><td>3</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>32.847</td><td>0.00</td><td>339.666</td></tr>
+<tr><td>12</td><td>3</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>32.847</td><td>0.00</td><td>11.796</td></tr>
+<tr><td>13</td><td>4</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>92.847</td><td>0.00</td><td>135.226</td></tr>
+<tr><td>14</td><td>4</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>92.847</td><td>0.00</td><td>167.356</td></tr>
+<tr><td>15</td><td>4</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>92.847</td><td>0.00</td><td>265.446</td></tr>
+<tr><td>16</td><td>4</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>92.847</td><td>0.00</td><td>35.156</td></tr>
+<tr><td>17</td><td>5</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>152.847</td><td>0.00</td><td>197.046</td></tr>
+<tr><td>18</td><td>5</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>152.847</td><td>0.00</td><td>302.596</td></tr>
+<tr><td>19</td><td>5</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>152.847</td><td>0.00</td><td>333.686</td></tr>
+<tr><td>20</td><td>5</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>152.847</td><td>0.00</td><td>66.066</td></tr>
+<tr><td>21</td><td>6</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>212.847</td><td>0.00</td><td>238.886</td></tr>
+<tr><td>22</td><td>6</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>212.847</td><td>0.00</td><td>345.226</td></tr>
+<tr><td>23</td><td>6</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>212.847</td><td>0.00</td><td>105.206</td></tr>
+<tr><td>24</td><td>6</td><td>49169</td><td>26561750</td><td>0.00</td><td>55.00</td><td>212.847</td><td>0.00</td><td>135.346</td></tr>
+</table>
+</details>
+<h3>Ground segment</h3>
+<table class="meta"><tr><td>Type</td><td>ConstellationID</td><td>GroundStationID</td><td>GroundStationName</td><td>Latitude</td><td>Longitude</td><td>Height</td><td>ReceiverConstellation</td><td>ElevationMask</td></tr>
+<tr><td>Downlink</td><td>1</td><td>1</td><td>Kourou</td><td>5.25</td><td>-52.8</td><td>0</td><td>1</td><td>5</td></tr>
+</table>
+<h3>User segment</h3>
+<table class="meta"><tr><td>Type</td><td>Latitude</td><td>Longitude</td><td>Height</td><td>ReceiverConstellation</td><td>ElevationMask</td></tr>
+<tr><td>Static</td><td>52.0</td><td>4.36</td><td>0</td><td>1</td><td>5</td></tr>
+<tr><td>Static</td><td>1.35</td><td>103.82</td><td>0</td><td>1</td><td>5</td></tr>
+</table>
+<h3>Analyses</h3><ul class="files">
+<li><b>cov_satellite_visible</b></li>
+<li><b>cov_satellite_sky_angles</b> — ConstellationID: 1, SatelliteID: 1</li>
+<li><b>cov_satellite_sky_angles</b> — ConstellationID: 1, SatelliteID: 7</li>
+</ul>
+</section>
 <section id="cov_satellite_sky_angles">
 <h2>cov_satellite_sky_angles</h2>
 <figure><img src="cov_satellite_sky_angles.png" alt="cov_satellite_sky_angles.png" loading="lazy"><figcaption>cov_satellite_sky_angles.png</figcaption></figure>

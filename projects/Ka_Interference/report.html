@@ -21,6 +21,9 @@ section { background: #fff; border-radius: 6px; padding: 16px 20px 20px;
           margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 h2 { margin: 2px 0 10px; font-size: 20px; border-bottom: 2px solid #0b62a4;
      padding-bottom: 4px; }
+h3 { margin: 16px 0 4px; font-size: 15px; color: #0b62a4; }
+details summary { cursor: pointer; font-size: 13.5px; color: #555;
+                  margin: 4px 0; }
 pre.log { background: #f4f7fa; border-left: 3px solid #0b62a4; padding: 8px 12px;
           font-size: 12.5px; overflow-x: auto; white-space: pre-wrap; }
 pre.warn { background: #fdf3e7; border-left: 3px solid #d9822b; }
@@ -34,8 +37,30 @@ footer { color: #999; font-size: 12px; margin-top: 30px; }
 <body>
 <div class="page">
 <h1>Ka_Interference</h1>
-<div class="generated">SatSVS simulation report, generated 2026-07-15 15:59</div>
-<nav><a href="#com_gr2sp_budget">com_gr2sp_budget</a> <a href="#com_gr2sp_budget_interference">com_gr2sp_budget_interference</a></nav>
+<div class="generated">SatSVS simulation report, generated 2026-07-15 16:03</div>
+<nav><a href="#scenario">scenario</a> <a href="#com_gr2sp_budget">com_gr2sp_budget</a> <a href="#com_gr2sp_budget_interference">com_gr2sp_budget_interference</a></nav>
+<section id="scenario">
+<h2>Scenario configuration</h2>
+<h3>Simulation</h3>
+<table class="meta"><tr><td>StartDate</td><td>2010-05-08 11:50:00</td></tr><tr><td>StopDate</td><td>2010-05-08 12:20:00</td></tr><tr><td>TimeStep</td><td>1</td></tr><tr><td>IncludeStation2SpaceLinks</td><td>True</td></tr><tr><td>IncludeUser2SpaceLinks</td><td>False</td></tr><tr><td>IncludeSpace2SpaceLinks</td><td>False</td></tr><tr><td>OrbitsFromPreviousRun</td><td>False</td></tr><tr><td>OrbitPropagator</td><td>Keplerian</td></tr></table>
+<h3>Space segment: ROSEL</h3>
+<table class="meta"><tr><td>NumOfPlanes</td><td>1</td></tr><tr><td>NumOfSatellites</td><td>1</td></tr><tr><td>ConstellationID</td><td>1</td></tr><tr><td>ConstellationName</td><td>ROSEL</td></tr><tr><td>ReceiverConstellation</td><td>1111</td></tr><tr><td>ObsSwathStart</td><td>325000.0</td></tr><tr><td>ObsSwathStop</td><td>585000.0</td></tr></table>
+<table class="meta"><tr><td>SatelliteID</td><td>Plane</td><td>EpochMJD</td><td>SemiMajorAxis</td><td>Eccentricity</td><td>Inclination</td><td>RAAN</td><td>ArgOfPerigee</td><td>MeanAnomaly</td></tr>
+<tr><td>1</td><td>1</td><td>54465.0</td><td>7081289</td><td>0.00</td><td>98.157</td><td>188.934</td><td>0.00</td><td>0</td></tr>
+<tr><td>2</td><td>1</td><td>54465.0</td><td>7081289</td><td>0.00</td><td>98.157</td><td>188.934</td><td>0.00</td><td>1</td></tr>
+</table>
+<h3>Ground segment</h3>
+<table class="meta"><tr><td>Type</td><td>ConstellationID</td><td>GroundStationID</td><td>GroundStationName</td><td>Latitude</td><td>Longitude</td><td>Height</td><td>ReceiverConstellation</td><td>ElevationMask</td></tr>
+<tr><td>Sentinel-1</td><td>1</td><td>1</td><td>Svalbard</td><td>77.8750</td><td>20.9752</td><td>0</td><td>1111</td><td>5</td></tr>
+</table>
+<h3>User segment</h3>
+<table class="meta"><tr><td>Type</td><td>Latitude</td><td>Longitude</td><td>Height</td><td>ReceiverConstellation</td><td>ElevationMask</td></tr>
+<tr><td>Static</td><td>77.8750</td><td>20.9752</td><td>0</td><td>1111</td><td>0</td></tr>
+</table>
+<h3>Analyses</h3><ul class="files">
+<li><b>com_gr2sp_budget_interference</b> — GroundStationID: 1, TransmitterObject: Satellite, CarrierFrequency: 26.25e9, BandWidth: 675e6, TransmitPowerW: 50, TransmitLossesdB: 5, TransmitGainManualdB: (0.00, 33.18), (0.72, ... (120 values), TransmitAntennaDiameter: 0.25, ReceiveAntennaDiameter: 6.8, ReceiveGainManualdB: (0.00, 64.24), (0.05, ... (160 values), ReceiveLossesdB: 3, ReceiveTempK: 290, PExceedPerc: 0.5, IncludeGas: True, IncludeRain: True, IncludeScintillation: True, IncludeClouds: True</li>
+</ul>
+</section>
 <section id="com_gr2sp_budget">
 <h2>com_gr2sp_budget</h2>
 <figure><img src="com_gr2sp_budget.png" alt="com_gr2sp_budget.png" loading="lazy"><figcaption>com_gr2sp_budget.png</figcaption></figure>

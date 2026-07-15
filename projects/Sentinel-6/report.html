@@ -21,6 +21,9 @@ section { background: #fff; border-radius: 6px; padding: 16px 20px 20px;
           margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 h2 { margin: 2px 0 10px; font-size: 20px; border-bottom: 2px solid #0b62a4;
      padding-bottom: 4px; }
+h3 { margin: 16px 0 4px; font-size: 15px; color: #0b62a4; }
+details summary { cursor: pointer; font-size: 13.5px; color: #555;
+                  margin: 4px 0; }
 pre.log { background: #f4f7fa; border-left: 3px solid #0b62a4; padding: 8px 12px;
           font-size: 12.5px; overflow-x: auto; white-space: pre-wrap; }
 pre.warn { background: #fdf3e7; border-left: 3px solid #d9822b; }
@@ -34,11 +37,43 @@ footer { color: #999; font-size: 12px; margin-top: 30px; }
 <body>
 <div class="page">
 <h1>Sentinel-6</h1>
-<div class="generated">SatSVS simulation report, generated 2026-07-15 15:59</div>
+<div class="generated">SatSVS simulation report, generated 2026-07-15 16:03</div>
 <table class="meta">
 <tr><td>Simulation</td><td>start MJD: 61072.0, stop MJD: 61076.0, size time steps in sec: 60.0</td></tr>
 </table>
-<nav><a href="#cov_ground_track">cov_ground_track</a> <a href="#cov_pass_time">cov_pass_time</a> <a href="#cov_satellite_contour">cov_satellite_contour</a> <a href="#obs_swath_conical">obs_swath_conical</a> <a href="#orb_deltav_element">orb_deltav_element</a> <a href="#sat_battery_depth_discharge">sat_battery_depth_discharge</a> <a href="#sat_data_latency">sat_data_latency</a> <a href="#sat_data_storage">sat_data_storage</a> <a href="#sat_eclipse_duration">sat_eclipse_duration</a></nav>
+<nav><a href="#scenario">scenario</a> <a href="#cov_ground_track">cov_ground_track</a> <a href="#cov_pass_time">cov_pass_time</a> <a href="#cov_satellite_contour">cov_satellite_contour</a> <a href="#obs_swath_conical">obs_swath_conical</a> <a href="#orb_deltav_element">orb_deltav_element</a> <a href="#sat_battery_depth_discharge">sat_battery_depth_discharge</a> <a href="#sat_data_latency">sat_data_latency</a> <a href="#sat_data_storage">sat_data_storage</a> <a href="#sat_eclipse_duration">sat_eclipse_duration</a></nav>
+<section id="scenario">
+<h2>Scenario configuration</h2>
+<h3>Simulation</h3>
+<table class="meta"><tr><td>StartDate</td><td>2026-02-01 00:00:00</td></tr><tr><td>StopDate</td><td>2026-02-05 00:00:00</td></tr><tr><td>TimeStep</td><td>60</td></tr><tr><td>IncludeStation2SpaceLinks</td><td>True</td></tr><tr><td>IncludeUser2SpaceLinks</td><td>True</td></tr><tr><td>IncludeSpace2SpaceLinks</td><td>False</td></tr><tr><td>OrbitsFromPreviousRun</td><td>False</td></tr><tr><td>OrbitPropagator</td><td>HPOP</td></tr></table>
+<h3>HPOP force model</h3>
+<table class="meta"><tr><td>IntegratorMinStep</td><td>0.001</td></tr><tr><td>IntegratorMaxStep</td><td>300</td></tr><tr><td>IntegratorPositionTolerance</td><td>1.0</td></tr><tr><td>Mass</td><td>1192</td></tr><tr><td>Geopotential</td><td>True</td></tr><tr><td>GeopotentialDegree</td><td>21</td></tr><tr><td>GeopotentialOrder</td><td>21</td></tr><tr><td>EarthPoleRotation</td><td>True</td></tr><tr><td>Drag</td><td>True</td></tr><tr><td>DragArea</td><td>5.0</td></tr><tr><td>DragCd</td><td>2.2</td></tr><tr><td>DragModel</td><td>NRLMSISE00</td></tr><tr><td>SolarRadiationPressure</td><td>True</td></tr><tr><td>SRPArea</td><td>12.0</td></tr><tr><td>SRPCr</td><td>1.5</td></tr><tr><td>ThirdBodySun</td><td>True</td></tr><tr><td>ThirdBodyMoon</td><td>True</td></tr><tr><td>ThirdBodyPlanets</td><td>False</td></tr><tr><td>SolidTides</td><td>True</td></tr><tr><td>OceanTides</td><td>False</td></tr><tr><td>Relativity</td><td>False</td></tr></table>
+<h3>Space segment: Sentinel-6</h3>
+<table class="meta"><tr><td>ConstellationID</td><td>1</td></tr><tr><td>NumOfSatellites</td><td>1</td></tr><tr><td>NumOfPlanes</td><td>1</td></tr><tr><td>ConstellationName</td><td>Sentinel-6</td></tr><tr><td>ReceiverConstellation</td><td>1</td></tr><tr><td>ObsSwathStop</td><td>10000.0</td></tr><tr><td>ObsSwathStop</td><td>10000.0</td></tr><tr><td>ObsSwathStop</td><td>10000.0</td></tr></table>
+<table class="meta"><tr><td>SatelliteID</td><td>Plane</td><td>EpochMJD</td><td>SemiMajorAxis</td><td>Eccentricity</td><td>Inclination</td><td>RAAN</td><td>ArgOfPerigee</td><td>MeanAnomaly</td></tr>
+<tr><td>1</td><td>1</td><td>61072.0</td><td>7714430</td><td>0.0001</td><td>66.04</td><td>30.0</td><td>0.0</td><td>0.0</td></tr>
+</table>
+<h3>Ground segment</h3>
+<table class="meta"><tr><td>Type</td><td>ConstellationID</td><td>GroundStationID</td><td>GroundStationName</td><td>Latitude</td><td>Longitude</td><td>Height</td><td>ReceiverConstellation</td><td>ElevationMask</td></tr>
+<tr><td>Downlink</td><td>1</td><td>1</td><td>Fairbanks</td><td>64.859</td><td>-147.849</td><td>230</td><td>1</td><td>5</td></tr>
+<tr><td>Downlink</td><td>1</td><td>2</td><td>Kiruna</td><td>67.857</td><td>20.964</td><td>402</td><td>1</td><td>5</td></tr>
+</table>
+<h3>User segment</h3>
+<table class="meta"><tr><td>Type</td><td>LatMin</td><td>LatMax</td><td>LonMin</td><td>LonMax</td><td>LatStep</td><td>LonStep</td><td>Height</td><td>ReceiverConstellation</td><td>ElevationMask</td></tr>
+<tr><td>Grid</td><td>-85</td><td>85</td><td>-180</td><td>180</td><td>5</td><td>5</td><td>0</td><td>1</td><td>5</td></tr>
+</table>
+<h3>Analyses</h3><ul class="files">
+<li><b>cov_ground_track</b> — ConstellationID: 1</li>
+<li><b>cov_satellite_contour</b> — ConstellationID: 1, SatelliteID: 1, ElevationMask: 5</li>
+<li><b>cov_pass_time</b> — ConstellationID: 1, Statistic: Mean</li>
+<li><b>obs_swath_conical</b> — Revisit: False, Statistic: Mean</li>
+<li><b>sat_battery_depth_discharge</b> — BatteryCapacityWh: 2500, InitialSoC: 1.0, SolarPanelArea: 4.0, PanelEfficiency: 0.28, BasePowerDrawW: 600, InstrumentPowerDrawW: 300, PayloadLatitudeLimit: 90</li>
+<li><b>sat_eclipse_duration</b></li>
+<li><b>sat_data_storage</b> — SSRCapacityGbits: 500, InitialFillGbits: 0, InstrumentRateMbps: 12, DownlinkRateMbps: 150, PayloadLatitudeLimit: 90</li>
+<li><b>sat_data_latency</b> — SSRCapacityGbits: 500, InitialFillGbits: 0, InstrumentRateMbps: 12, DownlinkRateMbps: 150, PayloadLatitudeLimit: 90, GroundProcessingMin: 15</li>
+<li><b>orb_deltav_element</b> — TargetType: Altitude, DeadBand: 500, ConstellationID: 1, SatelliteID: 1</li>
+</ul>
+</section>
 <section id="cov_ground_track">
 <h2>cov_ground_track</h2>
 <figure><img src="cov_ground_track.png" alt="cov_ground_track.png" loading="lazy"><figcaption>cov_ground_track.png</figcaption></figure>

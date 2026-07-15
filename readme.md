@@ -330,12 +330,14 @@ be saved by disabling some.
 - The OrbitsFromPreviousRun flag (True/False) reuses the satellite ECI orbits cached in 'output/orbits_internal.txt' from a previous run instead of re-propagating, to save time when only the analysis changes.
 - The OrbitPropagator determines which propagator to take: 'Keplerian', 'SGP4' or 'HPOP'.
 - The optional Report flag (True/False, default False) writes a mission report
-  __report.html__ into the output directory at the end of the run: one page with the
-  scenario summary, the warnings, and per analysis the summary lines from the log,
-  every plot and links to the CSV data dumps, pass tables and movies. The same page
-  can be built later from any existing results directory (e.g. a projects/ mission
-  folder) without re-running the simulation:
-  `py src/report.py <results_dir> [--title "Mission name"]`.
+  __report.html__ into the output directory at the end of the run: one page with a
+  scenario configuration summary (simulation parameters, force model,
+  constellations and their satellite orbits, ground stations, users, analyses),
+  the warnings, and per analysis the summary lines from the log, every plot and
+  links to the CSV data dumps, pass tables and movies. The same page can be built
+  later from any existing results directory (e.g. a projects/ mission folder)
+  without re-running the simulation:
+  `py src/report.py <results_dir> [--title "Mission name"] [--config Config.xml]`.
 - One or more Analysis blocks can be given. All analyses run in the same simulation
   over the same propagated orbits, each keeping its own metric memory for the
   post-processing/plots in its own output files (named after the analysis Type).

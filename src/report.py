@@ -17,6 +17,7 @@ import glob
 import html
 import os
 import re
+import xml.etree.ElementTree as ET
 
 from config_checks import ANALYSIS_PARAMS
 
@@ -41,6 +42,9 @@ section { background: #fff; border-radius: 6px; padding: 16px 20px 20px;
           margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 h2 { margin: 2px 0 10px; font-size: 20px; border-bottom: 2px solid #0b62a4;
      padding-bottom: 4px; }
+h3 { margin: 16px 0 4px; font-size: 15px; color: #0b62a4; }
+details summary { cursor: pointer; font-size: 13.5px; color: #555;
+                  margin: 4px 0; }
 pre.log { background: #f4f7fa; border-left: 3px solid #0b62a4; padding: 8px 12px;
           font-size: 12.5px; overflow-x: auto; white-space: pre-wrap; }
 pre.warn { background: #fdf3e7; border-left: 3px solid #d9822b; }
@@ -69,6 +73,104 @@ def _group_of(file_base, types):
     return None
 
 
+def _fmt_value(tag, text):
+    """Display value of a config tag: long lists summarised, not dumped."""
+    value = ' '.join((text or '').split())
+    if tag == 'PolygonList':
+        return f'polygon with {value.count("(")} vertices'
+    if len(value) > 100:
+        values = value.split(',')
+        if len(values) > 4:
+            return f'{", ".join(v.strip() for v in values[:3])}, ... ({len(values)} values)'
+        return value[:97] + '...'
+    return value
+
+
+def _kv_rows(element, skip=()):
+    """(tag, value) pairs of the scalar children of a config element."""
+    return [(child.tag, _fmt_value(child.tag, child.text))
+            for child in element if child.tag not in skip and not len(child)]
+
+
+def _element_table(elements, e):
+    """HTML table of repeated config elements (Satellite, GroundStation,
+    User): one row each, columns the ordered union of their child tags.
+    Collapsed by default when there are many rows."""
+    columns = []
+    for element in elements:
+        for child in element:
+            if not len(child) and child.tag not in columns:
+                columns.append(child.tag)
+    rows = ['<table class="meta"><tr>' +
+            ''.join(f'<td>{e(c)}</td>' for c in columns) + '</tr>']
+    for element in elements:
+        values = {child.tag: _fmt_value(child.tag, child.text)
+                  for child in element if not len(child)}
+        rows.append('<tr>' + ''.join(f'<td>{e(values.get(c, ""))}</td>'
+                                     for c in columns) + '</tr>')
+    rows.append('</table>')
+    table = '\n'.join(rows)
+    if len(elements) > 8:
+        return (f'<details><summary>{len(elements)} entries (click to '
+                f'expand)</summary>\n{table}\n</details>')
+    return table
+
+
+def _scenario_summary(config_file, e):
+    """HTML fragment summarising the scenario Config.xml: simulation
+    parameters, constellations and their satellite orbits, ground stations,
+    users and the analysis blocks."""
+    try:
+        root = ET.parse(config_file).getroot()
+    except Exception as err:
+        return f'<pre class="log warn">Config.xml not readable: {e(str(err))}</pre>'
+    out = []
+
+    for sim in root.iter('SimulationManager'):
+        out.append('<h3>Simulation</h3>')
+        pairs = _kv_rows(sim, skip=('Analysis',))
+        out.append('<table class="meta">' +
+                   ''.join(f'<tr><td>{e(k)}</td><td>{e(v)}</td></tr>'
+                           for k, v in pairs) + '</table>')
+        hpop = sim.find('HPOP')
+        if hpop is not None:
+            out.append('<h3>HPOP force model</h3>')
+            out.append('<table class="meta">' +
+                       ''.join(f'<tr><td>{e(k)}</td><td>{e(v)}</td></tr>'
+                               for k, v in _kv_rows(hpop)) + '</table>')
+
+    for constellation in root.iter('Constellation'):
+        name = constellation.findtext('ConstellationName', 'constellation')
+        out.append(f'<h3>Space segment: {e(name)}</h3>')
+        out.append('<table class="meta">' +
+                   ''.join(f'<tr><td>{e(k)}</td><td>{e(v)}</td></tr>'
+                           for k, v in _kv_rows(constellation)) + '</table>')
+        satellites = constellation.findall('Satellite')
+        if satellites:
+            out.append(_element_table(satellites, e))
+
+    stations = list(root.iter('GroundStation'))
+    if stations:
+        out.append('<h3>Ground segment</h3>')
+        out.append(_element_table(stations, e))
+
+    users = list(root.iter('User'))
+    if users:
+        out.append('<h3>User segment</h3>')
+        out.append(_element_table(users, e))
+
+    analyses = list(root.iter('Analysis'))
+    if analyses:
+        out.append('<h3>Analyses</h3><ul class="files">')
+        for analysis in analyses:
+            params = ', '.join(f'{k}: {v}' for k, v in
+                               _kv_rows(analysis, skip=('Type',)))
+            out.append(f'<li><b>{e(analysis.findtext("Type", "?"))}</b>'
+                       f'{" — " + e(params) if params else ""}</li>')
+        out.append('</ul>')
+    return '\n'.join(out)
+
+
 def _read_log(results_dir):
     """(all message, level) tuples from main.log, or [] when there is none."""
     log_file = os.path.join(results_dir, 'main.log')
@@ -83,11 +185,16 @@ def _read_log(results_dir):
     return messages
 
 
-def write_report(results_dir, title=None, meta=None):
+def write_report(results_dir, title=None, meta=None, config_file=None):
     """Write report.html into results_dir from the files found there.
     meta: optional list of (label, value) rows shown in the header table
     (the in-run caller passes precise scenario data; standalone use falls
-    back to what the log file provides)."""
+    back to what the log file provides). config_file: the scenario
+    Config.xml for the configuration summary section; defaults to a
+    Config.xml found in the results directory (the projects/ layout)."""
+    if config_file is None:
+        candidate = os.path.join(results_dir, 'Config.xml')
+        config_file = candidate if os.path.isfile(candidate) else None
     types = _known_types()
     files = sorted(f for f in os.listdir(results_dir)
                    if os.path.isfile(os.path.join(results_dir, f))
@@ -126,8 +233,13 @@ def write_report(results_dir, title=None, meta=None):
             out.append(f'<tr><td>{e(str(label))}</td><td>{e(str(value))}</td></tr>\n')
         out.append('</table>\n')
 
-    out.append('<nav>' + ' '.join(f'<a href="#{e(g)}">{e(g)}</a>'
-                                  for g in sorted(groups)) + '</nav>\n')
+    nav_items = (['<a href="#scenario">scenario</a>'] if config_file else []) + \
+                [f'<a href="#{e(g)}">{e(g)}</a>' for g in sorted(groups)]
+    out.append('<nav>' + ' '.join(nav_items) + '</nav>\n')
+
+    if config_file:
+        out.append('<section id="scenario">\n<h2>Scenario configuration</h2>\n'
+                   + _scenario_summary(config_file, e) + '\n</section>\n')
 
     if warnings:
         out.append('<section><h2>Warnings</h2>\n<pre class="log warn">'
@@ -182,7 +294,8 @@ def write_report_from_sm(sm):
                      f'station(s), {len(sm.users)} user(s)'),
         ('Analyses', ', '.join(analysis.type for analysis in sm.analyses)),
     ]
-    return write_report(sm.output_dir, title=title, meta=meta)
+    return write_report(sm.output_dir, title=title, meta=meta,
+                        config_file=sm.file_name)
 
 
 if __name__ == '__main__':
@@ -192,5 +305,9 @@ if __name__ == '__main__':
                                             '(plots, CSVs, main.log)')
     parser.add_argument('--title', default=None, help='report title '
                         '(default: the directory name)')
+    parser.add_argument('--config', default=None, help='scenario Config.xml '
+                        'for the configuration summary (default: a Config.xml '
+                        'inside the results directory, when present)')
     cli = parser.parse_args()
-    print('written', write_report(cli.results_dir, title=cli.title))
+    print('written', write_report(cli.results_dir, title=cli.title,
+                                  config_file=cli.config))
