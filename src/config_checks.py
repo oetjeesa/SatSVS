@@ -17,7 +17,8 @@ PLOT3D_PARAMS = {'Plot3D', 'ShowSatellite', 'ShowOrbit', 'SatelliteModelFile',
                  'SatelliteModelScale', 'MP4', 'EarthClouds'}
 
 # 2D-map decorations shared by every world-map analysis (AnalysisMap2D mixin)
-MAP2D_PARAMS = {'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack'}
+MAP2D_PARAMS = {'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack',
+                'Coastlines'}
 
 COM_GR2SP_PARAMS = {
     'GroundStationID', 'TransmitterObject', 'CarrierFrequency', 'TransmitPowerW',
@@ -212,6 +213,7 @@ BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',
              'Plot3D', 'ShowSatellite', 'ShowOrbit', 'MP4', 'EarthClouds',
              'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack',
+             'Coastlines',
              'Geopotential', 'EarthPoleRotation', 'Drag', 'SolarRadiationPressure',
              'ThirdBodySun', 'ThirdBodyMoon', 'ThirdBodyPlanets', 'SolidTides',
              'OceanTides', 'Relativity'}

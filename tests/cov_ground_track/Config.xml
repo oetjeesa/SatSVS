@@ -52,6 +52,7 @@
       <ConstellationID>1</ConstellationID>
       <SatelliteID>31698</SatelliteID>
       <EarthImage>True</EarthImage>
+      <Coastlines>False</Coastlines>
       <ShowStations>True</ShowStations>
       <ShowUsers>True</ShowUsers>
       <Plot3D>True</Plot3D>

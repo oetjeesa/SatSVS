@@ -427,15 +427,19 @@ Every analysis that produces a 2D world map accepts these optional flags in its
 <ShowStations>True</ShowStations>
 <ShowUsers>True</ShowUsers>
 <ShowGroundTrack>True</ShowGroundTrack>
+<Coastlines>False</Coastlines>
 ```
 - EarthImage: draw the map background as an Earth photo (input/earth_texture.jpg,
   the same texture as the 3D globe, with the cartopy stock image as fallback)
   instead of plain coastlines.
-- ShowStations: mark the ground station locations with red triangles and their names.
+- ShowStations: mark the ground station locations with red triangles (drawn
+  underneath the ground tracks) and halo-outlined name labels.
 - ShowUsers: mark the user locations with blue triangles (skipped with a warning
   for user grids with more than 200 points).
 - ShowGroundTrack: draw the subsatellite ground track(s) of all satellites as thin
   grey lines, recorded during the run.
+- Coastlines: set to False to turn the coastline outlines off (default on) — e.g.
+  with EarthImage the photo already shows the coasts.
 
 For example the cov_ground_track reference image below uses EarthImage,
 ShowStations and ShowUsers; the obs_target_imaging image uses ShowGroundTrack.

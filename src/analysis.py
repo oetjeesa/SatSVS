@@ -2,6 +2,7 @@ import os
 
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
+import matplotlib.patheffects as patheffects
 import cartopy.crs as ccrs
 from math import sin, cos, asin, degrees, radians
 import numpy as np
@@ -96,11 +97,13 @@ class AnalysisMap2D:
     <EarthImage>True</EarthImage>            Earth photo as the map background
         (input/earth_texture.jpg, cartopy stock image as fallback)
     <ShowStations>True</ShowStations>        ground stations as red triangles
-        with their names
+        (drawn underneath ground tracks) with halo-outlined name labels
     <ShowUsers>True</ShowUsers>              user locations as blue triangles
         (skipped with a warning for large user grids)
     <ShowGroundTrack>True</ShowGroundTrack>  subsatellite ground track(s),
         recorded per epoch, as thin grey lines
+    <Coastlines>False</Coastlines>           turn the coastline outlines off
+        (default on; e.g. with EarthImage the photo already shows the coasts)
 
     The config reading and the loop hooks are wired centrally (config.py
     load_simulation, main.py run loops); a map-drawing analysis only calls
@@ -113,6 +116,7 @@ class AnalysisMap2D:
         self.show_users = False
         self.earth_image = False
         self.show_ground_track = False
+        self.coastlines = True
         self._map2d_track = None  # (num_sat, num_epoch, 2) lat/lon [deg]
 
     def read_config_map2d(self, node):
@@ -124,6 +128,8 @@ class AnalysisMap2D:
             self.earth_image = misc_fn.str2bool(node.find('EarthImage').text)
         if node.find('ShowGroundTrack') is not None:
             self.show_ground_track = misc_fn.str2bool(node.find('ShowGroundTrack').text)
+        if node.find('Coastlines') is not None:
+            self.coastlines = misc_fn.str2bool(node.find('Coastlines').text)
 
     def before_loop_map2d(self, sm):
         if self.show_ground_track:
@@ -139,7 +145,14 @@ class AnalysisMap2D:
     def decorate_map2d(self, sm, ax):
         """Draw the enabled decorations on a 2D map; call once right after
         the map is created. The Earth image goes under the analysis data
-        (zorder 0), the ground track and the markers on top of it."""
+        (zorder 0), the station/user triangles above the data fields but
+        underneath the ground track and analysis lines, and the station name
+        labels (halo-outlined for readability on any background) on top."""
+        if not self.coastlines:
+            import cartopy.mpl.feature_artist as feature_artist
+            for artist in [c for c in ax.collections
+                           if isinstance(c, feature_artist.FeatureArtist)]:
+                artist.remove()
         if self.earth_image:
             texture = misc_fn.resolve_path(self.EARTH_TEXTURE)
             if texture is not None and os.path.isfile(texture):
@@ -157,16 +170,22 @@ class AnalysisMap2D:
                 if not used.any():
                     continue
                 x, y = misc_fn.track_with_gaps(lon[used], lat[used])
+                # zorder 3: above the data fields and the station triangles,
+                # underneath marker-based analysis data (e.g. imaging targets)
                 ax.plot(x, y, '-', color='0.35', linewidth=0.7,
-                        transform=ccrs.PlateCarree(), zorder=6)
+                        transform=ccrs.PlateCarree(), zorder=3)
         if self.show_stations:
             for station in sm.stations:
                 lon, lat = degrees(station.lla[1]), degrees(station.lla[0])
+                # zorder 1.8: above the data fields (pcolormesh/patches at 1)
+                # but underneath the ground track and analysis lines (2+)
                 ax.plot(lon, lat, '^', color='red', markersize=9,
                         markeredgecolor='black', transform=ccrs.PlateCarree(),
-                        zorder=7)
+                        zorder=1.8)
                 ax.text(lon + 2.0, lat + 2.0, station.station_name, fontsize=8,
-                        transform=ccrs.PlateCarree(), zorder=7)
+                        color='red', transform=ccrs.PlateCarree(), zorder=7,
+                        path_effects=[patheffects.withStroke(linewidth=2,
+                                                             foreground='white')])
         if self.show_users:
             if len(sm.users) > 200:
                 ls.logger.warning(f'ShowUsers: skipped, the user segment has '
@@ -175,7 +194,7 @@ class AnalysisMap2D:
                 for user in sm.users:
                     ax.plot(degrees(user.lla[1]), degrees(user.lla[0]), '^',
                             color='blue', markersize=7, markeredgecolor='black',
-                            transform=ccrs.PlateCarree(), zorder=7)
+                            transform=ccrs.PlateCarree(), zorder=1.8)
 
 
 class AnalysisBase(AnalysisMap2D):

@@ -213,6 +213,7 @@ write_test('cov_ground_track', config(
     '      <ConstellationID>1</ConstellationID>\n'
     '      <SatelliteID>31698</SatelliteID>\n'
     '      <EarthImage>True</EarthImage>\n'
+    '      <Coastlines>False</Coastlines>\n'
     '      <ShowStations>True</ShowStations>\n'
     '      <ShowUsers>True</ShowUsers>\n'
     '      <Plot3D>True</Plot3D>\n'
