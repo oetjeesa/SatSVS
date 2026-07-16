@@ -1,0 +1,34 @@
+2026-07-16 11:03:46,946 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\orb_collision_alt_check\Config.xml validated: 0 warning(s), no errors
+2026-07-16 11:03:46,946 - main - INFO - {'constellation_id': 1, 'constellation_name': 'Sentinel-1A', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': '../tests/orb_collision_alt_check/../orb_collision_check/mission_tle.txt', 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-16 11:03:46,947 - main - INFO - ['Found satellite:', '39634', 'Kepler Elements', "{'epoch_mjd': 61236.9617613, 'semi_major_axis': 7073927.613023457, 'eccentricity': 0.0001404, 'inclination': 1.713494446437953, 'right_ascension': 3.5617632177149083, 'arg_perigee': 1.507266342022303, 'mean_anomaly': 4.7782751596474755}"]
+2026-07-16 11:03:47,253 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-16 11:03:47,255 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000002551E9BC050>}
+2026-07-16 11:03:47,257 - main - INFO - Loaded simulation, start MJD: 61236.0, stop MJD: 61236.25, size time steps in sec: 600.0
+2026-07-16 11:03:47,257 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-16 11:03:47,257 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-16 11:03:47,257 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-16 11:03:47,260 - main - INFO - orb_collision_alt_check: 139 of 265 catalog objects within 10 km of the 695-697 km mission band
+2026-07-16 11:03:47,260 - main - INFO - Finished reading configuration file
+2026-07-16 11:03:47,262 - main - INFO - Simulation time: 2026-07-15 00:00:00, time step: 0
+2026-07-16 11:03:47,338 - main - INFO - Plotting analysis orb_collision_alt_check
+2026-07-16 11:03:47,338 - main - INFO - orb_collision_alt_check: SPARK 2 (NORAD 41901): 679 x 713 km, inclination 98.6 deg
+2026-07-16 11:03:47,338 - main - INFO - orb_collision_alt_check: SENTINEL-1D (NORAD 66315): 695 x 697 km, inclination 98.2 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: SENTINEL-1C (NORAD 62261): 695 x 697 km, inclination 98.2 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM112 (NORAD 41184): 694 x 699 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM110 (NORAD 41182): 694 x 699 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM108 (NORAD 41187): 695 x 699 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM116 (NORAD 41189): 696 x 698 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM118 (NORAD 41183): 695 x 699 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM117 (NORAD 41188): 695 x 699 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM113 (NORAD 41185): 695 x 698 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: ORBCOMM FM109 (NORAD 40086): 696 x 698 km, inclination 47.0 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: PVSAT (NORAD 52894): 689 x 700 km, inclination 98.2 deg
+2026-07-16 11:03:47,339 - main - INFO - orb_collision_alt_check: YAOGAN-33 04 (NORAD 57958): 697 x 698 km, inclination 98.2 deg
+2026-07-16 11:03:47,340 - main - INFO - orb_collision_alt_check: YAOGAN-33 03 (NORAD 57797): 691 x 704 km, inclination 98.2 deg
+2026-07-16 11:03:47,340 - main - INFO - orb_collision_alt_check: YAOGAN-33 02 (NORAD 53698): 695 x 700 km, inclination 98.2 deg
+2026-07-16 11:03:47,340 - main - INFO - orb_collision_alt_check: YAOGAN-33 01 (NORAD 47302): 695 x 700 km, inclination 98.0 deg
+2026-07-16 11:03:47,340 - main - INFO - orb_collision_alt_check: KSLV-II DUMMY (NORAD 52895): 692 x 703 km, inclination 98.2 deg
+2026-07-16 11:03:47,340 - main - INFO - orb_collision_alt_check: PERUSAT 1 (NORAD 41770): 697 x 699 km, inclination 98.2 deg
+2026-07-16 11:03:47,340 - main - INFO - orb_collision_alt_check: SPARK 1 (NORAD 41900): 678 x 710 km, inclination 98.6 deg
+2026-07-16 11:03:47,340 - main - INFO - orb_collision_alt_check: PLEIADES 1A (NORAD 38012): 697 x 699 km, inclination 98.2 deg
+2026-07-16 11:03:47,569 - main - INFO - Written data dump orb_collision_alt_check.csv (139 rows)

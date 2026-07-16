@@ -1235,6 +1235,21 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
             files.append(dest)
         return files
 
+    def _load_catalog(self):
+        """(names, Satrec list) of all objects in the configured catalog
+        file(s); disables the analysis when nothing could be loaded."""
+        catalog, names = [], []
+        for catalog_file in self._catalog_files():
+            with open(catalog_file) as f:
+                lines = [line.rstrip() for line in f if line.strip()]
+            for i in range(0, len(lines) - 2, 3):
+                catalog.append(Satrec.twoline2rv(lines[i + 1], lines[i + 2]))
+                names.append(lines[i].strip())
+        if not catalog:
+            ls.logger.error(f'{self.type}: empty catalog. Analysis disabled.')
+            self.enabled = False
+        return names, catalog
+
     def before_loop(self, sm):
         super().before_loop(sm)
         satellite = sm.satellites[self.idx_found_satellite]
@@ -1260,16 +1275,8 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
                               f'trajectory (fine at km-level TLE accuracy)')
 
         # Load the catalog and apply the apogee/perigee sieve
-        catalog, names = [], []
-        for catalog_file in self._catalog_files():
-            with open(catalog_file) as f:
-                lines = [line.rstrip() for line in f if line.strip()]
-            for i in range(0, len(lines) - 2, 3):
-                catalog.append(Satrec.twoline2rv(lines[i + 1], lines[i + 2]))
-                names.append(lines[i].strip())
+        names, catalog = self._load_catalog()
         if not catalog:
-            ls.logger.error(f'{self.type}: empty catalog. Analysis disabled.')
-            self.enabled = False
             return
         n_rad_s = np.array([s.no_kozai for s in catalog]) / 60.0
         ecc = np.array([s.ecco for s in catalog])
@@ -1376,6 +1383,100 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
         fig.tight_layout()
         plt.savefig(sm.output_path(self.type + '.png'))
         plt.show()
+
+
+class AnalysisOrbCollisionAltCheck(AnalysisOrbCollisionCheck):
+    """Altitude-band neighbours from the CelesTrak catalog: every object
+    whose perigee-apogee band comes within <AltitudeMargin> (default 10 km)
+    of the mission orbit's band, regardless of timing and phasing - the
+    static population sharing the mission altitude (the sieve stage of
+    orb_collision_check on its own). The plot shows each neighbour's
+    perigee-apogee bar versus its inclination, which separates co-planar
+    companions from crossing traffic; use orb_collision_check for the
+    time-resolved close approaches."""
+
+    def __init__(self):
+        super().__init__()
+        self.altitude_margin = 10e3  # [m] band around the mission orbit
+        self.neighbours = None  # (n, 4): norad, perigee, apogee, inclination
+
+    def read_config(self, node):
+        super().read_config(node)  # Selection + catalog group parameters
+        if node.find('AltitudeMargin') is not None:
+            self.altitude_margin = float(node.find('AltitudeMargin').text)
+
+    def before_loop(self, sm):
+        _AnalysisDeltaVBase.before_loop(self, sm)  # Selection only
+        names, catalog = self._load_catalog()
+        if not catalog:
+            return
+        satellite = sm.satellites[self.idx_found_satellite]
+        kepler = satellite.kepler
+        self.mission_peri = kepler.semi_major_axis * (1.0 - kepler.eccentricity)
+        self.mission_apo = kepler.semi_major_axis * (1.0 + kepler.eccentricity)
+        n_rad_s = np.array([s.no_kozai for s in catalog]) / 60.0
+        ecc = np.array([s.ecco for s in catalog])
+        sma = (GM_EARTH / n_rad_s ** 2) ** (1.0 / 3.0)
+        obj_peri, obj_apo = sma * (1.0 - ecc), sma * (1.0 + ecc)
+        keep = (obj_apo >= self.mission_peri - self.altitude_margin) & \
+               (obj_peri <= self.mission_apo + self.altitude_margin)
+        keep &= np.array([s.satnum != satellite.sat_id for s in catalog])
+        idx_keep = np.flatnonzero(keep)
+        self.names = [names[i] for i in idx_keep]
+        self.neighbours = np.column_stack([
+            [catalog[i].satnum for i in idx_keep],
+            obj_peri[idx_keep], obj_apo[idx_keep],
+            np.degrees([catalog[i].inclo for i in idx_keep])])
+        ls.logger.info(f'{self.type}: {len(idx_keep)} of {len(catalog)} catalog '
+                       f'objects within {self.altitude_margin / 1000:.0f} km of '
+                       f'the {(self.mission_peri - R_EARTH) / 1000:.0f}-'
+                       f'{(self.mission_apo - R_EARTH) / 1000:.0f} km mission band')
+
+    def after_loop(self, sm):
+        if not self.enabled or self.neighbours is None:
+            return
+        mission_incl = degrees(
+            sm.satellites[self.idx_found_satellite].kepler.inclination)
+        peri_km = (self.neighbours[:, 1] - R_EARTH) / 1000.0
+        apo_km = (self.neighbours[:, 2] - R_EARTH) / 1000.0
+        mean_alt = (peri_km + apo_km) / 2.0
+        mission_mid = ((self.mission_peri + self.mission_apo) / 2.0
+                       - R_EARTH) / 1000.0
+        # Closest-band neighbours first in the log
+        for i in np.argsort(np.abs(mean_alt - mission_mid))[:20]:
+            ls.logger.info(f'{self.type}: {self.names[i]} '
+                           f'(NORAD {int(self.neighbours[i, 0])}): '
+                           f'{peri_km[i]:.0f} x {apo_km[i]:.0f} km, '
+                           f'inclination {self.neighbours[i, 3]:.1f} deg')
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.vlines(self.neighbours[:, 3], peri_km, apo_km, color='C0',
+                  linewidth=1.2, alpha=0.7, label='Catalog neighbours')
+        band_lo = (self.mission_peri - self.altitude_margin - R_EARTH) / 1000.0
+        band_hi = (self.mission_apo + self.altitude_margin - R_EARTH) / 1000.0
+        ax.axhspan(band_lo, band_hi, color='red', alpha=0.12,
+                   label=f'Mission band ±{self.altitude_margin / 1000:.0f} km')
+        ax.plot(mission_incl, mission_mid, 'r^', markersize=11,
+                markeredgecolor='black', label='Mission orbit', zorder=5)
+        ax.set_xlabel('Inclination [deg]')
+        ax.set_ylabel('Perigee-apogee altitude band [km]')
+        # Focus on the mission band: eccentric neighbours whose apogee is far
+        # above (their bars run off the top) would otherwise squash the view
+        window = max(5.0 * self.altitude_margin / 1000.0, 60.0)
+        ax.set_ylim(band_lo - window, band_hi + window)
+        ax.set_title(f'{len(self.names)} catalog objects share the mission '
+                     f'altitude band (bars leaving the view are eccentric '
+                     f'crossers)', fontsize=11)
+        ax.grid(True, alpha=0.4)
+        ax.legend(loc='upper left')
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['norad_id', 'perigee_km', 'apogee_km',
+                            'inclination_deg'],
+                       np.column_stack([self.neighbours[:, 0], peri_km, apo_km,
+                                        self.neighbours[:, 3]]))
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,12 @@
+<!-- Altitude-band neighbours from the CelesTrak catalog: every object whose
+     perigee-apogee band comes within <AltitudeMargin> of the mission orbit band,
+     regardless of timing/phasing (the static sieve stage of orb_collision_check).
+     The plot shows each neighbour's altitude bar versus inclination. -->
+<Analysis>
+    <Type>orb_collision_alt_check</Type>
+    <ConstellationID>1</ConstellationID>            <!-- Optional: mission satellite selection -->
+    <SatelliteID>1</SatelliteID>                    <!-- Optional -->
+    <CelestrakGroup>active</CelestrakGroup>         <!-- Optional, repeatable: CelesTrak group(s) (default active) -->
+    <!-- <CelestrakGroupFile>../input/my_catalog.txt</CelestrakGroupFile>  local TLE catalog, no download -->
+    <AltitudeMargin>10000</AltitudeMargin>          <!-- Optional: band around the mission orbit [m] (default 10 km) -->
+</Analysis>

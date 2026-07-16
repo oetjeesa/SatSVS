@@ -70,6 +70,7 @@ test configs from scratch.
 | sat_drag_coefficient | 500 km SSO, built-in bus + solar panel mesh — Sentman free-molecular panel drag with shadowing, 30 deg attitude sweep |
 | orb_deltav_injection, orb_deltav_reentry, orb_deltav_collision | 700 km SSO satellite, 6 h coarse window (vis-viva calculators on the satellite-block orbit) — launcher injection correction, two-burn controlled re-entry, avoidance maneuver cost curve |
 | orb_collision_check | Sentinel-1A TLE (July 2026) screened for 1 day against a frozen 265-object CelesTrak snapshot committed in the test folder (CelestrakGroupFile, no network), 10 km threshold at 30 s screening step |
+| orb_collision_alt_check | Same Sentinel-1A mission and frozen snapshot, ±10 km altitude margin — static altitude-band neighbours versus inclination |
 | sat_thermal | 700 km SSO satellite, RAAN 140 deg (beta ~0 for max eclipses), 1 day at 60 s — single-node thermal balance with per-orbit eclipse saw-tooth |
 | sat_aocs | Same 700 km SSO scenario — worst-case disturbance torques (magnetic dominant at 700 km) and momentum buildup |
 | multi_analysis | GPS constellation, static users (Delft, Singapore): cov_satellite_visible plus cov_satellite_sky_angles for SV1 and SV7, all three in a single run (the repeated type writes cov_satellite_sky_angles_2.png) |
@@ -120,6 +121,7 @@ test configs from scratch.
 | orb_deltav_reentry | From 700 km circular: 122.3 m/s to a 250 km perigee, 58.6 m/s further to 50 km, total 180.9 m/s — matches the vis-viva hand calculation |
 | orb_deltav_collision | 10 km apogee raise over the conjunction: 2.65 m/s up + 2.65 m/s back = 5.29 m/s (v·dh/(4a) to first order), linear cost curve |
 | orb_collision_check | 162 of 265 objects pass the apogee/perigee sieve around 695-697 km; 2 conjunctions below 10 km in one day (4.0 km at 10.4 km/s, 8.5 km at 3.5 km/s) — identical events found when screening the full 16071-object live catalog (8 s incl. download) |
+| orb_collision_alt_check | 139 neighbours within ±10 km of the 695-697 km band; the closest are the constellation companions SENTINEL-1C/-1D (identical 695x697 km, 98.2 deg) plus crossing ORBCOMM traffic at 47 deg — SSO cluster clearly visible at 98 deg in the inclination plot |
 | sat_thermal | Per-orbit temperature saw-tooth −63..−21 degC between the eclipse cooling and sunlit heating, converging to a limit cycle from the first-epoch equilibrium; hot/cold case equilibria −11/−63 degC match the (Q/εσA)^0.25 hand calculation |
 | sat_aocs | Textbook torque hierarchy at 700 km: magnetic ~4.6e-5 N m dominant (two peaks per orbit at the magnetic poles), SRP 3.7e-6 dropping to zero in eclipse, gravity gradient 2.4e-6 constant, aero 1.2e-6; momentum ramp 0.24 N m s/orbit |
 | multi_analysis | Three analyses in one run: cov_satellite_visible plus sky angles for SV1 and SV7 with independent metric memory (different pass patterns per satellite); repeated type numbered as cov_satellite_sky_angles_2.png |

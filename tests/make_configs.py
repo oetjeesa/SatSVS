@@ -631,6 +631,18 @@ write_test('orb_collision_check', config(
     '      <ScreeningStep>30</ScreeningStep>',
     propagator='SGP4'))
 
+# Altitude-band neighbours only (the static sieve stage), reusing the frozen
+# snapshot and mission TLE of the orb_collision_check test
+write_test('orb_collision_alt_check', config(
+    tle_constellation('Sentinel-1A', '../orb_collision_check/mission_tle.txt',
+                      'orb_collision_alt_check'),
+    ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-07-15 00:00:00', '2026-07-15 06:00:00', 600,
+    '      <Type>orb_collision_alt_check</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <CelestrakGroupFile>../tests/orb_collision_check/catalog_snapshot.txt</CelestrakGroupFile>\n'
+    '      <AltitudeMargin>10000</AltitudeMargin>'))
+
 # Impulsive delta-v budget calculators on the satellite-block orbit: the time
 # loop is irrelevant, so a short coarse window keeps the tests fast
 write_test('orb_deltav_injection', config(

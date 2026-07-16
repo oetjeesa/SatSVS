@@ -589,6 +589,8 @@ class AppConfig:
                     analysis = AnalysisOrbDeltaVCollision()
                 if type_str == 'orb_collision_check':
                     analysis = AnalysisOrbCollisionCheck()
+                if type_str == 'orb_collision_alt_check':
+                    analysis = AnalysisOrbCollisionAltCheck()
                 if type_str == 'sat_thermal':
                     analysis = AnalysisSatThermal()
                 if type_str == 'sat_aocs':

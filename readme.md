@@ -82,6 +82,7 @@ Analysis can be added as wished, the baseline of analysis available are below
 - __orb_deltav_reentry__: Delta-v of a two-step controlled re-entry (perigee to ~250 km, then to ~50 km)
 - __orb_deltav_collision__: Delta-v of a collision avoidance maneuver (apogee raise over the conjunction and back)
 - __orb_collision_check__: Conjunction screening of the mission orbit against the CelesTrak catalog (miss distances below a screening threshold)
+- __orb_collision_alt_check__: Catalog objects sharing the mission altitude band (±margin), plotted versus inclination
 - __orb_beta_angle__: Solar beta angle and analytic eclipse fraction over time
 - __orb_lifetime__: Orbital lifetime under drag, 25-year rule compliance and deorbit delta-v
 - __orb_environment__: Space environment along the orbit (trapped radiation/SAA, dose vs. shielding, atomic oxygen, micrometeoroids)
@@ -1757,6 +1758,36 @@ Optional in the analysis part are:
   simulation TimeStep.
 
 <img src="/docs/orb_collision_check.png" alt="orb_collision_check"/>
+
+### orb_collision_alt_check
+Altitude-band neighbours from the CelesTrak catalog: every object whose
+perigee–apogee band comes within `<AltitudeMargin>` (default 10 km) of the mission
+orbit's band, regardless of timing and phasing — the static population sharing the
+mission altitude (the sieve stage of orb_collision_check on its own). The plot
+shows each neighbour's perigee–apogee bar versus its inclination, which separates
+co-planar companions from crossing traffic; eccentric objects whose apogee is far
+above run off the top of the focused view. The catalog download/caching and
+`<CelestrakGroup>`/`<CelestrakGroupFile>` parameters are the same as
+orb_collision_check; use that analysis for the time-resolved close approaches.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_collision_alt_check</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+    <CelestrakGroup>active</CelestrakGroup>
+    <CelestrakGroupFile>../input/my_catalog.txt</CelestrakGroupFile>
+    <AltitudeMargin>10000</AltitudeMargin>
+```
+- AltitudeMargin: band around the mission orbit in m (default 10 km).
+
+<img src="/docs/orb_collision_alt_check.png" alt="orb_collision_alt_check"/>
 
 ### sat_thermal
 Single-node spacecraft thermal balance over the orbit. Per time step the heat
