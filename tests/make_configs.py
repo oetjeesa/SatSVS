@@ -617,6 +617,20 @@ write_test('orb_lifetime', config(
     '      <DensityScale>1.0</DensityScale>\n'
     '      <MaxYears>100</MaxYears>'))
 
+# Conjunction screening of Sentinel-1A against a frozen 265-object CelesTrak
+# snapshot (both committed in the test folder, July 2026 epochs) - via
+# CelestrakGroupFile the test needs no network and stays deterministic
+write_test('orb_collision_check', config(
+    tle_constellation('Sentinel-1A', 'mission_tle.txt', 'orb_collision_check'),
+    ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-07-15 00:00:00', '2026-07-16 00:00:00', 300,
+    '      <Type>orb_collision_check</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <CelestrakGroupFile>../tests/orb_collision_check/catalog_snapshot.txt</CelestrakGroupFile>\n'
+    '      <ScreeningDistance>10000</ScreeningDistance>\n'
+    '      <ScreeningStep>30</ScreeningStep>',
+    propagator='SGP4'))
+
 # Impulsive delta-v budget calculators on the satellite-block orbit: the time
 # loop is irrelevant, so a short coarse window keeps the tests fast
 write_test('orb_deltav_injection', config(

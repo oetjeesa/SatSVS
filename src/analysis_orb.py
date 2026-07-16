@@ -1,3 +1,4 @@
+import os
 from math import cos, degrees, radians, sin
 
 import numpy as np
@@ -6,6 +7,7 @@ import cartopy.crs as ccrs
 from astropy.coordinates import get_sun
 from astropy.time import Time
 import astropy.units as u
+from sgp4.api import Satrec, SatrecArray, WGS84
 
 # Project modules
 from constants import GM_EARTH, OMEGA_EARTH, R_EARTH
@@ -1166,6 +1168,214 @@ class AnalysisOrbDeltaVCollision(_AnalysisDeltaVBase):
 
         self.write_csv(sm, ['raise_m', 'dv_up_ms', 'dv_total_ms'],
                        np.column_stack([raises, dv_up, 2.0 * dv_up]))
+
+
+class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
+    """Conjunction screening of the mission orbit against the CelesTrak
+    catalog (classic Hoots smart-sieve): the configured catalog group(s)
+    (default 'active', ~16000 objects) are downloaded and cached next to the
+    Config.xml, an apogee/perigee sieve keeps only the objects whose
+    altitude band can overlap the mission orbit, and the survivors are
+    propagated with the vectorized SGP4 batch propagator on a fine screening
+    grid over the simulation window. At every sample the linear-relative-
+    motion refined miss distance and time of closest approach are computed;
+    approaches below <ScreeningDistance> are reported as conjunction events.
+
+    This is a screening tool, not a collision-probability computation: TLE
+    accuracy is km-level, so treat the reported miss distances as a sieve
+    for which objects deserve a proper (CDM-based) conjunction assessment.
+    The mission trajectory uses the satellite's own TLE when available; for
+    Keplerian(/HPOP) missions an SGP4-equivalent of the orbit elements is
+    screened instead."""
+
+    def __init__(self):
+        super().__init__()
+        self.groups = []  # CelesTrak group names (default ['active'])
+        self.group_file = None  # Local TLE catalog file instead of downloading
+        self.screening_distance = 10e3  # [m] conjunction report threshold
+        self.screening_step = 30.0  # [s] screening grid step
+        self.enabled = True
+        self.names = []  # Catalog object names (sieve survivors)
+        self.norad_ids = None
+        self.sat_array = None  # SatrecArray of the sieve survivors
+        self.mission_satrec = None
+
+    def read_config(self, node):
+        self._read_selection(node)
+        for group in node.findall('CelestrakGroup'):
+            self.groups.append(group.text.strip())
+        if node.find('CelestrakGroupFile') is not None:
+            self.group_file = node.find('CelestrakGroupFile').text
+        if node.find('ScreeningDistance') is not None:
+            self.screening_distance = float(node.find('ScreeningDistance').text)
+        if node.find('ScreeningStep') is not None:
+            self.screening_step = float(node.find('ScreeningStep').text)
+        if not self.groups and self.group_file is None:
+            self.groups = ['active']
+
+    def _catalog_files(self):
+        """Local catalog file(s): the configured file, or the downloaded and
+        cached CelesTrak group(s) with offline fallback."""
+        if self.group_file is not None:
+            return [misc_fn.resolve_path(self.group_file)]
+        files = []
+        for group in self.groups:
+            safe = ''.join(c if c.isalnum() or c in '-_' else '_' for c in group)
+            dest = os.path.join(misc_fn.config_dir(), f'tle_celestrak_group_{safe}.txt')
+            if misc_fn.fetch_celestrak_group(group, dest):
+                ls.logger.info(f'{self.type}: downloaded CelesTrak group '
+                               f'"{group}" into {dest}')
+            elif os.path.isfile(dest):
+                ls.logger.warning(f'{self.type}: using the previously downloaded '
+                                  f'catalog {dest} instead')
+            else:
+                ls.logger.error(f'{self.type}: no catalog available for group '
+                                f'"{group}" (download failed, no cached file)')
+                continue
+            files.append(dest)
+        return files
+
+    def before_loop(self, sm):
+        super().before_loop(sm)
+        satellite = sm.satellites[self.idx_found_satellite]
+        # Mission trajectory as a Satrec: native TLE when available, else an
+        # SGP4-equivalent initialised from the orbit elements (config.py
+        # pattern); for HPOP that equivalent is what gets screened
+        if getattr(satellite, 'satrec', None) is not None:
+            self.mission_satrec = satellite.satrec
+        else:
+            kepler = satellite.kepler
+            self.mission_satrec = Satrec()
+            self.mission_satrec.sgp4init(
+                WGS84, 'i', 0,
+                kepler.epoch_mjd + 2400000.5 - 2433281.5,
+                0.0, 0.0, 0.0,
+                kepler.eccentricity, kepler.arg_perigee, kepler.inclination,
+                kepler.mean_anomaly,
+                np.sqrt(GM_EARTH / kepler.semi_major_axis ** 3) * 60.0,
+                kepler.right_ascension)
+        if sm.orbit_propagator == 'HPOP':
+            ls.logger.warning(f'{self.type}: screening uses an SGP4/Keplerian '
+                              f'equivalent of the mission orbit, not the HPOP '
+                              f'trajectory (fine at km-level TLE accuracy)')
+
+        # Load the catalog and apply the apogee/perigee sieve
+        catalog, names = [], []
+        for catalog_file in self._catalog_files():
+            with open(catalog_file) as f:
+                lines = [line.rstrip() for line in f if line.strip()]
+            for i in range(0, len(lines) - 2, 3):
+                catalog.append(Satrec.twoline2rv(lines[i + 1], lines[i + 2]))
+                names.append(lines[i].strip())
+        if not catalog:
+            ls.logger.error(f'{self.type}: empty catalog. Analysis disabled.')
+            self.enabled = False
+            return
+        n_rad_s = np.array([s.no_kozai for s in catalog]) / 60.0
+        ecc = np.array([s.ecco for s in catalog])
+        sma = (GM_EARTH / n_rad_s ** 2) ** (1.0 / 3.0)
+        obj_peri, obj_apo = sma * (1.0 - ecc), sma * (1.0 + ecc)
+        kepler = satellite.kepler
+        mission_peri = kepler.semi_major_axis * (1.0 - kepler.eccentricity)
+        mission_apo = kepler.semi_major_axis * (1.0 + kepler.eccentricity)
+        margin = self.screening_distance + 10e3  # Sieve pad over the threshold
+        keep = (obj_apo >= mission_peri - margin) & \
+               (obj_peri <= mission_apo + margin)
+        # The mission satellite itself (same NORAD id) is not a conjunction
+        keep &= np.array([s.satnum != self.mission_satrec.satnum
+                          for s in catalog])
+        idx_keep = np.flatnonzero(keep)
+        self.names = [names[i] for i in idx_keep]
+        self.norad_ids = np.array([catalog[i].satnum for i in idx_keep])
+        self.sat_array = SatrecArray([catalog[i] for i in idx_keep])
+        ls.logger.info(f'{self.type}: {len(catalog)} catalog objects, '
+                       f'{len(idx_keep)} pass the apogee/perigee sieve around '
+                       f'{(mission_peri - R_EARTH) / 1000:.0f}-'
+                       f'{(mission_apo - R_EARTH) / 1000:.0f} km '
+                       f'(margin {margin / 1000:.0f} km)')
+
+    def after_loop(self, sm):
+        if not self.enabled or self.sat_array is None or not self.names:
+            return
+        # Screening grid over the simulation window, decoupled from TimeStep
+        num = int(np.ceil((sm.stop_time - sm.start_time) * 86400.0 /
+                          self.screening_step)) + 1
+        times_mjd = sm.start_time + np.arange(num) * self.screening_step / 86400.0
+        jd = np.full(num, np.floor(sm.start_time) + 2400000.5)
+        fr = times_mjd - np.floor(sm.start_time)
+        err_m, r_m, v_m = SatrecArray([self.mission_satrec]).sgp4(jd, fr)
+        err_c, r_c, v_c = self.sat_array.sgp4(jd, fr)
+        valid = (err_c == 0) & (err_m[0] == 0)[None, :]
+
+        # Linear-relative-motion refinement at every sample: miss distance
+        # and offset to the time of closest approach (dr, dv in km, km/s)
+        dr = r_c - r_m[0][None, :, :]
+        dv = v_c - v_m[0][None, :, :]
+        vrel = np.maximum(np.linalg.norm(dv, axis=2), 1e-9)
+        along = np.sum(dr * dv, axis=2) / vrel
+        d_min_km = np.sqrt(np.maximum(np.sum(dr ** 2, axis=2) - along ** 2, 0.0))
+        tca_offset_s = -along / vrel  # [s] from the sample to closest approach
+        near_tca = np.abs(tca_offset_s) <= self.screening_step
+
+        threshold_km = self.screening_distance / 1000.0
+        flagged = valid & near_tca & (d_min_km < threshold_km)
+        doy0 = self.times_f_doy[0] if self.times_f_doy else 0.0
+        events = []  # [doy_tca, norad, miss_km, vrel_kms, alt_km, name idx]
+        for i in np.flatnonzero(flagged.any(axis=1)):
+            samples = np.flatnonzero(flagged[i])
+            # Consecutive flagged samples of the same object are one event
+            for run in np.split(samples, np.flatnonzero(np.diff(samples) > 2) + 1):
+                k = run[np.argmin(d_min_km[i, run])]
+                tca_mjd = times_mjd[k] + tca_offset_s[i, k] / 86400.0
+                alt_km = np.linalg.norm(r_c[i, k]) - R_EARTH / 1000.0
+                events.append([doy0 + (tca_mjd - sm.start_time),
+                               self.norad_ids[i], d_min_km[i, k],
+                               vrel[i, k], alt_km, i])
+        events.sort(key=lambda event: event[2])
+        for doy, norad, miss, vr, alt, i in events[:20]:
+            ls.logger.info(f'{self.type}: {self.names[int(i)]} (NORAD {int(norad)}): '
+                           f'miss {miss:.2f} km at DOY {doy:.4f}, relative '
+                           f'velocity {vr:.1f} km/s, altitude {alt:.0f} km')
+        ls.logger.info(f'{self.type}: {len(events)} conjunction(s) below '
+                       f'{threshold_km:.1f} km over '
+                       f'{(sm.stop_time - sm.start_time):.1f} day(s), '
+                       f'{len(self.names)} screened objects')
+
+        # Per-candidate closest approach over the window (near-TCA samples)
+        cand_min = np.where(near_tca & valid, d_min_km, np.inf).min(axis=1)
+        no_tca = ~np.isfinite(cand_min)
+        cand_min[no_tca] = np.linalg.norm(dr, axis=2).min(axis=1)[no_tca]
+        self.write_csv(sm, ['norad_id', 'min_miss_km'],
+                       np.column_stack([self.norad_ids, cand_min]),
+                       suffix='candidates')
+        self.write_csv(sm, ['doy_tca', 'norad_id', 'miss_km', 'vrel_kms', 'alt_km'],
+                       [event[:5] for event in events])
+
+        if not events:
+            ls.logger.warning(f'{self.type}: no conjunction below the threshold; '
+                              f'no plot produced.')
+            return
+        rows = np.array([event[:5] for event in events])
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.scatter(rows[:, 0], rows[:, 2], c=rows[:, 3], cmap=plt.cm.jet, s=30,
+                   edgecolors='black', linewidths=0.4, zorder=3)
+        cb = plt.colorbar(ax.collections[0], ax=ax, shrink=0.85)
+        cb.set_label('Relative velocity [km/s]')
+        ax.axhline(threshold_km, color='red', linestyle=':',
+                   label=f'Screening distance {threshold_km:.0f} km')
+        for doy, norad, miss, vr, alt, i in events[:5]:
+            ax.annotate(self.names[int(i)], (doy, miss), xytext=(5, 4),
+                        textcoords='offset points', fontsize=8)
+        ax.set_xlabel('Day of Year (DOY) of closest approach')
+        ax.set_ylabel('Miss distance [km]')
+        ax.set_ylim(bottom=0)
+        ax.set_title(f'Conjunction screening: {len(events)} approaches below '
+                     f'{threshold_km:.0f} km ({len(self.names)} screened objects)')
+        ax.grid(True, alpha=0.4)
+        ax.legend(loc='lower right')
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
 
 
 # ---------------------------------------------------------------------------

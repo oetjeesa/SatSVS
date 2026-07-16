@@ -3,8 +3,6 @@ from math import ceil, radians
 from astropy.time import Time
 from sgp4.api import Satrec, WGS84
 import os
-import urllib.parse
-import urllib.request
 import matplotlib.pyplot as plt
 from geopandas import GeoSeries, GeoDataFrame
 from shapely.geometry import Point, Polygon
@@ -26,35 +24,7 @@ import misc_fn
 import copy
 
 
-def fetch_celestrak_tle(identifier, dest_file):
-    """Download the latest TLE set for a satellite from CelesTrak into
-    dest_file. The identifier is a NORAD catalog number (all digits, CATNR
-    query) or a satellite name (NAME query, which may return several
-    satellites - all are written and loaded). Returns True on success; on
-    any failure (offline, unknown satellite) a warning is logged and False
-    returned so the caller can fall back to a previously downloaded file."""
-    if identifier.isdigit():
-        query = f'CATNR={identifier}'
-    else:
-        query = 'NAME=' + urllib.parse.quote(identifier)
-    url = f'https://celestrak.org/NORAD/elements/gp.php?{query}&FORMAT=TLE'
-    try:
-        with urllib.request.urlopen(url, timeout=20) as response:
-            text = response.read().decode('ascii', errors='replace')
-    except Exception as e:
-        ls.logger.warning(f'CelesTrak TLE download failed for "{identifier}": {e}')
-        return False
-    text = text.replace('\r\n', '\n').strip('\n')
-    if 'No GP data found' in text or len(text.splitlines()) < 3:
-        ls.logger.warning(f'CelesTrak returned no TLE for "{identifier}": '
-                          f'{text.splitlines()[0] if text else "empty response"}')
-        return False
-    dest_dir = os.path.dirname(dest_file)
-    if dest_dir:
-        os.makedirs(dest_dir, exist_ok=True)
-    with open(dest_file, 'w') as f:
-        f.write(text + '\n')
-    return True
+fetch_celestrak_tle = misc_fn.fetch_celestrak_tle  # moved to misc_fn (also used by orb_collision_check)
 
 
 class AppConfig:
@@ -617,6 +587,8 @@ class AppConfig:
                     analysis = AnalysisOrbDeltaVReentry()
                 if type_str == 'orb_deltav_collision':
                     analysis = AnalysisOrbDeltaVCollision()
+                if type_str == 'orb_collision_check':
+                    analysis = AnalysisOrbCollisionCheck()
                 if type_str == 'sat_thermal':
                     analysis = AnalysisSatThermal()
                 if type_str == 'sat_aocs':

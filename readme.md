@@ -81,6 +81,7 @@ Analysis can be added as wished, the baseline of analysis available are below
 - __orb_deltav_injection__: Delta-v to correct typical launcher injection errors (Ariane 6, Vega-C, Falcon 9 presets, configurable)
 - __orb_deltav_reentry__: Delta-v of a two-step controlled re-entry (perigee to ~250 km, then to ~50 km)
 - __orb_deltav_collision__: Delta-v of a collision avoidance maneuver (apogee raise over the conjunction and back)
+- __orb_collision_check__: Conjunction screening of the mission orbit against the CelesTrak catalog (miss distances below a screening threshold)
 - __orb_beta_angle__: Solar beta angle and analytic eclipse fraction over time
 - __orb_lifetime__: Orbital lifetime under drag, 25-year rule compliance and deorbit delta-v
 - __orb_environment__: Space environment along the orbit (trapped radiation/SAA, dose vs. shielding, atomic oxygen, micrometeoroids)
@@ -1705,6 +1706,57 @@ Optional in the analysis part are:
 - AvoidanceAltitude: altitude raise over the conjunction point in m (default 10 km).
 
 <img src="/docs/orb_deltav_collision.png" alt="orb_deltav_collision"/>
+
+### orb_collision_check
+Conjunction screening of the mission orbit against the CelesTrak catalog, as a
+classic three-stage smart sieve:
+1. the configured catalog group(s) are downloaded from CelesTrak (default `active`,
+   ~16000 objects, ~3 MB) and cached next to the Config.xml with offline fallback —
+   or a local TLE catalog is read with `<CelestrakGroupFile>` (no network);
+2. an apogee/perigee sieve on the TLE mean elements keeps only the objects whose
+   altitude band can overlap the mission orbit (typically a ~99% cut);
+3. the survivors are propagated with the vectorized SGP4 batch propagator on a fine
+   screening grid over the simulation window, and at every sample the
+   linear-relative-motion refined miss distance and time of closest approach are
+   computed. Approaches below `<ScreeningDistance>` are reported as conjunction
+   events (log table, plot and CSV; a per-candidate closest-approach CSV is also
+   written).
+
+A full `active`-catalog screen of one day takes of the order of 10 seconds
+including the download. **This is a screening tool, not a collision-probability
+computation**: TLE accuracy is km-level, so treat the reported miss distances as a
+sieve for which objects deserve a proper (CDM-based) conjunction assessment — and
+combine with orb_deltav_collision for the cost of the avoidance maneuver. The
+mission trajectory uses the satellite's own TLE when available; for Keplerian or
+HPOP missions an SGP4 equivalent of the orbit elements is screened instead.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_collision_check</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+    <CelestrakGroup>active</CelestrakGroup>
+    <CelestrakGroup>cosmos-2251-debris</CelestrakGroup>
+    <CelestrakGroupFile>../input/my_catalog.txt</CelestrakGroupFile>
+    <ScreeningDistance>10000</ScreeningDistance>
+    <ScreeningStep>30</ScreeningStep>
+```
+- ConstellationID/SatelliteID: select the mission satellite (default: the first).
+- CelestrakGroup: CelesTrak group name, repeatable to combine groups (default
+  `active`; debris clouds like `cosmos-2251-debris` or `fengyun-1c-debris` can be
+  added).
+- CelestrakGroupFile: local TLE catalog file instead of downloading.
+- ScreeningDistance: conjunction report threshold in m (default 10 km).
+- ScreeningStep: screening grid step in s (default 30), independent of the
+  simulation TimeStep.
+
+<img src="/docs/orb_collision_check.png" alt="orb_collision_check"/>
 
 ### sat_thermal
 Single-node spacecraft thermal balance over the orbit. Per time step the heat

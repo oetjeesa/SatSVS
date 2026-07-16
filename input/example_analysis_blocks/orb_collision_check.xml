@@ -1,0 +1,15 @@
+<!-- Conjunction screening of the mission orbit against the CelesTrak catalog: the
+     group TLEs are downloaded (cached next to the Config.xml, offline fallback), an
+     apogee/perigee sieve keeps the objects whose altitude band can overlap the mission
+     orbit, and the survivors are screened with vectorized SGP4 over the simulation
+     window. Screening only (TLE accuracy is km-level), not collision probability. -->
+<Analysis>
+    <Type>orb_collision_check</Type>
+    <ConstellationID>1</ConstellationID>            <!-- Optional: mission satellite selection -->
+    <SatelliteID>1</SatelliteID>                    <!-- Optional -->
+    <CelestrakGroup>active</CelestrakGroup>         <!-- Optional, repeatable: CelesTrak group(s) (default active) -->
+    <!-- <CelestrakGroup>cosmos-2251-debris</CelestrakGroup> -->
+    <!-- <CelestrakGroupFile>../input/my_catalog.txt</CelestrakGroupFile>  local TLE catalog, no download -->
+    <ScreeningDistance>10000</ScreeningDistance>    <!-- Optional: report threshold [m] (default 10 km) -->
+    <ScreeningStep>30</ScreeningStep>               <!-- Optional: screening grid [s] (default 30) -->
+</Analysis>

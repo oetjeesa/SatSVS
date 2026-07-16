@@ -57,6 +57,53 @@ def track_with_gaps(lon, lat):
     return np.insert(lon, jumps, np.nan), np.insert(lat, jumps, np.nan)
 
 
+def _fetch_celestrak(query, label, dest_file, min_lines=3):
+    """Shared CelesTrak gp.php download into dest_file. Returns True on
+    success; on any failure (offline, unknown satellite/group) a warning is
+    logged and False returned so the caller can fall back to a previously
+    downloaded file."""
+    import urllib.request
+    url = f'https://celestrak.org/NORAD/elements/gp.php?{query}&FORMAT=TLE'
+    try:
+        with urllib.request.urlopen(url, timeout=60) as response:
+            text = response.read().decode('ascii', errors='replace')
+    except Exception as e:
+        ls.logger.warning(f'CelesTrak TLE download failed for "{label}": {e}')
+        return False
+    text = text.replace('\r\n', '\n').strip('\n')
+    if 'No GP data found' in text or len(text.splitlines()) < min_lines:
+        ls.logger.warning(f'CelesTrak returned no TLE for "{label}": '
+                          f'{text.splitlines()[0] if text else "empty response"}')
+        return False
+    dest_dir = os.path.dirname(dest_file)
+    if dest_dir:
+        os.makedirs(dest_dir, exist_ok=True)
+    with open(dest_file, 'w') as f:
+        f.write(text + '\n')
+    return True
+
+
+def fetch_celestrak_tle(identifier, dest_file):
+    """Download the latest TLE set for a satellite from CelesTrak into
+    dest_file. The identifier is a NORAD catalog number (all digits, CATNR
+    query) or a satellite name (NAME query, which may return several
+    satellites - all are written and loaded)."""
+    import urllib.parse
+    if identifier.isdigit():
+        query = f'CATNR={identifier}'
+    else:
+        query = 'NAME=' + urllib.parse.quote(identifier)
+    return _fetch_celestrak(query, identifier, dest_file)
+
+
+def fetch_celestrak_group(group, dest_file):
+    """Download the TLEs of a whole CelesTrak group (e.g. 'active',
+    'cosmos-2251-debris') into dest_file, for catalog-wide screening."""
+    import urllib.parse
+    return _fetch_celestrak('GROUP=' + urllib.parse.quote(group.strip()),
+                            f'group {group}', dest_file)
+
+
 def benchmark(func):
     """
     A decorator that prints the time a function takes to execute.

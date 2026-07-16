@@ -88,6 +88,9 @@ ANALYSIS_PARAMS = {
                            'IntermediatePerigee', 'FinalPerigee'},
     'orb_deltav_collision': {'ConstellationID', 'SatelliteID',
                              'AvoidanceAltitude'},
+    'orb_collision_check': {'ConstellationID', 'SatelliteID', 'CelestrakGroup',
+                            'CelestrakGroupFile', 'ScreeningDistance',
+                            'ScreeningStep'},
     'sat_thermal': {'ConstellationID', 'SatelliteID', 'SurfaceArea', 'CrossSectionSun',
                     'CrossSectionEarth', 'Absorptivity', 'Emissivity', 'InternalPowerW',
                     'HeatCapacity', 'InitialTemperature'},
@@ -219,7 +222,7 @@ FLOAT_TAGS = {'EpochMJD', 'Altitude', 'SemiMajorAxis', 'Eccentricity', 'Inclinat
               'MaxOffNadir', 'MinSunElevation', 'MissionYears',
               'AccommodationCoefficient', 'WallTemperature', 'ExosphericTemperature',
               'AttitudeStep', 'MaxFacets', 'IntermediatePerigee', 'FinalPerigee',
-              'AvoidanceAltitude'}
+              'AvoidanceAltitude', 'ScreeningDistance', 'ScreeningStep'}
 BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeSpace2SpaceLinks', 'OrbitsFromPreviousRun', 'IncludeRain',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',
