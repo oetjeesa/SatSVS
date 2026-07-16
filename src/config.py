@@ -611,6 +611,12 @@ class AppConfig:
                     analysis = AnalysisOrbLifetime()
                 if type_str == 'orb_environment':
                     analysis = AnalysisOrbEnvironment()
+                if type_str == 'orb_deltav_injection':
+                    analysis = AnalysisOrbDeltaVInjection()
+                if type_str == 'orb_deltav_reentry':
+                    analysis = AnalysisOrbDeltaVReentry()
+                if type_str == 'orb_deltav_collision':
+                    analysis = AnalysisOrbDeltaVCollision()
                 if type_str == 'sat_thermal':
                     analysis = AnalysisSatThermal()
                 if type_str == 'sat_aocs':

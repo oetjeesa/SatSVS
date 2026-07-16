@@ -1,0 +1,12 @@
+<!-- Delta-v to correct launcher injection errors, target orbit = the <Satellite> block:
+     per launcher the 3-sigma altitude error (tangential burns at both apsides) and the
+     inclination error (plane change) are costed. Without <Launcher> tags typical
+     Ariane 62 / Vega-C / Falcon 9 LEO accuracies are used. -->
+<Analysis>
+    <Type>orb_deltav_injection</Type>
+    <ConstellationID>1</ConstellationID>            <!-- Optional: satellite selection -->
+    <SatelliteID>1</SatelliteID>                    <!-- Optional -->
+    <Launcher>Ariane 62, 5000, 0.04</Launcher>      <!-- Optional, repeatable: "Name, delta_alt_m, delta_inc_deg" (3-sigma) -->
+    <Launcher>Vega-C, 15000, 0.15</Launcher>
+    <Launcher>Falcon 9, 15000, 0.10</Launcher>
+</Analysis>

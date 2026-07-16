@@ -929,6 +929,246 @@ class AnalysisOrbLifetime(AnalysisBase):
 
 
 # ---------------------------------------------------------------------------
+# Impulsive maneuver delta-v budgets (orb_deltav_injection / _reentry /
+# _collision): vis-viva calculators on the orbit of the satellite block
+# ---------------------------------------------------------------------------
+
+def _vis_viva(radius, sma):
+    """Orbital speed [m/s] at radius on an orbit with semi-major axis sma."""
+    return np.sqrt(GM_EARTH * (2.0 / radius - 1.0 / sma))
+
+
+class _AnalysisDeltaVBase(AnalysisBase):
+    """Shared satellite selection of the impulsive delta-v budget analyses:
+    the target/nominal orbit is the one given in the <Satellite> block (or
+    the TLE) of the selected satellite."""
+
+    def __init__(self):
+        super().__init__()
+        self.constellation_id = 0  # Optional selection
+        self.satellite_id = 0  # Optional selection
+        self.idx_found_satellite = 0
+
+    def _read_selection(self, node):
+        if node.find('ConstellationID') is not None:
+            self.constellation_id = int(node.find('ConstellationID').text)
+        if node.find('SatelliteID') is not None:
+            self.satellite_id = int(node.find('SatelliteID').text)
+
+    def before_loop(self, sm):
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if self.constellation_id > 0 and \
+                    satellite.constellation_id != self.constellation_id:
+                continue
+            if self.satellite_id > 0 and satellite.sat_id != self.satellite_id:
+                continue
+            self.idx_found_satellite = idx_sat
+            break
+
+    def _orbit(self, sm):
+        """(semi-major axis, apogee radius, perigee radius) of the selected
+        satellite's nominal orbit."""
+        kepler = sm.satellites[self.idx_found_satellite].kepler
+        sma = kepler.semi_major_axis
+        return sma, sma * (1.0 + kepler.eccentricity), \
+            sma * (1.0 - kepler.eccentricity)
+
+
+# Typical 3-sigma LEO/SSO injection accuracies (launcher user manuals, first
+# order): (name, altitude error [m], inclination error [deg]). Overridable
+# with <Launcher>Name, delta_alt_m, delta_inc_deg</Launcher> config tags.
+_LAUNCHER_PRESETS = [
+    ('Ariane 62', 5000.0, 0.04),
+    ('Vega-C', 15000.0, 0.15),
+    ('Falcon 9', 15000.0, 0.10),
+]
+
+
+class AnalysisOrbDeltaVInjection(_AnalysisDeltaVBase):
+    """Delta-v to correct typical launcher injection errors, with the orbit
+    of the <Satellite> block as the target: per launcher the 3-sigma
+    altitude error (corrected with tangential burns at both apsides,
+    dv = v*dh/(2a)) and inclination error (plane change dv = 2 v sin(di/2))
+    are costed and stacked. Reported as the conservative arithmetic sum and
+    the root-sum-square (a combined burn corrects both cheaper). Defaults:
+    typical Ariane 62 / Vega-C / Falcon 9 LEO accuracies; override with
+    <Launcher>Name, delta_alt_m, delta_inc_deg</Launcher> tags."""
+
+    def __init__(self):
+        super().__init__()
+        self.launchers = []  # (name, altitude error [m], inclination error [rad])
+
+    def read_config(self, node):
+        self._read_selection(node)
+        for launcher in node.findall('Launcher'):
+            name, d_alt, d_inc = [v.strip() for v in launcher.text.split(',')]
+            self.launchers.append((name, float(d_alt), radians(float(d_inc))))
+        if not self.launchers:
+            self.launchers = [(name, d_alt, radians(d_inc))
+                              for name, d_alt, d_inc in _LAUNCHER_PRESETS]
+
+    def after_loop(self, sm):
+        sma, _, _ = self._orbit(sm)
+        v_circ = np.sqrt(GM_EARTH / sma)
+        rows = []
+        for idx, (name, d_alt, d_inc) in enumerate(self.launchers):
+            dv_alt = v_circ * d_alt / (2.0 * sma)  # Both apsides corrected
+            dv_inc = 2.0 * v_circ * np.sin(d_inc / 2.0)
+            dv_sum = dv_alt + dv_inc
+            dv_rss = np.hypot(dv_alt, dv_inc)
+            rows.append([idx + 1, d_alt, degrees(d_inc), dv_alt, dv_inc,
+                         dv_sum, dv_rss])
+            ls.logger.info(f'{self.type}: {name}: altitude +/-{d_alt / 1000:.0f} km '
+                           f'-> {dv_alt:.1f} m/s, inclination '
+                           f'+/-{degrees(d_inc):.2f} deg -> {dv_inc:.1f} m/s, '
+                           f'total {dv_sum:.1f} m/s (RSS {dv_rss:.1f} m/s)')
+        rows = np.array(rows)
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        x = np.arange(len(self.launchers))
+        width = 0.28
+        ax.bar(x - width, rows[:, 3], width, label='Altitude correction', color='C0')
+        ax.bar(x, rows[:, 4], width, label='Inclination correction', color='C1')
+        ax.bar(x + width, rows[:, 5], width, label='Total (sum)', color='C3')
+        ax.set_xticks(x)
+        ax.set_xticklabels([f'{name}\n(±{d_alt / 1000:.0f} km, '
+                            f'±{degrees(d_inc):.2f} deg)'
+                            for name, d_alt, d_inc in self.launchers], fontsize=9)
+        ax.set_ylabel('Delta-v [m/s]')
+        ax.set_title(f'Injection error correction to the target orbit '
+                     f'(altitude {(sma - R_EARTH) / 1000:.0f} km)')
+        ax.grid(True, axis='y', alpha=0.4)
+        ax.legend()
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['launcher_id', 'delta_alt_m', 'delta_inc_deg',
+                            'dv_altitude_ms', 'dv_inclination_ms',
+                            'dv_total_ms', 'dv_rss_ms'], rows)
+
+
+class AnalysisOrbDeltaVReentry(_AnalysisDeltaVBase):
+    """Delta-v of a typical ESA controlled re-entry in two steps: an apogee
+    burn lowering the perigee to a safe intermediate altitude
+    (<IntermediatePerigee>, default 250 km) and the final apogee burn
+    lowering the perigee into the atmosphere for a targeted entry
+    (<FinalPerigee>, default 50 km). Vis-viva at the (fixed) apogee of the
+    orbit given in the <Satellite> block."""
+
+    def __init__(self):
+        super().__init__()
+        self.intermediate_perigee = 250e3  # [m] safe intermediate perigee
+        self.final_perigee = 50e3  # [m] targeted-entry perigee
+
+    def read_config(self, node):
+        self._read_selection(node)
+        if node.find('IntermediatePerigee') is not None:
+            self.intermediate_perigee = float(node.find('IntermediatePerigee').text)
+        if node.find('FinalPerigee') is not None:
+            self.final_perigee = float(node.find('FinalPerigee').text)
+
+    def after_loop(self, sm):
+        sma, r_apo, r_peri = self._orbit(sm)
+        steps = [('nominal orbit', r_peri, 0.0)]
+        for label, target in (('intermediate perigee', self.intermediate_perigee),
+                              ('final entry perigee', self.final_perigee)):
+            sma_before = (r_apo + steps[-1][1]) / 2.0
+            r_target = R_EARTH + target
+            sma_after = (r_apo + r_target) / 2.0
+            dv = _vis_viva(r_apo, sma_before) - _vis_viva(r_apo, sma_after)
+            steps.append((label, r_target, dv))
+        total_dv = sum(dv for _, _, dv in steps)
+        ls.logger.info(f'{self.type}: apogee {(r_apo - R_EARTH) / 1000:.0f} km, '
+                       + ', '.join(f'{label} {(r - R_EARTH) / 1000:.0f} km '
+                                   f'({dv:.1f} m/s)'
+                                   for label, r, dv in steps[1:])
+                       + f', total {total_dv:.1f} m/s')
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        x = np.arange(len(steps))
+        apogees = np.full(len(steps), (r_apo - R_EARTH) / 1000.0)
+        perigees = np.array([(r - R_EARTH) / 1000.0 for _, r, _ in steps])
+        ax.plot(x, apogees, 'o-', color='C0', label='Apogee altitude')
+        ax.plot(x, perigees, 'o-', color='C1', label='Perigee altitude')
+        for i, (label, _, dv) in enumerate(steps):
+            if dv > 0:
+                ax.annotate(f'burn {i}: {dv:.1f} m/s', (i, perigees[i]),
+                            xytext=(0, 12), textcoords='offset points',
+                            ha='center', fontsize=9)
+        ax.set_xticks(x)
+        ax.set_xticklabels([label for label, _, _ in steps], fontsize=9)
+        ax.set_ylabel('Altitude [km]')
+        ax.set_title(f'Controlled re-entry: two apogee burns, '
+                     f'total {total_dv:.1f} m/s')
+        ax.grid(True, alpha=0.4)
+        ax.legend()
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['step', 'perigee_km', 'apogee_km', 'dv_ms'],
+                       [[i, (r - R_EARTH) / 1000.0, (r_apo - R_EARTH) / 1000.0, dv]
+                        for i, (_, r, dv) in enumerate(steps)])
+
+
+class AnalysisOrbDeltaVCollision(_AnalysisDeltaVBase):
+    """Delta-v of a short-term collision avoidance maneuver: a tangential
+    burn half an orbit before the conjunction raises the orbit on the far
+    side (the apogee over the conjunction point) by <AvoidanceAltitude>
+    (default 10 km), and an equal burn afterwards brings the orbit back to
+    nominal - the budget is twice the raise burn. Computed with vis-viva on
+    the orbit of the <Satellite> block; the plot shows the cost versus the
+    raise altitude with the configured value marked."""
+
+    def __init__(self):
+        super().__init__()
+        self.avoidance_altitude = 10e3  # [m] apogee raise over the conjunction
+
+    def read_config(self, node):
+        self._read_selection(node)
+        if node.find('AvoidanceAltitude') is not None:
+            self.avoidance_altitude = float(node.find('AvoidanceAltitude').text)
+
+    def _dv_raise(self, r_burn, sma, raise_m):
+        sma_raised = sma + raise_m / 2.0
+        return _vis_viva(r_burn, sma_raised) - _vis_viva(r_burn, sma)
+
+    def after_loop(self, sm):
+        sma, _, r_peri = self._orbit(sm)
+        raises = np.linspace(0.0, 2.0 * self.avoidance_altitude, 41)
+        dv_up = np.array([self._dv_raise(r_peri, sma, r) for r in raises])
+        dv_config = self._dv_raise(r_peri, sma, self.avoidance_altitude)
+        ls.logger.info(f'{self.type}: raising the orbit over the conjunction by '
+                       f'{self.avoidance_altitude / 1000:.1f} km costs '
+                       f'{dv_config:.2f} m/s, return to nominal the same: '
+                       f'total {2 * dv_config:.2f} m/s per avoidance maneuver')
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(raises / 1000.0, 2.0 * dv_up, '-', color='C0',
+                label='Total (raise + return)')
+        ax.plot(raises / 1000.0, dv_up, '--', color='C1', label='Raise burn only')
+        ax.plot(self.avoidance_altitude / 1000.0, 2.0 * dv_config, 'r^',
+                markersize=10)
+        ax.annotate(f'{2 * dv_config:.2f} m/s at '
+                    f'{self.avoidance_altitude / 1000:.1f} km',
+                    (self.avoidance_altitude / 1000.0, 2.0 * dv_config),
+                    xytext=(8, -12), textcoords='offset points', fontsize=9)
+        ax.set_xlabel('Altitude raise over the conjunction point [km]')
+        ax.set_ylabel('Delta-v [m/s]')
+        ax.set_title(f'Collision avoidance maneuver '
+                     f'(orbit altitude {(sma - R_EARTH) / 1000:.0f} km)')
+        ax.grid(True, alpha=0.4)
+        ax.legend()
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        self.write_csv(sm, ['raise_m', 'dv_up_ms', 'dv_total_ms'],
+                       np.column_stack([raises, dv_up, 2.0 * dv_up]))
+
+
+# ---------------------------------------------------------------------------
 # Space environment models (orb_environment). First-order engineering
 # parametrisations calibrated to published model outputs (AE8/AP8 LEO maps,
 # MSIS mean-activity atomic oxygen, Gruen 1985 micrometeoroids); they place

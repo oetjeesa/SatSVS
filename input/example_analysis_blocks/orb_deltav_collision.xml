@@ -1,0 +1,10 @@
+<!-- Delta-v of a short-term collision avoidance maneuver: a tangential burn half an
+     orbit before the conjunction raises the orbit over the conjunction point by
+     <AvoidanceAltitude>, and an equal burn returns to nominal (budget = twice the
+     raise burn). Orbit = the <Satellite> block. -->
+<Analysis>
+    <Type>orb_deltav_collision</Type>
+    <ConstellationID>1</ConstellationID>            <!-- Optional: satellite selection -->
+    <SatelliteID>1</SatelliteID>                    <!-- Optional -->
+    <AvoidanceAltitude>10000</AvoidanceAltitude>    <!-- Optional: altitude raise over the conjunction [m] (default 10 km) -->
+</Analysis>

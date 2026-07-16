@@ -1,0 +1,10 @@
+<!-- Delta-v of a typical ESA controlled re-entry in two apogee burns: perigee down to a
+     safe intermediate altitude first, then into the atmosphere for a targeted entry.
+     Start orbit = the <Satellite> block. -->
+<Analysis>
+    <Type>orb_deltav_reentry</Type>
+    <ConstellationID>1</ConstellationID>                    <!-- Optional: satellite selection -->
+    <SatelliteID>1</SatelliteID>                            <!-- Optional -->
+    <IntermediatePerigee>250000</IntermediatePerigee>       <!-- Optional: intermediate perigee altitude [m] (default 250 km) -->
+    <FinalPerigee>50000</FinalPerigee>                      <!-- Optional: targeted-entry perigee altitude [m] (default 50 km) -->
+</Analysis>

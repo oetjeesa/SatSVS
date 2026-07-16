@@ -617,6 +617,35 @@ write_test('orb_lifetime', config(
     '      <DensityScale>1.0</DensityScale>\n'
     '      <MaxYears>100</MaxYears>'))
 
+# Impulsive delta-v budget calculators on the satellite-block orbit: the time
+# loop is irrelevant, so a short coarse window keeps the tests fast
+write_test('orb_deltav_injection', config(
+    sso_constellation(), ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-02-01 00:00:00', '2026-02-01 06:00:00', 600,
+    '      <Type>orb_deltav_injection</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <Launcher>Ariane 62, 5000, 0.04</Launcher>\n'
+    '      <Launcher>Vega-C, 15000, 0.15</Launcher>\n'
+    '      <Launcher>Falcon 9, 15000, 0.10</Launcher>'))
+
+write_test('orb_deltav_reentry', config(
+    sso_constellation(), ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-02-01 00:00:00', '2026-02-01 06:00:00', 600,
+    '      <Type>orb_deltav_reentry</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <IntermediatePerigee>250000</IntermediatePerigee>\n'
+    '      <FinalPerigee>50000</FinalPerigee>'))
+
+write_test('orb_deltav_collision', config(
+    sso_constellation(), ground_segment(['Svalbard']), static_users(DELFT),
+    '2026-02-01 00:00:00', '2026-02-01 06:00:00', 600,
+    '      <Type>orb_deltav_collision</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>\n'
+    '      <AvoidanceAltitude>10000</AvoidanceAltitude>'))
+
 write_test('sat_drag_coefficient', config(
     # 500 km SSO with the built-in bus + solar panel model: free-molecular
     # Sentman panel drag with shadowing, attitude sweep at 30 deg for speed

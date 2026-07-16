@@ -78,6 +78,9 @@ Analysis can be added as wished, the baseline of analysis available are below
 - __orb_deltav_element__: Station-keeping delta-v to hold one orbit element in a deadband
   (semi-major axis, eccentricity, inclination, RAAN, argument of perigee, mean
   anomaly), e.g. the orbital decay under atmospheric drag with the HPOP propagator
+- __orb_deltav_injection__: Delta-v to correct typical launcher injection errors (Ariane 6, Vega-C, Falcon 9 presets, configurable)
+- __orb_deltav_reentry__: Delta-v of a two-step controlled re-entry (perigee to ~250 km, then to ~50 km)
+- __orb_deltav_collision__: Delta-v of a collision avoidance maneuver (apogee raise over the conjunction and back)
 - __orb_beta_angle__: Solar beta angle and analytic eclipse fraction over time
 - __orb_lifetime__: Orbital lifetime under drag, 25-year rule compliance and deorbit delta-v
 - __orb_environment__: Space environment along the orbit (trapped radiation/SAA, dose vs. shielding, atomic oxygen, micrometeoroids)
@@ -1624,6 +1627,84 @@ Optional in the analysis part are:
 <img src="/docs/orb_environment_dose_depth.png" alt="orb_environment_dose_depth"/>
 <img src="/docs/orb_environment_atomic_oxygen.png" alt="orb_environment_atomic_oxygen"/>
 <img src="/docs/orb_environment_micrometeoroids.png" alt="orb_environment_micrometeoroids"/>
+
+### orb_deltav_injection
+Delta-v to correct typical launcher injection errors, with the orbit of the
+`<Satellite>` block as the target. Per launcher the 3-sigma altitude error is costed
+with tangential burns at both apsides (dv = v·dh/(2a)) and the inclination error with
+a plane change (dv = 2·v·sin(di/2)); the log reports the conservative arithmetic sum
+and the root-sum-square (a combined burn corrects both at once for less). Without
+`<Launcher>` tags, typical Ariane 62 / Vega-C / Falcon 9 LEO accuracies are used.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_deltav_injection</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+    <Launcher>Ariane 62, 5000, 0.04</Launcher>
+    <Launcher>Vega-C, 15000, 0.15</Launcher>
+```
+- ConstellationID/SatelliteID: select the satellite (default: the first satellite).
+- Launcher: one per launcher, "Name, delta_alt_m, delta_inc_deg" with the 3-sigma
+  injection errors (repeat the tag per launcher; default: the three presets above
+  plus Falcon 9 at 15 km / 0.10 deg).
+
+<img src="/docs/orb_deltav_injection.png" alt="orb_deltav_injection"/>
+
+### orb_deltav_reentry
+Delta-v of a typical ESA controlled re-entry in two steps: an apogee burn lowers the
+perigee to a safe intermediate altitude first, and the final apogee burn brings the
+perigee into the atmosphere for a targeted entry. Computed with vis-viva at the
+(fixed) apogee of the orbit given in the `<Satellite>` block.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_deltav_reentry</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+    <IntermediatePerigee>250000</IntermediatePerigee>
+    <FinalPerigee>50000</FinalPerigee>
+```
+- IntermediatePerigee: perigee altitude in m after the first burn (default 250 km).
+- FinalPerigee: targeted-entry perigee altitude in m of the final burn (default 50 km).
+
+<img src="/docs/orb_deltav_reentry.png" alt="orb_deltav_reentry"/>
+
+### orb_deltav_collision
+Delta-v of a short-term collision avoidance maneuver: a tangential burn half an orbit
+before the conjunction raises the orbit over the conjunction point by
+`<AvoidanceAltitude>`, and an equal burn afterwards returns the orbit to nominal —
+the budget is twice the raise burn. The plot shows the cost versus the raise
+altitude with the configured value marked.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_deltav_collision</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+    <AvoidanceAltitude>10000</AvoidanceAltitude>
+```
+- AvoidanceAltitude: altitude raise over the conjunction point in m (default 10 km).
+
+<img src="/docs/orb_deltav_collision.png" alt="orb_deltav_collision"/>
 
 ### sat_thermal
 Single-node spacecraft thermal balance over the orbit. Per time step the heat

@@ -83,6 +83,11 @@ ANALYSIS_PARAMS = {
                      'DragCoefficient', 'DensityScale', 'MaxYears', 'ReentryAltitude'},
     'orb_environment': {'ConstellationID', 'SatelliteID', 'MissionYears',
                         'SurfaceArea'} | MAP2D_PARAMS,
+    'orb_deltav_injection': {'ConstellationID', 'SatelliteID', 'Launcher'},
+    'orb_deltav_reentry': {'ConstellationID', 'SatelliteID',
+                           'IntermediatePerigee', 'FinalPerigee'},
+    'orb_deltav_collision': {'ConstellationID', 'SatelliteID',
+                             'AvoidanceAltitude'},
     'sat_thermal': {'ConstellationID', 'SatelliteID', 'SurfaceArea', 'CrossSectionSun',
                     'CrossSectionEarth', 'Absorptivity', 'Emissivity', 'InternalPowerW',
                     'HeatCapacity', 'InitialTemperature'},
@@ -213,7 +218,8 @@ FLOAT_TAGS = {'EpochMJD', 'Altitude', 'SemiMajorAxis', 'Eccentricity', 'Inclinat
               'ReentryAltitude', 'MinDuration', 'ReferenceBandwidth', 'PfdLimit',
               'MaxOffNadir', 'MinSunElevation', 'MissionYears',
               'AccommodationCoefficient', 'WallTemperature', 'ExosphericTemperature',
-              'AttitudeStep', 'MaxFacets'}
+              'AttitudeStep', 'MaxFacets', 'IntermediatePerigee', 'FinalPerigee',
+              'AvoidanceAltitude'}
 BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeSpace2SpaceLinks', 'OrbitsFromPreviousRun', 'IncludeRain',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',
