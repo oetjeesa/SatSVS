@@ -219,17 +219,30 @@ class AnalysisBase(AnalysisMap2D):
     def after_loop(self, sm):
         pass
 
-    def write_csv(self, sm, columns, data, suffix=None):
+    def write_csv(self, sm, columns, data, suffix=None, text_columns=None):
         """Numeric dump of the plotted metric next to the PNG, as
         <type>[_suffix].csv with a one-line header. Every analysis dumps the
         data behind its plot so results can be post-processed without a rerun
-        (and the regression tests compare numbers instead of pixels)."""
+        (and the regression tests compare numbers instead of pixels).
+        text_columns: optional [(column_name, values), ...] string columns
+        appended after the numeric ones (e.g. object names next to their
+        NORAD ids); commas in the values are replaced to keep the CSV valid."""
         name = self.type + (f'_{suffix}' if suffix else '') + '.csv'
         data = np.atleast_2d(np.asarray(data, dtype=float))
         if data.size == 0:  # Header-only file: the run produced no data points
             data = data.reshape(0, len(columns))
-        np.savetxt(sm.output_path(name), data, delimiter=',', fmt='%.10g',
-                   header=','.join(columns), comments='')
+        if text_columns:
+            header = ','.join(list(columns) + [n for n, _ in text_columns])
+            with open(sm.output_path(name), 'w') as f:
+                f.write(header + '\n')
+                for i, row in enumerate(data):
+                    text = [str(values[i]).replace(',', ';')
+                            for _, values in text_columns]
+                    f.write(','.join(f'{value:.10g}' for value in row)
+                            + ',' + ','.join(text) + '\n')
+        else:
+            np.savetxt(sm.output_path(name), data, delimiter=',', fmt='%.10g',
+                       header=','.join(columns), comments='')
         ls.logger.info(f'Written data dump {name} ({data.shape[0]} rows)')
 
 

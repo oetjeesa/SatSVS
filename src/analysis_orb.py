@@ -1354,9 +1354,11 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
         cand_min[no_tca] = np.linalg.norm(dr, axis=2).min(axis=1)[no_tca]
         self.write_csv(sm, ['norad_id', 'min_miss_km'],
                        np.column_stack([self.norad_ids, cand_min]),
-                       suffix='candidates')
+                       suffix='candidates', text_columns=[('name', self.names)])
         self.write_csv(sm, ['doy_tca', 'norad_id', 'miss_km', 'vrel_kms', 'alt_km'],
-                       [event[:5] for event in events])
+                       [event[:5] for event in events],
+                       text_columns=[('name', [self.names[int(event[5])]
+                                               for event in events])])
 
         if not events:
             ls.logger.warning(f'{self.type}: no conjunction below the threshold; '
@@ -1476,7 +1478,8 @@ class AnalysisOrbCollisionAltCheck(AnalysisOrbCollisionCheck):
         self.write_csv(sm, ['norad_id', 'perigee_km', 'apogee_km',
                             'inclination_deg'],
                        np.column_stack([self.neighbours[:, 0], peri_km, apo_km,
-                                        self.neighbours[:, 3]]))
+                                        self.neighbours[:, 3]]),
+                       text_columns=[('name', self.names)])
 
 
 # ---------------------------------------------------------------------------
