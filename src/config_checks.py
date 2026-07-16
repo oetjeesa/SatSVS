@@ -90,7 +90,8 @@ ANALYSIS_PARAMS = {
                              'AvoidanceAltitude'},
     'orb_collision_check': {'ConstellationID', 'SatelliteID', 'CelestrakGroup',
                             'CelestrakGroupFile', 'ScreeningDistance',
-                            'ScreeningStep'},
+                            'ScreeningStep', 'HardBodyRadius', 'CovarianceRadial',
+                            'CovarianceAlongTrack', 'CovarianceCrossTrack'},
     'orb_collision_alt_check': {'ConstellationID', 'SatelliteID', 'CelestrakGroup',
                                 'CelestrakGroupFile', 'AltitudeMargin'},
     'sat_thermal': {'ConstellationID', 'SatelliteID', 'SurfaceArea', 'CrossSectionSun',
@@ -225,7 +226,8 @@ FLOAT_TAGS = {'EpochMJD', 'Altitude', 'SemiMajorAxis', 'Eccentricity', 'Inclinat
               'AccommodationCoefficient', 'WallTemperature', 'ExosphericTemperature',
               'AttitudeStep', 'MaxFacets', 'IntermediatePerigee', 'FinalPerigee',
               'AvoidanceAltitude', 'ScreeningDistance', 'ScreeningStep',
-              'AltitudeMargin'}
+              'AltitudeMargin', 'HardBodyRadius', 'CovarianceRadial',
+              'CovarianceAlongTrack', 'CovarianceCrossTrack'}
 BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeSpace2SpaceLinks', 'OrbitsFromPreviousRun', 'IncludeRain',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',

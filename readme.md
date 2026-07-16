@@ -1723,6 +1723,14 @@ classic three-stage smart sieve:
    events (log table, plot and CSV; a per-candidate closest-approach CSV is also
    written).
 
+Every event also gets a first-order collision probability: the configured combined
+position covariance (1-sigma radial/along-track/cross-track in the mission orbit
+frame, TLE-class defaults 1000/3000/1000 m) is projected onto the encounter plane
+perpendicular to the relative velocity, and the small hard-body approximation
+Pc = R_hb²/(2·√det C)·exp(−d·C⁻¹·d/2) is evaluated with the combined
+`<HardBodyRadius>` (default 20 m). Events are ranked and colour-coded by Pc. TLE
+covariances are assumptions, so treat the probabilities as indicative rankings.
+
 A full `active`-catalog screen of one day takes of the order of 10 seconds
 including the download. **This is a screening tool, not a collision-probability
 computation**: TLE accuracy is km-level, so treat the reported miss distances as a
@@ -1747,6 +1755,10 @@ Optional in the analysis part are:
     <CelestrakGroupFile>../input/my_catalog.txt</CelestrakGroupFile>
     <ScreeningDistance>10000</ScreeningDistance>
     <ScreeningStep>30</ScreeningStep>
+    <HardBodyRadius>20</HardBodyRadius>
+    <CovarianceRadial>1000</CovarianceRadial>
+    <CovarianceAlongTrack>3000</CovarianceAlongTrack>
+    <CovarianceCrossTrack>1000</CovarianceCrossTrack>
 ```
 - ConstellationID/SatelliteID: select the mission satellite (default: the first).
 - CelestrakGroup: CelesTrak group name, repeatable to combine groups (default
@@ -1756,6 +1768,9 @@ Optional in the analysis part are:
 - ScreeningDistance: conjunction report threshold in m (default 10 km).
 - ScreeningStep: screening grid step in s (default 30), independent of the
   simulation TimeStep.
+- HardBodyRadius: combined hard-body radius of the two objects in m (default 20).
+- CovarianceRadial/AlongTrack/CrossTrack: combined 1-sigma position covariance in
+  m for the Pc evaluation (defaults 1000/3000/1000).
 
 <img src="/docs/orb_collision_check.png" alt="orb_collision_check"/>
 

@@ -12,4 +12,8 @@
     <!-- <CelestrakGroupFile>../input/my_catalog.txt</CelestrakGroupFile>  local TLE catalog, no download -->
     <ScreeningDistance>10000</ScreeningDistance>    <!-- Optional: report threshold [m] (default 10 km) -->
     <ScreeningStep>30</ScreeningStep>               <!-- Optional: screening grid [s] (default 30) -->
+    <HardBodyRadius>20</HardBodyRadius>             <!-- Optional: combined hard-body radius [m] for Pc (default 20) -->
+    <CovarianceRadial>1000</CovarianceRadial>       <!-- Optional: combined 1-sigma position covariance [m], -->
+    <CovarianceAlongTrack>3000</CovarianceAlongTrack>  <!-- mission radial/along-track/cross-track frame -->
+    <CovarianceCrossTrack>1000</CovarianceCrossTrack>  <!-- (TLE-class defaults 1000/3000/1000 m) -->
 </Analysis>

@@ -1181,9 +1181,14 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
     motion refined miss distance and time of closest approach are computed;
     approaches below <ScreeningDistance> are reported as conjunction events.
 
-    This is a screening tool, not a collision-probability computation: TLE
-    accuracy is km-level, so treat the reported miss distances as a sieve
-    for which objects deserve a proper (CDM-based) conjunction assessment.
+    Every event also gets a first-order collision probability: the
+    configured combined position covariance (1-sigma radial/along-track/
+    cross-track in the mission orbit frame, TLE-class defaults) is projected
+    onto the encounter plane perpendicular to the relative velocity, and the
+    small-radius approximation Pc = R_hb^2/(2*sqrt(det C)) * exp(-d^T C^-1
+    d / 2) is evaluated with the combined <HardBodyRadius>. TLE covariances
+    are assumptions, so treat the Pc values as indicative rankings - a
+    proper (CDM-based) conjunction assessment remains the real screen.
     The mission trajectory uses the satellite's own TLE when available; for
     Keplerian(/HPOP) missions an SGP4-equivalent of the orbit elements is
     screened instead."""
@@ -1194,6 +1199,10 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
         self.group_file = None  # Local TLE catalog file instead of downloading
         self.screening_distance = 10e3  # [m] conjunction report threshold
         self.screening_step = 30.0  # [s] screening grid step
+        self.hard_body_radius = 20.0  # [m] combined hard-body radius
+        self.sigma_radial = 1000.0  # [m] combined 1-sigma covariance, radial
+        self.sigma_along = 3000.0  # [m] along-track (dominant for TLEs)
+        self.sigma_cross = 1000.0  # [m] cross-track
         self.enabled = True
         self.names = []  # Catalog object names (sieve survivors)
         self.norad_ids = None
@@ -1210,8 +1219,53 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
             self.screening_distance = float(node.find('ScreeningDistance').text)
         if node.find('ScreeningStep') is not None:
             self.screening_step = float(node.find('ScreeningStep').text)
+        if node.find('HardBodyRadius') is not None:
+            self.hard_body_radius = float(node.find('HardBodyRadius').text)
+        if node.find('CovarianceRadial') is not None:
+            self.sigma_radial = float(node.find('CovarianceRadial').text)
+        if node.find('CovarianceAlongTrack') is not None:
+            self.sigma_along = float(node.find('CovarianceAlongTrack').text)
+        if node.find('CovarianceCrossTrack') is not None:
+            self.sigma_cross = float(node.find('CovarianceCrossTrack').text)
         if not self.groups and self.group_file is None:
             self.groups = ['active']
+
+    def _collision_probability(self, dr_km, dv_kms, r_mission_km, v_mission_kms):
+        """First-order collision probability of one encounter: the combined
+        covariance (configured 1-sigma values in the mission radial/along-
+        track/cross-track frame) is projected onto the 2D encounter plane
+        perpendicular to the relative velocity, and the small hard-body
+        approximation of the 2D Gaussian integral is evaluated at the miss
+        vector (Foster-style; valid for hard-body radius << sigma)."""
+        v_hat = dv_kms / np.linalg.norm(dv_kms)
+        miss_vec = dr_km - np.dot(dr_km, v_hat) * v_hat
+        miss = np.linalg.norm(miss_vec)
+        if miss > 1e-9:
+            e1 = miss_vec / miss
+        else:  # Head-on within numerics: any direction in the encounter plane
+            e1 = np.cross(v_hat, [0.0, 0.0, 1.0])
+            if np.linalg.norm(e1) < 1e-9:
+                e1 = np.cross(v_hat, [0.0, 1.0, 0.0])
+            e1 /= np.linalg.norm(e1)
+        e2 = np.cross(v_hat, e1)
+        # Combined covariance in the tool frame from the mission RTN axes
+        r_hat = r_mission_km / np.linalg.norm(r_mission_km)
+        w_hat = np.cross(r_mission_km, v_mission_kms)
+        w_hat /= np.linalg.norm(w_hat)
+        s_hat = np.cross(w_hat, r_hat)
+        cov = ((self.sigma_radial / 1e3) ** 2 * np.outer(r_hat, r_hat) +
+               (self.sigma_along / 1e3) ** 2 * np.outer(s_hat, s_hat) +
+               (self.sigma_cross / 1e3) ** 2 * np.outer(w_hat, w_hat))
+        basis = np.vstack([e1, e2])
+        cov_2d = basis @ cov @ basis.T
+        det = float(np.linalg.det(cov_2d))
+        if det <= 0.0:
+            return 0.0
+        inv_00 = float(np.linalg.inv(cov_2d)[0, 0])
+        radius_km = self.hard_body_radius / 1e3
+        pc = (radius_km ** 2 / (2.0 * np.sqrt(det))) * \
+            np.exp(-0.5 * miss ** 2 * inv_00)
+        return float(min(pc, 1.0))
 
     def _catalog_files(self):
         """Local catalog file(s): the configured file, or the downloaded and
@@ -1327,7 +1381,7 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
         threshold_km = self.screening_distance / 1000.0
         flagged = valid & near_tca & (d_min_km < threshold_km)
         doy0 = self.times_f_doy[0] if self.times_f_doy else 0.0
-        events = []  # [doy_tca, norad, miss_km, vrel_kms, alt_km, name idx]
+        events = []  # [doy_tca, norad, miss_km, vrel_kms, alt_km, pc, name idx]
         for i in np.flatnonzero(flagged.any(axis=1)):
             samples = np.flatnonzero(flagged[i])
             # Consecutive flagged samples of the same object are one event
@@ -1335,18 +1389,23 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
                 k = run[np.argmin(d_min_km[i, run])]
                 tca_mjd = times_mjd[k] + tca_offset_s[i, k] / 86400.0
                 alt_km = np.linalg.norm(r_c[i, k]) - R_EARTH / 1000.0
+                pc = self._collision_probability(dr[i, k], dv[i, k],
+                                                 r_m[0, k], v_m[0, k])
                 events.append([doy0 + (tca_mjd - sm.start_time),
                                self.norad_ids[i], d_min_km[i, k],
-                               vrel[i, k], alt_km, i])
-        events.sort(key=lambda event: event[2])
-        for doy, norad, miss, vr, alt, i in events[:20]:
+                               vrel[i, k], alt_km, pc, i])
+        events.sort(key=lambda event: event[5], reverse=True)  # Highest Pc first
+        for doy, norad, miss, vr, alt, pc, i in events[:20]:
             ls.logger.info(f'{self.type}: {self.names[int(i)]} (NORAD {int(norad)}): '
-                           f'miss {miss:.2f} km at DOY {doy:.4f}, relative '
-                           f'velocity {vr:.1f} km/s, altitude {alt:.0f} km')
+                           f'miss {miss:.2f} km, Pc {pc:.1e} at DOY {doy:.4f}, '
+                           f'relative velocity {vr:.1f} km/s, altitude {alt:.0f} km')
         ls.logger.info(f'{self.type}: {len(events)} conjunction(s) below '
                        f'{threshold_km:.1f} km over '
                        f'{(sm.stop_time - sm.start_time):.1f} day(s), '
-                       f'{len(self.names)} screened objects')
+                       f'{len(self.names)} screened objects (Pc with '
+                       f'{self.hard_body_radius:.0f} m hard-body radius, 1-sigma '
+                       f'{self.sigma_radial:.0f}/{self.sigma_along:.0f}/'
+                       f'{self.sigma_cross:.0f} m R/S/W covariance)')
 
         # Per-candidate closest approach over the window (near-TCA samples)
         cand_min = np.where(near_tca & valid, d_min_km, np.inf).min(axis=1)
@@ -1355,26 +1414,30 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
         self.write_csv(sm, ['norad_id', 'min_miss_km'],
                        np.column_stack([self.norad_ids, cand_min]),
                        suffix='candidates', text_columns=[('name', self.names)])
-        self.write_csv(sm, ['doy_tca', 'norad_id', 'miss_km', 'vrel_kms', 'alt_km'],
-                       [event[:5] for event in events],
-                       text_columns=[('name', [self.names[int(event[5])]
+        self.write_csv(sm, ['doy_tca', 'norad_id', 'miss_km', 'vrel_kms', 'alt_km',
+                            'pc'],
+                       [event[:6] for event in events],
+                       text_columns=[('name', [self.names[int(event[6])]
                                                for event in events])])
 
         if not events:
             ls.logger.warning(f'{self.type}: no conjunction below the threshold; '
                               f'no plot produced.')
             return
-        rows = np.array([event[:5] for event in events])
+        rows = np.array([event[:6] for event in events])
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.scatter(rows[:, 0], rows[:, 2], c=rows[:, 3], cmap=plt.cm.jet, s=30,
+        from matplotlib.colors import LogNorm
+        pc_floor = np.maximum(rows[:, 5], 1e-12)  # Log colour scale needs > 0
+        ax.scatter(rows[:, 0], rows[:, 2], c=pc_floor, cmap=plt.cm.jet, s=30,
+                   norm=LogNorm(vmin=pc_floor.min(), vmax=max(pc_floor.max(), 1e-11)),
                    edgecolors='black', linewidths=0.4, zorder=3)
         cb = plt.colorbar(ax.collections[0], ax=ax, shrink=0.85)
-        cb.set_label('Relative velocity [km/s]')
+        cb.set_label('Collision probability Pc [-]')
         ax.axhline(threshold_km, color='red', linestyle=':',
                    label=f'Screening distance {threshold_km:.0f} km')
-        for doy, norad, miss, vr, alt, i in events[:5]:
-            ax.annotate(self.names[int(i)], (doy, miss), xytext=(5, 4),
-                        textcoords='offset points', fontsize=8)
+        for doy, norad, miss, vr, alt, pc, i in events[:5]:
+            ax.annotate(f'{self.names[int(i)]} (Pc {pc:.0e})', (doy, miss),
+                        xytext=(5, 4), textcoords='offset points', fontsize=8)
         ax.set_xlabel('Day of Year (DOY) of closest approach')
         ax.set_ylabel('Miss distance [km]')
         ax.set_ylim(bottom=0)
