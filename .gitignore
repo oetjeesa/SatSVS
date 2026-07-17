@@ -4,3 +4,21 @@ output/main.log
 output/orbits_internal.txt
 .idea/
 .vscode/
+
+# Large CAD/mesh satellite models (user assets, ~100 MB)
+*.stl
+*.glb
+*.gltf
+
+# Downloaded TLE catalog caches
+tle_celestrak*
+
+# Test-run scratch
+tests/*/run_stderr.txt
+
+# Only the Sentinel-1/2/3 reference projects are version controlled
+projects/*
+!projects/readme.md
+!projects/Sentinel-1/
+!projects/Sentinel-2/
+!projects/Sentinel-3/
