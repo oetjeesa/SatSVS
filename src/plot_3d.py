@@ -268,6 +268,14 @@ def _add_gltf_model(plotter, satellite, model_file, model_scale, model_axes):
     place[:3, 3] = offset
     # Compose with (not replace) each node's own transform
     for actor, node in zip(new_actors, node_matrices):
+        # Prefer the material base colour over COLOR_0 vertex scalars (CAD
+        # exports often carry flat gray vertex colours that would override
+        # the material, e.g. Blender ignores them too). A white material
+        # means the vertex colours are the intended colouring - keep them.
+        mapper = actor.GetMapper()
+        if mapper is not None and mapper.GetScalarVisibility():
+            if any(abs(c - 1.0) > 1e-3 for c in actor.GetProperty().GetColor()):
+                mapper.ScalarVisibilityOff()
         combined = place @ node
         matrix = vtk.vtkMatrix4x4()
         for i in range(4):
