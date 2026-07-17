@@ -1,71 +1,73 @@
-2026-07-14 23:23:28,004 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\sat_eclipse_duration\Config.xml validated: 0 warning(s), no errors
-2026-07-14 23:23:28,005 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
-2026-07-14 23:23:28,005 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000001FA1C1B5400>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
-2026-07-14 23:23:28,187 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
-2026-07-14 23:23:28,188 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000001FA6A7C0690>}
-2026-07-14 23:23:28,189 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61074.0, size time steps in sec: 30.0
-2026-07-14 23:23:28,189 - main - INFO - Loaded 1 number of Station to Spacecraft links
-2026-07-14 23:23:28,189 - main - INFO - Loaded 1 number of User to Spacecraft links
-2026-07-14 23:23:28,189 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
-2026-07-14 23:23:28,189 - main - INFO - Eclipse Duration Analysis Initialized
-2026-07-14 23:23:28,189 - main - INFO - Finished reading configuration file
-2026-07-14 23:23:28,239 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
-2026-07-14 23:23:28,378 - main - INFO - Simulation time: 2026-02-01 00:50:00, time step: 100
-2026-07-14 23:23:28,458 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 200
-2026-07-14 23:23:28,535 - main - INFO - Simulation time: 2026-02-01 02:30:00, time step: 300
-2026-07-14 23:23:28,611 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 400
-2026-07-14 23:23:28,692 - main - INFO - Simulation time: 2026-02-01 04:10:00, time step: 500
-2026-07-14 23:23:28,778 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 600
-2026-07-14 23:23:28,865 - main - INFO - Simulation time: 2026-02-01 05:50:00, time step: 700
-2026-07-14 23:23:28,947 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 800
-2026-07-14 23:23:29,030 - main - INFO - Simulation time: 2026-02-01 07:30:00, time step: 900
-2026-07-14 23:23:29,109 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 1000
-2026-07-14 23:23:29,188 - main - INFO - Simulation time: 2026-02-01 09:10:00, time step: 1100
-2026-07-14 23:23:29,271 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 1200
-2026-07-14 23:23:29,352 - main - INFO - Simulation time: 2026-02-01 10:50:00, time step: 1300
-2026-07-14 23:23:29,436 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 1400
-2026-07-14 23:23:29,519 - main - INFO - Simulation time: 2026-02-01 12:30:00, time step: 1500
-2026-07-14 23:23:29,598 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 1600
-2026-07-14 23:23:29,678 - main - INFO - Simulation time: 2026-02-01 14:10:00, time step: 1700
-2026-07-14 23:23:29,760 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 1800
-2026-07-14 23:23:29,839 - main - INFO - Simulation time: 2026-02-01 15:50:00, time step: 1900
-2026-07-14 23:23:29,918 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 2000
-2026-07-14 23:23:29,999 - main - INFO - Simulation time: 2026-02-01 17:30:00, time step: 2100
-2026-07-14 23:23:30,080 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 2200
-2026-07-14 23:23:30,159 - main - INFO - Simulation time: 2026-02-01 19:10:00, time step: 2300
-2026-07-14 23:23:30,241 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 2400
-2026-07-14 23:23:30,320 - main - INFO - Simulation time: 2026-02-01 20:50:00, time step: 2500
-2026-07-14 23:23:30,397 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 2600
-2026-07-14 23:23:30,483 - main - INFO - Simulation time: 2026-02-01 22:30:00, time step: 2700
-2026-07-14 23:23:30,561 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 2800
-2026-07-14 23:23:30,642 - main - INFO - Simulation time: 2026-02-02 00:10:00, time step: 2900
-2026-07-14 23:23:30,722 - main - INFO - Simulation time: 2026-02-02 01:00:00, time step: 3000
-2026-07-14 23:23:30,804 - main - INFO - Simulation time: 2026-02-02 01:50:00, time step: 3100
-2026-07-14 23:23:30,882 - main - INFO - Simulation time: 2026-02-02 02:40:00, time step: 3200
-2026-07-14 23:23:30,958 - main - INFO - Simulation time: 2026-02-02 03:30:00, time step: 3300
-2026-07-14 23:23:31,033 - main - INFO - Simulation time: 2026-02-02 04:20:00, time step: 3400
-2026-07-14 23:23:31,107 - main - INFO - Simulation time: 2026-02-02 05:10:00, time step: 3500
-2026-07-14 23:23:31,185 - main - INFO - Simulation time: 2026-02-02 06:00:00, time step: 3600
-2026-07-14 23:23:31,261 - main - INFO - Simulation time: 2026-02-02 06:50:00, time step: 3700
-2026-07-14 23:23:31,341 - main - INFO - Simulation time: 2026-02-02 07:40:00, time step: 3800
-2026-07-14 23:23:31,420 - main - INFO - Simulation time: 2026-02-02 08:30:00, time step: 3900
-2026-07-14 23:23:31,519 - main - INFO - Simulation time: 2026-02-02 09:20:00, time step: 4000
-2026-07-14 23:23:31,598 - main - INFO - Simulation time: 2026-02-02 10:10:00, time step: 4100
-2026-07-14 23:23:31,677 - main - INFO - Simulation time: 2026-02-02 11:00:00, time step: 4200
-2026-07-14 23:23:31,753 - main - INFO - Simulation time: 2026-02-02 11:50:00, time step: 4300
-2026-07-14 23:23:31,833 - main - INFO - Simulation time: 2026-02-02 12:40:00, time step: 4400
-2026-07-14 23:23:31,916 - main - INFO - Simulation time: 2026-02-02 13:30:00, time step: 4500
-2026-07-14 23:23:31,993 - main - INFO - Simulation time: 2026-02-02 14:20:00, time step: 4600
-2026-07-14 23:23:32,069 - main - INFO - Simulation time: 2026-02-02 15:10:00, time step: 4700
-2026-07-14 23:23:32,145 - main - INFO - Simulation time: 2026-02-02 16:00:00, time step: 4800
-2026-07-14 23:23:32,224 - main - INFO - Simulation time: 2026-02-02 16:50:00, time step: 4900
-2026-07-14 23:23:32,303 - main - INFO - Simulation time: 2026-02-02 17:40:00, time step: 5000
-2026-07-14 23:23:32,382 - main - INFO - Simulation time: 2026-02-02 18:30:00, time step: 5100
-2026-07-14 23:23:32,461 - main - INFO - Simulation time: 2026-02-02 19:20:00, time step: 5200
-2026-07-14 23:23:32,543 - main - INFO - Simulation time: 2026-02-02 20:10:00, time step: 5300
-2026-07-14 23:23:32,618 - main - INFO - Simulation time: 2026-02-02 21:00:00, time step: 5400
-2026-07-14 23:23:32,698 - main - INFO - Simulation time: 2026-02-02 21:50:00, time step: 5500
-2026-07-14 23:23:32,775 - main - INFO - Simulation time: 2026-02-02 22:40:00, time step: 5600
-2026-07-14 23:23:32,853 - main - INFO - Simulation time: 2026-02-02 23:30:00, time step: 5700
-2026-07-14 23:23:32,900 - main - INFO - Plotting analysis sat_eclipse_duration
-2026-07-14 23:23:32,903 - main - INFO - Written data dump sat_eclipse_duration.csv (29 rows)
+2026-07-17 10:47:29,280 - main - INFO - Configuration C:\Users\Michel Tossaint\OneDrive - ESA\Documents\86 - Ipython Notebooks\SatSVS\tests\sat_eclipse_duration\Config.xml validated: 0 warning(s), no errors
+2026-07-17 10:47:29,281 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'num_sat': 1, 'num_planes': 1, 'rx_constellation': '1', 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'tle_file_name': None, 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'frontal_area': None, 'mass': None}
+2026-07-17 10:47:29,281 - main - INFO - {'constellation_id': 1, 'constellation_name': 'LEO-SSO', 'sat_id': 1, 'plane': 1, 'name': '', 'rx_constellation': '1', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [], 'el_mask_max': [], 'uere_list': [], 'kepler': <segments.KeplerSet object at 0x000002B0747A2510>, 'tle_line1': '', 'tle_line2': '', 'frontal_area': None, 'mass': None, 'satrec': None, 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([0., 0., 0.]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([0., 0., 0.]), 'idx_stat_in_view': [], 'idx_sat_in_view': [], 'obs_inci_angle_start': None, 'obs_inci_angle_stop': None, 'obs_swath_start': None, 'obs_swath_stop': None, 'p1': array([0., 0., 0.]), 'p2': array([0., 0., 0.]), 'p3': array([0., 0., 0.]), 'p4': array([0., 0., 0.])}
+2026-07-17 10:47:31,115 - main - INFO - {'constellation_id': 1, 'station_id': 1, 'station_name': 'Svalbard', 'rx_constellation': '1', 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([1254944.19262441,  481104.81267317, 6214020.08271524]), 'vel_ecf': array([0., 0., 0.]), 'lla': array([1.35917515, 0.3660863 , 0.        ]), 'idx_sat_in_view': []}
+2026-07-17 10:47:31,118 - main - INFO - {'type': 'Static', 'user_id': 0, 'rx_constellation': '1', 'name': '', 'ltan': -1, 'sso_raan_ref': None, 'sso_raan_ref_mjd': 0.0, 'elevation_mask': [0.08726646259971647], 'el_mask_max': [1.5707963267948966], 'pos_eci': array([0., 0., 0.]), 'vel_eci': array([0., 0., 0.]), 'pos_ecf': array([3923572.96352912,  299147.24517876, 5002803.34543355]), 'vel_ecf': array([0., 0., 0.]), 'norm_ecf': 0, 'lla': array([0.90757121, 0.07609636, 0.        ]), 'num_lat': 0, 'num_lon': 0, 'idx_sat_in_view': [], 'tle_file_name': '', 'kepler': <segments.KeplerSet object at 0x000002B075840050>}
+2026-07-17 10:47:31,120 - main - INFO - Loaded simulation, start MJD: 61072.0, stop MJD: 61074.0, size time steps in sec: 30.0
+2026-07-17 10:47:31,120 - main - INFO - Loaded 1 number of Station to Spacecraft links
+2026-07-17 10:47:31,120 - main - INFO - Loaded 1 number of User to Spacecraft links
+2026-07-17 10:47:31,120 - main - INFO - Loaded 1 number of Spacecraft to Spacecraft links
+2026-07-17 10:47:31,120 - main - INFO - Eclipse Duration Analysis Initialized
+2026-07-17 10:47:31,120 - main - INFO - Finished reading configuration file
+2026-07-17 10:47:31,200 - main - INFO - Simulation time: 2026-02-01 00:00:00, time step: 0
+2026-07-17 10:47:31,896 - main - INFO - Simulation time: 2026-02-01 00:50:00, time step: 100
+2026-07-17 10:47:32,054 - main - INFO - Simulation time: 2026-02-01 01:40:00, time step: 200
+2026-07-17 10:47:32,201 - main - INFO - Simulation time: 2026-02-01 02:30:00, time step: 300
+2026-07-17 10:47:32,351 - main - INFO - Simulation time: 2026-02-01 03:20:00, time step: 400
+2026-07-17 10:47:32,502 - main - INFO - Simulation time: 2026-02-01 04:10:00, time step: 500
+2026-07-17 10:47:32,661 - main - INFO - Simulation time: 2026-02-01 05:00:00, time step: 600
+2026-07-17 10:47:32,843 - main - INFO - Simulation time: 2026-02-01 05:50:00, time step: 700
+2026-07-17 10:47:32,960 - main - INFO - Simulation time: 2026-02-01 06:40:00, time step: 800
+2026-07-17 10:47:33,137 - main - INFO - Simulation time: 2026-02-01 07:30:00, time step: 900
+2026-07-17 10:47:33,324 - main - INFO - Simulation time: 2026-02-01 08:20:00, time step: 1000
+2026-07-17 10:47:33,514 - main - INFO - Simulation time: 2026-02-01 09:10:00, time step: 1100
+2026-07-17 10:47:33,667 - main - INFO - Simulation time: 2026-02-01 10:00:00, time step: 1200
+2026-07-17 10:47:33,837 - main - INFO - Simulation time: 2026-02-01 10:50:00, time step: 1300
+2026-07-17 10:47:33,988 - main - INFO - Simulation time: 2026-02-01 11:40:00, time step: 1400
+2026-07-17 10:47:34,144 - main - INFO - Simulation time: 2026-02-01 12:30:00, time step: 1500
+2026-07-17 10:47:34,276 - main - INFO - Simulation time: 2026-02-01 13:20:00, time step: 1600
+2026-07-17 10:47:34,442 - main - INFO - Simulation time: 2026-02-01 14:10:00, time step: 1700
+2026-07-17 10:47:34,571 - main - INFO - Simulation time: 2026-02-01 15:00:00, time step: 1800
+2026-07-17 10:47:34,700 - main - INFO - Simulation time: 2026-02-01 15:50:00, time step: 1900
+2026-07-17 10:47:34,865 - main - INFO - Simulation time: 2026-02-01 16:40:00, time step: 2000
+2026-07-17 10:47:35,040 - main - INFO - Simulation time: 2026-02-01 17:30:00, time step: 2100
+2026-07-17 10:47:35,226 - main - INFO - Simulation time: 2026-02-01 18:20:00, time step: 2200
+2026-07-17 10:47:35,391 - main - INFO - Simulation time: 2026-02-01 19:10:00, time step: 2300
+2026-07-17 10:47:35,541 - main - INFO - Simulation time: 2026-02-01 20:00:00, time step: 2400
+2026-07-17 10:47:35,676 - main - INFO - Simulation time: 2026-02-01 20:50:00, time step: 2500
+2026-07-17 10:47:35,858 - main - INFO - Simulation time: 2026-02-01 21:40:00, time step: 2600
+2026-07-17 10:47:36,013 - main - INFO - Simulation time: 2026-02-01 22:30:00, time step: 2700
+2026-07-17 10:47:36,173 - main - INFO - Simulation time: 2026-02-01 23:20:00, time step: 2800
+2026-07-17 10:47:36,367 - main - INFO - Simulation time: 2026-02-02 00:10:00, time step: 2900
+2026-07-17 10:47:36,534 - main - INFO - Simulation time: 2026-02-02 01:00:00, time step: 3000
+2026-07-17 10:47:36,706 - main - INFO - Simulation time: 2026-02-02 01:50:00, time step: 3100
+2026-07-17 10:47:36,880 - main - INFO - Simulation time: 2026-02-02 02:40:00, time step: 3200
+2026-07-17 10:47:37,036 - main - INFO - Simulation time: 2026-02-02 03:30:00, time step: 3300
+2026-07-17 10:47:37,204 - main - INFO - Simulation time: 2026-02-02 04:20:00, time step: 3400
+2026-07-17 10:47:37,350 - main - INFO - Simulation time: 2026-02-02 05:10:00, time step: 3500
+2026-07-17 10:47:37,499 - main - INFO - Simulation time: 2026-02-02 06:00:00, time step: 3600
+2026-07-17 10:47:37,675 - main - INFO - Simulation time: 2026-02-02 06:50:00, time step: 3700
+2026-07-17 10:47:37,835 - main - INFO - Simulation time: 2026-02-02 07:40:00, time step: 3800
+2026-07-17 10:47:38,024 - main - INFO - Simulation time: 2026-02-02 08:30:00, time step: 3900
+2026-07-17 10:47:38,208 - main - INFO - Simulation time: 2026-02-02 09:20:00, time step: 4000
+2026-07-17 10:47:38,368 - main - INFO - Simulation time: 2026-02-02 10:10:00, time step: 4100
+2026-07-17 10:47:38,533 - main - INFO - Simulation time: 2026-02-02 11:00:00, time step: 4200
+2026-07-17 10:47:38,755 - main - INFO - Simulation time: 2026-02-02 11:50:00, time step: 4300
+2026-07-17 10:47:38,966 - main - INFO - Simulation time: 2026-02-02 12:40:00, time step: 4400
+2026-07-17 10:47:39,126 - main - INFO - Simulation time: 2026-02-02 13:30:00, time step: 4500
+2026-07-17 10:47:39,270 - main - INFO - Simulation time: 2026-02-02 14:20:00, time step: 4600
+2026-07-17 10:47:39,423 - main - INFO - Simulation time: 2026-02-02 15:10:00, time step: 4700
+2026-07-17 10:47:39,573 - main - INFO - Simulation time: 2026-02-02 16:00:00, time step: 4800
+2026-07-17 10:47:39,775 - main - INFO - Simulation time: 2026-02-02 16:50:00, time step: 4900
+2026-07-17 10:47:39,946 - main - INFO - Simulation time: 2026-02-02 17:40:00, time step: 5000
+2026-07-17 10:47:40,143 - main - INFO - Simulation time: 2026-02-02 18:30:00, time step: 5100
+2026-07-17 10:47:40,297 - main - INFO - Simulation time: 2026-02-02 19:20:00, time step: 5200
+2026-07-17 10:47:40,438 - main - INFO - Simulation time: 2026-02-02 20:10:00, time step: 5300
+2026-07-17 10:47:40,589 - main - INFO - Simulation time: 2026-02-02 21:00:00, time step: 5400
+2026-07-17 10:47:40,739 - main - INFO - Simulation time: 2026-02-02 21:50:00, time step: 5500
+2026-07-17 10:47:40,898 - main - INFO - Simulation time: 2026-02-02 22:40:00, time step: 5600
+2026-07-17 10:47:41,077 - main - INFO - Simulation time: 2026-02-02 23:30:00, time step: 5700
+2026-07-17 10:47:41,184 - main - INFO - Plotting analysis sat_eclipse_duration
+2026-07-17 10:47:41,188 - main - INFO - Written data dump sat_eclipse_duration.csv (29 rows)
+2026-07-17 10:47:41,520 - main - INFO - Analytic year overview: eclipse 34.9 .. 35.3 min/orbit, beta -12.2 .. -3.0 deg, 0 eclipse-free day(s) in 2026
+2026-07-17 10:47:41,773 - main - INFO - Written data dump sat_eclipse_duration_year.csv (365 rows)

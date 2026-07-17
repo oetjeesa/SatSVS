@@ -25,6 +25,7 @@ import logging_svs as ls
 
 STEFAN_BOLTZMANN = 5.670374419e-8  # [W/m2/K4]
 EARTH_IR_FLUX = 237.0  # Mean Earth infrared emission at the surface [W/m2]
+J2_EARTH = 1.08262668e-3  # Earth oblateness zonal harmonic [-]
 
 # Centred dipole model of the geomagnetic field (SMAD): field constant at the
 # surface on the magnetic equator and the geomagnetic north pole (IGRF-13 2020)
@@ -481,20 +482,96 @@ class AnalysisSatEclipseDuration(AnalysisBase):
     def after_loop(self, sm):
         self.write_csv(sm, ['doy', 'eclipse_duration_min'], self.eclipse_durations)
         if not self.eclipse_durations:
-            ls.logger.warning("No eclipse events detected during the simulation. No plot produced.")
-            return
+            ls.logger.warning("No eclipse events detected during the simulation. "
+                              "No simulated-eclipse plot produced.")
+        else:
+            data = np.array(self.eclipse_durations)
 
-        data = np.array(self.eclipse_durations)
+            fig, ax = plt.subplots(figsize=(12, 6))
+            ax.plot(data[:, 0], data[:, 1], 'k.', markersize=2, label='Eclipse Duration')
+            ax.set_xlabel('Day of Year (DOY)')
+            ax.set_ylabel('Eclipse Duration [minutes]')
+            ax.set_title(f'Eclipse Duration per Orbit')
+            ax.grid(True, which='both', linestyle='--', alpha=0.5)
 
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(data[:, 0], data[:, 1], 'k.', markersize=2, label='Eclipse Duration')
-        ax.set_xlabel('Day of Year (DOY)')
-        ax.set_ylabel('Eclipse Duration [minutes]')
-        ax.set_title(f'Eclipse Duration per Orbit')
-        ax.grid(True, which='both', linestyle='--', alpha=0.5)
+            plt.savefig(sm.output_path('sat_eclipse_duration.png'))
+            plt.show()
 
-        plt.savefig(sm.output_path('sat_eclipse_duration.png'))
+        self._plot_year_analytic(sm)
+
+    def _plot_year_analytic(self, sm):
+        """Analytic eclipse duration per orbit over the calendar year of the
+        simulation start, without simulating the year: the daily solar beta
+        angle follows from the sun ephemeris and the J2-driven RAAN drift
+        (LTAN-defined SSO orbits use the tool's own SSO RAAN model), and the
+        eclipse fraction of a circular orbit at that beta is the analytic
+        cylindrical-shadow expression (same as orb_beta_angle)."""
+        from segments import det_sso_raan
+        satellite = sm.satellites[0]
+        kepler = satellite.kepler
+        year = Time(sm.start_time, format='mjd').datetime.year
+        mjd_jan1 = Time(f'{year}-01-01 00:00:00').mjd
+        mjd = mjd_jan1 + np.arange(365.0)
+        sun_hat = get_sun(Time(mjd, format='mjd')).cartesian.xyz.value
+        sun_hat = sun_hat / np.linalg.norm(sun_hat, axis=0)
+
+        incl = kepler.inclination
+        if satellite.ltan != -1:  # LTAN-defined SSO: the tool's RAAN model
+            raan = np.array([det_sso_raan(satellite, m) for m in mjd])
+        else:  # Secular J2 nodal regression from the epoch elements
+            n_mean = np.sqrt(GM_EARTH / kepler.semi_major_axis ** 3)
+            p_slr = kepler.semi_major_axis * (1.0 - kepler.eccentricity ** 2)
+            raan_rate = -1.5 * n_mean * J2_EARTH * (R_EARTH / p_slr) ** 2 * np.cos(incl)
+            raan = kepler.right_ascension + \
+                raan_rate * 86400.0 * (mjd - kepler.epoch_mjd)
+        orbit_normal = np.vstack([np.sin(raan) * np.sin(incl),
+                                  -np.cos(raan) * np.sin(incl),
+                                  np.full(len(mjd), np.cos(incl))])
+        beta = np.arcsin(np.clip(np.sum(orbit_normal * sun_hat, axis=0), -1.0, 1.0))
+
+        radius = kepler.semi_major_axis
+        shadow_half = np.arcsin(min(R_EARTH / radius, 1.0))
+        fraction = np.zeros(len(mjd))
+        in_shadow = np.abs(beta) < shadow_half
+        fraction[in_shadow] = np.arccos(np.clip(
+            np.sqrt(radius ** 2 - R_EARTH ** 2) /
+            (radius * np.cos(beta[in_shadow])), -1.0, 1.0)) / np.pi
+        period_min = 2.0 * np.pi * np.sqrt(radius ** 3 / GM_EARTH) / 60.0
+        minutes = fraction * period_min
+        eclipse_free = int(np.sum(minutes == 0.0))
+        ls.logger.info(f'Analytic year overview: eclipse '
+                       f'{minutes.min():.1f} .. {minutes.max():.1f} min/orbit, '
+                       f'beta {np.degrees(beta).min():.1f} .. '
+                       f'{np.degrees(beta).max():.1f} deg, '
+                       f'{eclipse_free} eclipse-free day(s) in {year}')
+
+        doy = np.arange(365.0) + 1.0
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+        ax1.plot(doy, minutes, '-', color='C0', linewidth=1.2)
+        ax1.set_xlabel('Day of Year (DOY)')
+        ax1.set_ylabel('Eclipse duration per orbit [min]', color='C0')
+        ax1.tick_params(axis='y', labelcolor='C0')
+        ax1.set_ylim(bottom=0)
+        ax1.grid(True, alpha=0.4)
+        ax2 = ax1.twinx()
+        ax2.plot(doy, np.degrees(beta), '--', color='C1', linewidth=1.0)
+        ax2.set_ylabel('Solar beta angle [deg]', color='C1')
+        ax2.tick_params(axis='y', labelcolor='C1')
+        window = (max(sm.start_time - mjd_jan1 + 1.0, 1.0),
+                  min(sm.stop_time - mjd_jan1 + 1.0, 365.0))
+        if window[1] > window[0]:
+            ax1.axvspan(window[0], window[1], color='gray', alpha=0.3,
+                        label='Simulated window')
+            ax1.legend(loc='upper right', fontsize=8)
+        ax1.set_title(f'Analytic eclipse duration over {year} '
+                      f'(max {minutes.max():.1f} min/orbit)')
+        fig.tight_layout()
+        plt.savefig(sm.output_path('sat_eclipse_duration_year.png'))
         plt.show()
+
+        self.write_csv(sm, ['doy', 'beta_deg', 'eclipse_min'],
+                       np.column_stack([doy, np.degrees(beta), minutes]),
+                       suffix='year')
 
 
 # ---------------------------------------------------------------------------

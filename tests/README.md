@@ -106,7 +106,7 @@ test configs from scratch.
 | nav_dilution_of_precision | Max VDOP 1.8–5.2 worldwide |
 | nav_accuracy | Mean horizontal accuracy 1.7–2.2 m (95%) |
 | sat_battery_depth_discharge | Per-orbit eclipses, DoD swings 0–60% |
-| sat_eclipse_duration | ~35 min eclipse per orbit (beta~0, 700 km) |
+| sat_eclipse_duration | ~35 min eclipse per orbit (beta~0, 700 km); the analytic year overview matches (34.9–35.3 min/orbit all year, beta −12..−3 deg), simulated window shaded on the curve |
 | sat_data_storage | SSR sawtooth 0–250 Gbit, downlink windows shaded |
 | sat_data_latency | Mean 0.95 h, 95% 1.57 h, 100% < 2 h |
 | orb_altitude | Altitude saw-tooth 493–522 km: the ~14 km eccentricity swing plus the ~11 km oblateness signature per orbit, repeating cleanly over the day |

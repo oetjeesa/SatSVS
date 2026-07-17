@@ -1293,6 +1293,15 @@ Detects eclipse entry/exit for the first satellite using the same geometric Eart
 plots the duration in minutes of each eclipse over the simulation (day-of-year on the x-axis).
 A small time step is recommended so eclipse transitions are captured accurately.
 
+A second plot (sat_eclipse_duration_year.png) gives the eclipse duration per orbit
+over the entire calendar year **analytically**, without simulating the year: the
+daily solar beta angle follows from the sun ephemeris and the J2-driven RAAN drift
+(LTAN-defined SSO orbits use the tool's SSO RAAN model), and the eclipse fraction
+of a circular orbit at that beta is the analytic cylindrical-shadow expression
+(same as orb_beta_angle). The beta angle is shown on the right axis, the simulated
+window is shaded, and the log reports the min/max eclipse per orbit and the number
+of eclipse-free days.
+
 The following parameters are needed:
 ```
 <Analysis>
@@ -1301,6 +1310,7 @@ The following parameters are needed:
 ```
 
 <img src="/docs/sat_eclipse_duration.png" alt="sat_eclipse_duration"/>
+<img src="/docs/sat_eclipse_duration_year.png" alt="sat_eclipse_duration_year"/>
 
 
 ### sat_data_storage
