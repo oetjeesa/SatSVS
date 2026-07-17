@@ -1,0 +1,7 @@
+<!-- Geodetic altitude above the ellipsoid: one plot over the full simulation window
+     and one over the first orbit (oblateness saw-tooth + apogee/perigee swing). -->
+<Analysis>
+    <Type>orb_altitude</Type>
+    <ConstellationID>1</ConstellationID>    <!-- Optional: satellite selection (default all satellites) -->
+    <SatelliteID>1</SatelliteID>            <!-- Optional -->
+</Analysis>

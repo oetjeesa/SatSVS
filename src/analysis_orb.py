@@ -930,6 +930,100 @@ class AnalysisOrbLifetime(AnalysisBase):
         self.write_csv(sm, ['years', 'altitude_m'], np.column_stack([times, alts]))
 
 
+class AnalysisOrbAltitude(AnalysisBase):
+    """Geodetic altitude above the ellipsoid (the height over ground) of the
+    selected satellite(s): one plot over the full simulation window and one
+    over the first orbit. For a near-circular LEO the one-orbit plot is
+    dominated by the Earth-oblateness saw-tooth (~+/-10 km between equator
+    and pole crossings) plus the apogee/perigee swing; the full-window plot
+    shows the repeating profile and any secular decay."""
+
+    def __init__(self):
+        super().__init__()
+        self.constellation_id = 0  # Optional selection
+        self.satellite_id = 0  # Optional selection
+        self.sat_metric = None  # (num_sat, num_epoch) altitude [km]
+
+    def read_config(self, node):
+        if node.find('ConstellationID') is not None:
+            self.constellation_id = int(node.find('ConstellationID').text)
+        if node.find('SatelliteID') is not None:
+            self.satellite_id = int(node.find('SatelliteID').text)
+
+    def _selected(self, satellite):
+        if self.constellation_id > 0 and \
+                satellite.constellation_id != self.constellation_id:
+            return False
+        if self.satellite_id > 0 and satellite.sat_id != self.satellite_id:
+            return False
+        return True
+
+    def before_loop(self, sm):
+        self.sat_metric = np.full((sm.num_sat, sm.num_epoch), np.nan)
+
+    def in_loop(self, sm):
+        for idx_sat, satellite in enumerate(sm.satellites):
+            if not self._selected(satellite):
+                continue
+            satellite.det_lla()
+            altitude = np.linalg.norm(satellite.pos_ecf) - \
+                misc_fn.earth_radius_lat(satellite.lla[0])
+            self.sat_metric[idx_sat, sm.cnt_epoch] = altitude / 1000.0
+
+    def after_loop(self, sm):
+        times = np.asarray(self.times_f_doy)
+        selected = [(idx_sat, satellite)
+                    for idx_sat, satellite in enumerate(sm.satellites)
+                    if self._selected(satellite)
+                    and not np.isnan(self.sat_metric[idx_sat]).all()]
+        if not selected:
+            ls.logger.error(f'No satellite matched ConstellationID '
+                            f'{self.constellation_id} / SatelliteID '
+                            f'{self.satellite_id}. No plot produced.')
+            return
+        csv_rows = []
+        fig, ax = plt.subplots(figsize=(10, 6))
+        for idx_sat, satellite in selected:
+            alt = self.sat_metric[idx_sat]
+            ax.plot(times, alt, '-', linewidth=1.0,
+                    label=f'Sat {satellite.sat_id}')
+            ls.logger.info(f'{self.type}: satellite {satellite.sat_id} altitude '
+                           f'{np.nanmin(alt):.1f} .. {np.nanmax(alt):.1f} km, '
+                           f'mean {np.nanmean(alt):.1f} km')
+            csv_rows.append(np.column_stack([times,
+                                             np.full(sm.num_epoch, satellite.sat_id),
+                                             alt]))
+        ax.set_xlabel('DOY [-]')
+        ax.set_ylabel('Altitude above ground [km]')
+        ax.set_title('Altitude over the simulation window')
+        ax.grid(True)
+        ax.legend(fontsize=8)
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '.png'))
+        plt.show()
+
+        # One-orbit view: the orbital period of the first selected satellite
+        period_s = 2.0 * np.pi * np.sqrt(
+            selected[0][1].kepler.semi_major_axis ** 3 / GM_EARTH)
+        n_orbit = min(int(np.ceil(period_s / sm.time_step)) + 1, sm.num_epoch)
+        minutes = (times[:n_orbit] - times[0]) * 24.0 * 60.0
+        fig, ax = plt.subplots(figsize=(10, 6))
+        for idx_sat, satellite in selected:
+            ax.plot(minutes, self.sat_metric[idx_sat, :n_orbit], '-',
+                    linewidth=1.2, label=f'Sat {satellite.sat_id}')
+        ax.set_xlabel('Time since simulation start [min]')
+        ax.set_ylabel('Altitude above ground [km]')
+        ax.set_title(f'Altitude over the first orbit '
+                     f'(period {period_s / 60.0:.1f} min)')
+        ax.grid(True)
+        ax.legend(fontsize=8)
+        fig.tight_layout()
+        plt.savefig(sm.output_path(self.type + '_orbit.png'))
+        plt.show()
+
+        self.write_csv(sm, ['doy', 'sat_id', 'alt_km'], np.vstack(csv_rows))
+
+
 # ---------------------------------------------------------------------------
 # Impulsive maneuver delta-v budgets (orb_deltav_injection / _reentry /
 # _collision): vis-viva calculators on the orbit of the satellite block

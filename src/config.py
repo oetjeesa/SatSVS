@@ -565,6 +565,8 @@ class AppConfig:
                     analysis = AnalysisSatDataStorage()
                 if type_str == 'sat_data_latency':
                     analysis = AnalysisSatDataLatency()
+                if type_str == 'orb_altitude':
+                    analysis = AnalysisOrbAltitude()
                 if type_str == 'orb_kepler_elements':
                     analysis = AnalysisOrbKeplerElements()
                 if type_str == 'orb_air_density':

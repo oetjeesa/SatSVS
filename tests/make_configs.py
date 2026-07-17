@@ -617,6 +617,16 @@ write_test('orb_lifetime', config(
     '      <DensityScale>1.0</DensityScale>\n'
     '      <MaxYears>100</MaxYears>'))
 
+write_test('orb_altitude', config(
+    # 500 km SSO with a small eccentricity: the one-orbit plot shows the
+    # oblateness saw-tooth plus the apogee/perigee swing, the full-day plot
+    # the repeating altitude profile
+    sso_constellation(sma=6878137, incl=97.4, raan=140.0),
+    ground_segment(['Svalbard']), static_users(DELFT), *FEB26, 60,
+    '      <Type>orb_altitude</Type>\n'
+    '      <ConstellationID>1</ConstellationID>\n'
+    '      <SatelliteID>1</SatelliteID>'))
+
 # Conjunction screening of Sentinel-1A against a frozen 265-object CelesTrak
 # snapshot (both committed in the test folder, July 2026 epochs) - via
 # CelestrakGroupFile the test needs no network and stays deterministic

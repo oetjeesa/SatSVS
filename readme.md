@@ -71,6 +71,7 @@ Analysis can be added as wished, the baseline of analysis available are below
 (and explained further below):
 
 ### Orbit
+- __orb_altitude__: Altitude above the ground (ellipsoid) over the full simulation and over one orbit
 - __orb_kepler_elements__: Evolution of the osculating Kepler elements over time
 - __orb_air_density__: Atmospheric density at the satellite altitude over time (HPOP)
 - __orb_disturbance_forces__: Magnitude of the perturbation accelerations over time (HPOP)
@@ -1367,6 +1368,32 @@ Optional in the analysis part are:
 <img src="/docs/sat_data_latency_timeseries.png" alt="sat_data_latency_timeseries"/>
 <img src="/docs/sat_data_latency_histogram.png" alt="sat_data_latency_histogram"/>
 
+
+### orb_altitude
+Plots the geodetic altitude above the ellipsoid (the height over ground) of the
+selected satellite(s): one plot over the full simulation window
+(orb_altitude.png) and one over the first orbit (orb_altitude_orbit.png). For a
+near-circular LEO the one-orbit plot is dominated by the Earth-oblateness
+saw-tooth (about +/-10 km between equator and pole crossings) plus the
+apogee/perigee swing; the full-window plot shows the repeating profile and any
+secular decay. The log reports the minimum/mean/maximum altitude per satellite.
+
+The following parameters are needed:
+```
+<Analysis>
+    <Type>orb_altitude</Type>
+</Analysis>
+```
+
+Optional in the analysis part are:
+```
+    <ConstellationID>1</ConstellationID>
+    <SatelliteID>1</SatelliteID>
+```
+- ConstellationID/SatelliteID: select the satellite(s) (default: all satellites).
+
+<img src="/docs/orb_altitude.png" alt="orb_altitude"/>
+<img src="/docs/orb_altitude_orbit.png" alt="orb_altitude_orbit"/>
 
 ### orb_kepler_elements
 Plots the evolution of all osculating Kepler elements of the satellite(s) over the

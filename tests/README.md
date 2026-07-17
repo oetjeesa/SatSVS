@@ -59,6 +59,7 @@ test configs from scratch.
 | sat_battery_depth_discharge | 700 km SSO satellite defined via LTAN (exercises the SSO/LTAN orbit path), payload latitude limit 60 deg |
 | sat_eclipse_duration | 700 km SSO satellite, RAAN 140 deg → beta ~0 for max eclipses, 2 days at 30 s steps |
 | sat_data_storage, sat_data_latency | 700 km SSO satellite, Svalbard + Inuvik downlink stations, 60 Mbps instrument / 1070 Mbps downlink |
+| orb_altitude | 500 km SSO (e=0.001), Keplerian, 1 day at 60 s — altitude over ground for the full day and the first orbit |
 | orb_kepler_elements | 250 km LEO, HPOP propagator with full force model (NRLMSISE00 drag), 3 days — evolution of all osculating Kepler elements |
 | orb_air_density | Same 250 km LEO/HPOP scenario, 1 day — NRLMSISE00 density at the satellite altitude |
 | orb_disturbance_forces | Same 250 km LEO/HPOP scenario, 1 day — per-epoch magnitude of every enabled perturbation |
@@ -108,6 +109,7 @@ test configs from scratch.
 | sat_eclipse_duration | ~35 min eclipse per orbit (beta~0, 700 km) |
 | sat_data_storage | SSR sawtooth 0–250 Gbit, downlink windows shaded |
 | sat_data_latency | Mean 0.95 h, 95% 1.57 h, 100% < 2 h |
+| orb_altitude | Altitude saw-tooth 493–522 km: the ~14 km eccentricity swing plus the ~11 km oblateness signature per orbit, repeating cleanly over the day |
 | orb_kepler_elements | HPOP + drag: Kepler element evolution (one plot per element) — J2 SMA oscillation over a 15.4 km secular drag decay in 3 days at ~250 km, +0.97 deg/day RAAN drift |
 | orb_air_density | Density 4–8e-11 kg/m3 oscillating anti-phase with the 240–265 km altitude oscillation (perigee peaks) |
 | orb_disturbance_forces | Textbook hierarchy at 250 km: J2 ~2e-2, drag ~2e-5, Moon > Sun > solid tides ~1e-6..5e-7, SRP square wave dropping to zero in eclipse, central gravity 9 m/s2 reference |

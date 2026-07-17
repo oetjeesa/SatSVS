@@ -72,6 +72,7 @@ ANALYSIS_PARAMS = {
                          'DownlinkRateMbps', 'PayloadLatitudeLimit'},
     'sat_data_latency': {'SSRCapacityGbits', 'InitialFillGbits', 'InstrumentRateMbps',
                          'DownlinkRateMbps', 'PayloadLatitudeLimit', 'GroundProcessingMin'},
+    'orb_altitude': {'ConstellationID', 'SatelliteID'},
     'orb_kepler_elements': {'ConstellationID', 'SatelliteID'},
     'orb_air_density': {'ConstellationID', 'SatelliteID'},
     'orb_disturbance_forces': {'ConstellationID', 'SatelliteID'},
