@@ -604,10 +604,14 @@ class AnalysisObsSzaSubSat(AnalysisBase, AnalysisPlot3D):
         fig = plt.figure(figsize=(10, 5))
 
         for i, lat in enumerate(range_lat):
-            print('*** Analysing latitude: '+str(lat))
             df2 = df[(df.Latitude > lat - step_size / 2) & (df.Latitude < lat + step_size / 2)]
-            df3 = df2.groupby(pd.cut(df2["DOY"], np.arange(0, 365, 1))).SZA.mean().reset_index().dropna()
-            plt.plot(df3.index, df3.SZA, label=str(lat))
+            # Daily-mean SZA plotted at the day-of-year bin midpoints (the
+            # positional index would collapse short runs onto x=0, giving an
+            # empty-looking plot); markers keep single-day runs visible
+            df3 = df2.groupby(pd.cut(df2["DOY"], np.arange(0, 367, 1)),
+                              observed=True).SZA.mean().reset_index().dropna()
+            plt.plot([interval.mid for interval in df3.DOY], df3.SZA, 'o-',
+                     markersize=3, linewidth=1.0, label=str(lat))
 
         plt.legend()
         plt.xlabel('DOY [-]')

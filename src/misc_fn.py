@@ -613,20 +613,25 @@ def sat_contour(lla, elevation_mask):
         lam = PI / 2 - elevation_mask - asin(cos(elevation_mask) * R_EARTH / (R_EARTH + lla[2]))
 
 
-    # Problem detected at Az=180 for acos, so step size set to 0.3 iso 0.5
-
     lat_t, lon_t = 0, 0
-    delta_lon = 0
     cnt = 0
     for idx_az in np.arange(0.0, 360.0, step_size):
 
-        try:
-            az = radians(idx_az)
-            lat_t_acc = acos(cos(lam) * sin(lat_s) + sin(lam) * cos(lat_s) * cos(az))
-            lat_t = PI / 2 - lat_t_acc
-            delta_lon = acos((cos(lam)-(sin(lat_s) * sin(lat_t))) / (cos(lat_s) * cos(lat_t)))
-        except:
-            pass
+        az = radians(idx_az)
+        # Arguments clipped to the acos domain: rounding can push them just
+        # outside, and for a visibility circle that encloses a pole the
+        # delta_lon argument legitimately falls below -1 - the boundary
+        # point then sits on the far-side meridian (delta_lon = 180 deg).
+        # (The previous try/except kept a stale/zero delta_lon there, which
+        # drew a spurious horizontal line at high latitude.)
+        arg = cos(lam) * sin(lat_s) + sin(lam) * cos(lat_s) * cos(az)
+        lat_t = PI / 2 - acos(min(max(arg, -1.0), 1.0))
+        denom = cos(lat_s) * cos(lat_t)
+        if fabs(denom) < 1e-12:  # Boundary point at a pole: longitude arbitrary
+            delta_lon = PI
+        else:
+            arg = (cos(lam) - sin(lat_s) * sin(lat_t)) / denom
+            delta_lon = acos(min(max(arg, -1.0), 1.0))
         if idx_az < 180:
             lon_t = lon_s + delta_lon
         else:

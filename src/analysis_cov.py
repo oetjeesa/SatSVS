@@ -362,16 +362,24 @@ class AnalysisCovSatelliteHighest(AnalysisBase, AnalysisPlot3D):
     def after_loop(self, sm):
         metric, lats, lons = [], [], []
         for idx_usr, user in enumerate(sm.users):
-            if self.statistic == 'Min':
-                metric.append(np.min(self.user_metric[idx_usr]))
-            if self.statistic == 'Mean':
-                metric.append(np.mean(self.user_metric[idx_usr]))
-            if self.statistic == 'Max':
-                metric.append(np.max(self.user_metric[idx_usr]))
-            if self.statistic == 'Std':
-                metric.append(np.std(self.user_metric[idx_usr]))
-            if self.statistic == 'Median':
-                metric.append(np.median(self.user_metric[idx_usr]))
+            # Statistic over the epochs with a satellite in view only: the -1
+            # no-visibility sentinel would otherwise drown the value for
+            # sparsely covered grid points (single-satellite missions).
+            # Never-covered points become NaN (blank on the map).
+            values = self.user_metric[idx_usr]
+            values = values[values > -1]
+            if values.size == 0:
+                metric.append(np.nan)
+            elif self.statistic == 'Min':
+                metric.append(np.min(values))
+            elif self.statistic == 'Mean':
+                metric.append(np.mean(values))
+            elif self.statistic == 'Max':
+                metric.append(np.max(values))
+            elif self.statistic == 'Std':
+                metric.append(np.std(values))
+            elif self.statistic == 'Median':
+                metric.append(np.median(values))
             lats.append(degrees(user.lla[0]))
             lons.append(degrees(user.lla[1]))
         self.write_csv(sm, ['lon_deg', 'lat_deg', f'{self.statistic.lower()}_max_elevation_deg'],
@@ -455,10 +463,12 @@ class AnalysisCovSatellitePvt(AnalysisBase):
         ax1.plot(self.times_f_doy, data2.y, 'g+-', label='y_pos')
         ax1.plot(self.times_f_doy, data2.z, 'b+-', label='z_pos')
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-        ax2.set_ylabel('Velocity ECI [m]')  # we already handled the x-label with ax1
+        ax2.set_ylabel('Velocity ECI [m/s]')  # we already handled the x-label with ax1
         ax2.plot(self.times_f_doy, data2.x_vel, 'm+-', label='x_vel')
         ax2.plot(self.times_f_doy, data2.y_vel, 'y+-', label='y_vel')
         ax2.plot(self.times_f_doy, data2.z_vel, 'k+-', label='z_vel')
+        speed = np.linalg.norm(data2[['x_vel', 'y_vel', 'z_vel']].values, axis=1)
+        ax2.plot(self.times_f_doy, speed, 'c-', linewidth=2.0, label='speed')
         ax1.legend(loc=2); ax2.legend(loc=0)
         plt.xlabel('DOY[-]'); fig.tight_layout()
         plt.savefig(sm.output_path(self.type + '.png'))
