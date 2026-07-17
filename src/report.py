@@ -213,7 +213,8 @@ def write_report(results_dir, title=None, meta=None, config_file=None):
     types = _known_types()
     files = sorted(f for f in os.listdir(results_dir)
                    if os.path.isfile(os.path.join(results_dir, f))
-                   and f not in _EXCLUDE and not f.endswith('.log'))
+                   and f not in _EXCLUDE and not f.endswith('.log')
+                   and not f.startswith('tle_celestrak'))  # catalog caches
     groups = {}  # group -> {'png': [...], 'other': [...]}
     ungrouped = []
     for f in files:

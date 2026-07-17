@@ -1272,11 +1272,18 @@ class AnalysisOrbCollisionCheck(_AnalysisDeltaVBase):
         cached CelesTrak group(s) with offline fallback."""
         if self.group_file is not None:
             return [misc_fn.resolve_path(self.group_file)]
+        import time
         files = []
         for group in self.groups:
             safe = ''.join(c if c.isalnum() or c in '-_' else '_' for c in group)
             dest = os.path.join(misc_fn.config_dir(), f'tle_celestrak_group_{safe}.txt')
-            if misc_fn.fetch_celestrak_group(group, dest):
+            if os.path.isfile(dest) and \
+                    time.time() - os.path.getmtime(dest) < 3600.0:
+                # Fresh cache (e.g. another collision analysis in the same
+                # run just fetched it): no repeat download
+                ls.logger.info(f'{self.type}: using the catalog downloaded '
+                               f'less than an hour ago ({dest})')
+            elif misc_fn.fetch_celestrak_group(group, dest):
                 ls.logger.info(f'{self.type}: downloaded CelesTrak group '
                                f'"{group}" into {dest}')
             elif os.path.isfile(dest):

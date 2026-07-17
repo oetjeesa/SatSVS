@@ -207,6 +207,8 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
         self.swath_edges = np.zeros((len(sm.satellites), sm.num_epoch, 2, 3))
 
     def det_angles_from_swath_before_loop(self, sm):
+        # Previous-epoch swath edge points per satellite (see in_loop)
+        self._prev_edges = np.zeros((len(sm.satellites), 2, 3))
         for satellite in sm.satellites:
             idx_found = 0
             for idx, constellation in enumerate(sm.constellations):
@@ -248,13 +250,19 @@ class AnalysisObsSwathPushBroom(AnalysisBase, AnalysisObs, AnalysisPlot3D):
                 satellite.pos_ecf, satellite.pos_ecf + point_vec1, r_earth, np.zeros(3))
             intersect, p2b, satellite.p2 = misc_fn.line_sphere_intersect(
                 satellite.pos_ecf, satellite.pos_ecf + point_vec2, r_earth, np.zeros(3))
-            # 4 Planes of pyramid need to be carefully chosen with normal outwards of pyramid
+            # 4 Planes of pyramid need to be carefully chosen with normal outwards of
+            # pyramid. The previous-epoch edge points are kept per analysis
+            # (self._prev_edges), NOT on the satellite: with several push-broom
+            # analyses in one run a shared satellite attribute would already be
+            # overwritten within the epoch, degenerating the swath pyramid
+            prev1 = self._prev_edges[idx_sat, 0]
+            prev2 = self._prev_edges[idx_sat, 1]
             self.planes[0,:] = misc_fn.plane_normal(satellite.p1, satellite.p2)
-            self.planes[1,:] = misc_fn.plane_normal(satellite.p4, satellite.p3)
-            self.planes[2,:] = misc_fn.plane_normal(satellite.p2, satellite.p4)
-            self.planes[3,:] = misc_fn.plane_normal(satellite.p3, satellite.p1)
-            satellite.p3 = satellite.p1.copy()  # Copy for next run, without .copy() python just refers to same list
-            satellite.p4 = satellite.p2.copy()
+            self.planes[1,:] = misc_fn.plane_normal(prev2, prev1)
+            self.planes[2,:] = misc_fn.plane_normal(satellite.p2, prev2)
+            self.planes[3,:] = misc_fn.plane_normal(prev1, satellite.p1)
+            self._prev_edges[idx_sat, 0] = satellite.p1
+            self._prev_edges[idx_sat, 1] = satellite.p2
             if sm.cnt_epoch > 0:  # Now valid point 3 and 4
                 # misc_fn.check_users_in_plane(
                 #      self.user_pos_ecf, self.planes, self.shared_array)
@@ -355,6 +363,8 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
         self.before_loop_3d(sm)
 
     def det_angles_from_swath_before_loop(self, sm):
+        # Previous-epoch swath edge points per satellite (see in_loop)
+        self._prev_edges = np.zeros((len(sm.satellites), 2, 3))
         for satellite in sm.satellites:
             idx_found = 0
             for idx, constellation in enumerate(sm.constellations):
@@ -388,7 +398,7 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
 
         epoch = time.Time(sm.time_mjd, format='mjd')
         epoch.delta_ut1_utc = 0.0  # avoid getting IERS outside range error
-        for satellite in sm.satellites:
+        for idx_sat, satellite in enumerate(sm.satellites):
             r_earth = self.det_angles_from_swath_in_loop(satellite)
             point_vec1 = misc_fn.rot_vec_vec(-satellite.pos_ecf, np.array(satellite.vel_ecf),
                                              -satellite.obs_inci_angle_start)  # minus for right looking, plus for left
@@ -398,13 +408,19 @@ class AnalysisObsSzaPushBroom(AnalysisBase, AnalysisPlot3D): # In very early sta
                 satellite.pos_ecf, satellite.pos_ecf + point_vec1, r_earth, np.zeros(3))
             intersect, p2b, satellite.p2 = misc_fn.line_sphere_intersect(
                 satellite.pos_ecf, satellite.pos_ecf + point_vec2, r_earth, np.zeros(3))
-            # 4 Planes of pyramid need to be carefully chosen with normal outwards of pyramid
+            # 4 Planes of pyramid need to be carefully chosen with normal outwards of
+            # pyramid. The previous-epoch edge points are kept per analysis
+            # (self._prev_edges), NOT on the satellite: with several push-broom
+            # analyses in one run a shared satellite attribute would already be
+            # overwritten within the epoch, degenerating the swath pyramid
+            prev1 = self._prev_edges[idx_sat, 0]
+            prev2 = self._prev_edges[idx_sat, 1]
             self.planes[0,:] = misc_fn.plane_normal(satellite.p1, satellite.p2)
-            self.planes[1,:] = misc_fn.plane_normal(satellite.p4, satellite.p3)
-            self.planes[2,:] = misc_fn.plane_normal(satellite.p2, satellite.p4)
-            self.planes[3,:] = misc_fn.plane_normal(satellite.p3, satellite.p1)
-            satellite.p3 = satellite.p1.copy()  # Copy for next run, without .copy() python just refers to same list
-            satellite.p4 = satellite.p2.copy()
+            self.planes[1,:] = misc_fn.plane_normal(prev2, prev1)
+            self.planes[2,:] = misc_fn.plane_normal(satellite.p2, prev2)
+            self.planes[3,:] = misc_fn.plane_normal(prev1, satellite.p1)
+            self._prev_edges[idx_sat, 0] = satellite.p1
+            self._prev_edges[idx_sat, 1] = satellite.p2
             if sm.cnt_epoch > 0:  # Now valid point 3 and 4
                 # misc_fn.check_users_in_plane(
                 #      self.user_pos_ecf, self.planes, self.shared_array)
