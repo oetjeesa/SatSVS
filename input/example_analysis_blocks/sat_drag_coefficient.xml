@@ -8,6 +8,8 @@
     <SatelliteID>1</SatelliteID>                            <!-- Optional -->
     <SatelliteModelFile>../input/satellite.stl</SatelliteModelFile>  <!-- Optional: STL in metres (default: built-in model) -->
     <SatelliteModelScale>1.0</SatelliteModelScale>          <!-- Optional: metres per STL unit -->
+    <ModelRamAxis>+x</ModelRamAxis>                         <!-- Optional: STL axis along the flight direction -->
+    <ModelNadirAxis>+z</ModelNadirAxis>                     <!-- Optional: STL axis towards nadir -->
     <AccommodationCoefficient>0.93</AccommodationCoefficient>  <!-- Optional: energy accommodation (0.9-1.0 below ~500 km) -->
     <WallTemperature>300</WallTemperature>                  <!-- Optional: surface temperature [K] -->
     <ExosphericTemperature>1000</ExosphericTemperature>     <!-- Optional: atmosphere temperature scale [K] -->

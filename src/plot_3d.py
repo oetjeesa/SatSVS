@@ -27,6 +27,7 @@ import numpy as np
 
 from constants import R_EARTH
 import logging_svs as ls
+import misc_fn
 
 # Textures live in the repo's input/ directory, resolved relative to this file
 # so runs started from outside src/ (e.g. the test runner) find them too
@@ -59,10 +60,22 @@ def _sphere_grid(radius, inside=False):
     return grid
 
 
+def _smooth_texture(texture):
+    """Linear interpolation + mipmaps on a texture: without them the heavily
+    minified textures (the sky panorama on the huge background sphere) render
+    as coarse nearest-neighbour blocks."""
+    for attribute in ('interpolate', 'mipmap'):
+        try:
+            setattr(texture, attribute, True)
+        except AttributeError:
+            pass
+    return texture
+
+
 def _make_earth(radius):
     """Textured Earth sphere (NASA Blue Marble, oceans and land)."""
     import pyvista as pv
-    return _sphere_grid(radius), pv.read_texture(EARTH_TEXTURE)
+    return _sphere_grid(radius), _smooth_texture(pv.read_texture(EARTH_TEXTURE))
 
 
 def _add_sky(plotter):
@@ -74,7 +87,8 @@ def _add_sky(plotter):
         ls.logger.info(f'No star map at {STAR_TEXTURE}; plain black background used')
         return
     sky = _sphere_grid(R_EARTH * 60.0, inside=True)
-    plotter.add_mesh(sky, texture=pv.read_texture(STAR_TEXTURE), lighting=False)
+    plotter.add_mesh(sky, texture=_smooth_texture(pv.read_texture(STAR_TEXTURE)),
+                     lighting=False)
 
 
 def _add_clouds(plotter):
@@ -105,12 +119,21 @@ def _add_clouds(plotter):
                      ambient=0.3, opacity=0.99)
 
 
-def _make_satellite_meshes(model_file=None):
+def _make_satellite_meshes(model_file=None, model_axes=None):
     """Satellite model in the body frame (+x flight direction, +y solar panel
-    axis, +z towards nadir), roughly unit-sized. Returns [(mesh, color), ...]."""
+    axis, +z towards nadir), roughly unit-sized. model_axes optionally names
+    the MODEL axes pointing along ram and nadir (e.g. ('+y', '+z')) for STL
+    files not drawn in the body convention. Returns [(mesh, color), ...]."""
     import pyvista as pv
     if model_file:
         mesh = pv.read(model_file)
+        if isinstance(mesh, pv.MultiBlock):  # e.g. glTF geometry
+            mesh = mesh.combine().extract_surface()
+        if model_axes is not None:
+            rotation = misc_fn.model_axes_rotation(*model_axes)
+            if rotation is not None:
+                mesh = mesh.copy()
+                mesh.points = np.asarray(mesh.points, dtype=float) @ rotation.T
         # Normalise user models to unit size around their centre
         mesh = mesh.translate(np.array(mesh.center) * -1.0)
         extent = max(mesh.length, 1e-9)
@@ -177,7 +200,8 @@ def _orbit_scene_points(pos_hist_eci, gmst):
 
 
 def _add_orbit_and_model(plotter, satellite, pos_hist, model_file, model_scale,
-                         show_satellite=True, show_orbit=True, draw_nadir=True):
+                         show_satellite=True, show_orbit=True, draw_nadir=True,
+                         model_axes=None):
     """Orbit polyline (already in scene coordinates), the satellite model at
     the last epoch (nadir pointing) and optionally the nadir line down to the
     subsatellite point (suppressed by the callers for large constellations,
@@ -187,16 +211,73 @@ def _add_orbit_and_model(plotter, satellite, pos_hist, model_file, model_scale,
         plotter.add_mesh(pv.lines_from_points(pos_hist), color='cyan', line_width=1)
     if not show_satellite:
         return
-    rot = _body_to_ecf(satellite.pos_ecf, satellite.vel_ecf)
-    for mesh, color in _make_satellite_meshes(model_file):
-        pts = np.asarray(mesh.points, dtype=float) * model_scale
-        mesh = mesh.copy()
-        mesh.points = (rot @ pts.T).T + satellite.pos_ecf
-        plotter.add_mesh(mesh, color=color, smooth_shading=False)
+    if model_file and str(model_file).lower().endswith(('.glb', '.gltf')):
+        # Coloured glTF export (e.g. from Blender): imported with materials
+        # and placed via the actor transform instead of mesh point edits
+        _add_gltf_model(plotter, satellite, model_file, model_scale, model_axes)
+    else:
+        rot = _body_to_ecf(satellite.pos_ecf, satellite.vel_ecf)
+        for mesh, color in _make_satellite_meshes(model_file, model_axes):
+            pts = np.asarray(mesh.points, dtype=float) * model_scale
+            mesh = mesh.copy()
+            mesh.points = (rot @ pts.T).T + satellite.pos_ecf
+            plotter.add_mesh(mesh, color=color, smooth_shading=False)
     if draw_nadir:
         nadir_end = satellite.pos_ecf / np.linalg.norm(satellite.pos_ecf) * R_EARTH
         plotter.add_mesh(pv.Line(satellite.pos_ecf, nadir_end),
                          color='yellow', line_width=1)
+
+
+def _add_gltf_model(plotter, satellite, model_file, model_scale, model_axes):
+    """Coloured glTF/GLB satellite model (e.g. a Blender export with
+    materials): imported with vtkGLTFImporter so the colours survive, then
+    oriented and placed at the satellite with a single actor user matrix
+    (body attitude x model-axes alignment x unit-size normalisation)."""
+    import vtk
+
+    actors_before = set(plotter.renderer.actors.keys())
+    plotter.import_gltf(str(model_file))
+    new_actors = [actor for key, actor in plotter.renderer.actors.items()
+                  if key not in actors_before]
+    if not new_actors:
+        ls.logger.error(f'glTF model {model_file} imported no geometry')
+        return
+    # Centre and size from the imported actors (bounding box diagonal, the
+    # same normalisation as the mesh path). GetBounds() includes each node's
+    # own transform (Blender's Y-up conversion and per-part placement live
+    # there), so these are scene-world coordinates.
+    node_matrices = []
+    for actor in new_actors:
+        m = actor.GetMatrix()
+        node_matrices.append(np.array([[m.GetElement(i, j) for j in range(4)]
+                                       for i in range(4)]))
+    bounds = np.array([actor.GetBounds() for actor in new_actors], dtype=float)
+    low = bounds[:, 0::2].min(axis=0)
+    high = bounds[:, 1::2].max(axis=0)
+    center = (low + high) / 2.0
+    extent = max(float(np.linalg.norm(high - low)), 1e-9)
+
+    align = misc_fn.model_axes_rotation(*(model_axes or ('+x', '+z')))
+    if align is None:
+        align = np.eye(3)
+    linear = _body_to_ecf(satellite.pos_ecf, satellite.vel_ecf) @ align
+    linear = linear * (model_scale * 2.0 / extent)
+    offset = satellite.pos_ecf - linear @ center
+    place = np.eye(4)
+    place[:3, :3] = linear
+    place[:3, 3] = offset
+    # Compose with (not replace) each node's own transform
+    for actor, node in zip(new_actors, node_matrices):
+        combined = place @ node
+        matrix = vtk.vtkMatrix4x4()
+        for i in range(4):
+            for j in range(4):
+                matrix.SetElement(i, j, combined[i, j])
+        actor.SetPosition(0.0, 0.0, 0.0)
+        actor.SetOrientation(0.0, 0.0, 0.0)
+        actor.SetScale(1.0, 1.0, 1.0)
+        actor.SetOrigin(0.0, 0.0, 0.0)
+        actor.SetUserMatrix(matrix)
 
 
 def _add_stations(plotter, sm):
@@ -204,6 +285,61 @@ def _add_stations(plotter, sm):
     for station in sm.stations:
         marker = pv.Sphere(radius=R_EARTH * 0.008, center=station.pos_ecf)
         plotter.add_mesh(marker, color='magenta')
+
+
+def _add_scene_extras(plotter, sm, satellites, ground_track=None,
+                      station_cones=False, satellite_cone=False):
+    """Optional generic 3D scene layers of the <Plot3D> renders:
+    - ground_track: recorded (num_sat, num_epoch, 2) [lat, lon] subsatellite
+      track(s) drawn on the surface (<ShowGroundTrack>, shared with the 2D
+      map decorations)
+    - station_cones (<StationCones>): translucent visibility cone of every
+      ground station, opening 90 deg minus its elevation mask, up to the
+      first satellite's altitude
+    - satellite_cone (<SatelliteCone>): translucent cone from each satellite
+      at its final position down to its geometric-horizon circle on the
+      surface"""
+    import pyvista as pv
+    if ground_track is not None:
+        tracks = np.asarray(ground_track, dtype=float)
+        if tracks.ndim == 2:
+            tracks = tracks[None, :, :]
+        for track in tracks:
+            used = np.isfinite(track[:, 0]) & ~np.all(track == 0, axis=1)
+            if used.sum() > 1:
+                points = _track_points(track[used, 0], track[used, 1],
+                                       R_EARTH * 1.003)
+                plotter.add_mesh(pv.lines_from_points(points), color='orange',
+                                 line_width=2)
+    if station_cones and len(satellites):
+        r_sat = float(np.linalg.norm(satellites[0].pos_ecf))
+        for station in sm.stations:
+            mask = station.elevation_mask[0] if station.elevation_mask else 0.0
+            zenith = station.pos_ecf / np.linalg.norm(station.pos_ecf)
+            # Cone truncated at the slant range to the satellite altitude
+            # shell (Earth-curvature aware) so a low mask does not produce a
+            # flat-Earth sheet dwarfing the scene
+            slant = (np.sqrt(max(r_sat ** 2 - (R_EARTH * np.cos(mask)) ** 2,
+                                 0.0)) - R_EARTH * np.sin(mask))
+            height = max(slant * np.sin(mask), 100e3)
+            radius = slant * np.cos(mask)
+            cone = pv.Cone(center=(station.pos_ecf + zenith * height / 2.0),
+                           direction=(-zenith).tolist(), height=height,
+                           radius=radius, resolution=60, capping=False)
+            plotter.add_mesh(cone, color='yellow', opacity=0.12)
+    if satellite_cone:
+        for satellite in satellites:
+            r_sat = float(np.linalg.norm(satellite.pos_ecf))
+            if r_sat <= R_EARTH:
+                continue
+            lam = np.arccos(min(R_EARTH / r_sat, 1.0))  # Horizon earth angle
+            nadir = -satellite.pos_ecf / r_sat
+            height = r_sat - R_EARTH * np.cos(lam)
+            radius = R_EARTH * np.sin(lam)
+            cone = pv.Cone(center=(satellite.pos_ecf + nadir * height / 2.0),
+                           direction=(-nadir).tolist(), height=height,
+                           radius=radius, resolution=72, capping=False)
+            plotter.add_mesh(cone, color='cyan', opacity=0.18)
 
 
 def _finish_scene(plotter, satellites, off_screen, file_name, content_radius=None):
@@ -250,7 +386,9 @@ SCALAR_BAR_ARGS = dict(color='white', title_font_size=22, label_font_size=17,
 
 def plot_ground_track_3d(sm, satellites, metrics, file_name,
                          model_file=None, model_scale=200e3,
-                         show_satellite=True, show_orbit=True, clouds=False):
+                         show_satellite=True, show_orbit=True, clouds=False,
+                  model_axes=None, ground_track=None, show_stations=False,
+                  station_cones=False, satellite_cone=False):
     """Render ground track(s), ECF orbit path(s), stations and a 3D satellite
     model on a textured Earth. satellites: list of Satellite objects; metrics:
     matching list of (num_epoch, 5) arrays holding per-epoch
@@ -273,8 +411,11 @@ def plot_ground_track_3d(sm, satellites, metrics, file_name,
         if show_orbit:
             r_content = max(r_content, np.linalg.norm(pos_hist, axis=1).max())
         _add_orbit_and_model(plotter, satellite, _orbit_scene_points(pos_hist, sm.time_gmst),
-                             model_file, model_scale, show_satellite, show_orbit)
+                             model_file, model_scale, show_satellite, show_orbit,
+                             model_axes=model_axes)
     _add_stations(plotter, sm)
+    _add_scene_extras(plotter, sm, satellites, ground_track=ground_track,
+                      station_cones=station_cones, satellite_cone=satellite_cone)
     _finish_scene(plotter, satellites, off_screen, file_name, r_content)
 
 
@@ -303,7 +444,9 @@ def _slerp_across(edges, n_across):
 
 def plot_swath_3d(sm, satellites, sat_pos_hist, swath_edges, file_name,
                   model_file=None, model_scale=200e3,
-                  show_satellite=True, show_orbit=True, clouds=False):
+                  show_satellite=True, show_orbit=True, clouds=False,
+                  model_axes=None, ground_track=None, show_stations=False,
+                  station_cones=False, satellite_cone=False):
     """Render the swath coverage as a semi-transparent ribbon on the textured
     Earth, plus orbit path(s), stations and the 3D satellite model.
 
@@ -338,7 +481,8 @@ def plot_swath_3d(sm, satellites, sat_pos_hist, swath_edges, file_name,
         pos_used = ~np.all(sat_pos_hist[idx_sat] == 0, axis=1)
         _add_orbit_and_model(plotter, satellite,
                              _orbit_scene_points(sat_pos_hist[idx_sat][pos_used], sm.time_gmst),
-                             model_file, model_scale, show_satellite, show_orbit)
+                             model_file, model_scale, show_satellite, show_orbit,
+                             model_axes=model_axes)
     _add_stations(plotter, sm)
     r_content = float(np.linalg.norm(sat_pos_hist.reshape(-1, 3), axis=1).max()) \
         if show_orbit else 0.0
@@ -346,7 +490,8 @@ def plot_swath_3d(sm, satellites, sat_pos_hist, swath_edges, file_name,
 
 
 def _add_orbits_and_models(plotter, gmst, satellites, sat_pos_hist,
-                           model_file, model_scale, show_satellite, show_orbit):
+                           model_file, model_scale, show_satellite, show_orbit,
+                           model_axes=None):
     """Orbit + model for every satellite (sat_pos_hist holds ECI positions and
     may be None). Returns the largest radius of the drawn orbit content."""
     draw_nadir = len(satellites) <= 2
@@ -361,14 +506,16 @@ def _add_orbits_and_models(plotter, gmst, satellites, sat_pos_hist,
             pos_hist = _orbit_scene_points(pos_hist, gmst)
         _add_orbit_and_model(plotter, satellite, pos_hist,
                              model_file, model_scale, show_satellite, show_orbit,
-                             draw_nadir)
+                             draw_nadir, model_axes=model_axes)
     return r_content
 
 
 def plot_points_3d(sm, satellites, sat_pos_hist, points_llv, scalar_label,
                    file_name, cmap='jet', clim=None, point_size=7.0,
                    model_file=None, model_scale=200e3,
-                   show_satellite=True, show_orbit=True, clouds=False):
+                   show_satellite=True, show_orbit=True, clouds=False,
+                  model_axes=None, ground_track=None, show_stations=False,
+                  station_cones=False, satellite_cone=False):
     """Render a value-coloured point cloud on the textured Earth (3D version of
     the scatter world maps). points_llv: (n, 3) array of longitude [deg],
     latitude [deg], value."""
@@ -383,8 +530,11 @@ def plot_points_3d(sm, satellites, sat_pos_hist, points_llv, scalar_label,
                          point_size=point_size, render_points_as_spheres=True,
                          scalar_bar_args=dict(title=scalar_label, **SCALAR_BAR_ARGS))
     r_content = _add_orbits_and_models(plotter, sm.time_gmst, satellites, sat_pos_hist,
-                                       model_file, model_scale, show_satellite, show_orbit)
+                                       model_file, model_scale, show_satellite,
+                                       show_orbit, model_axes=model_axes)
     _add_stations(plotter, sm)
+    _add_scene_extras(plotter, sm, satellites, ground_track=ground_track,
+                      station_cones=station_cones, satellite_cone=satellite_cone)
     _finish_scene(plotter, satellites, off_screen, file_name, r_content)
 
 
@@ -420,21 +570,27 @@ def _add_grid_field(plotter, lats_deg, lons_deg, values, scalar_label,
 def plot_grid_3d(sm, satellites, sat_pos_hist, lats_deg, lons_deg, values,
                  scalar_label, file_name, cmap='jet', clim=None,
                  model_file=None, model_scale=200e3,
-                 show_satellite=True, show_orbit=True, clouds=False):
+                 show_satellite=True, show_orbit=True, clouds=False,
+                  model_axes=None, ground_track=None, show_stations=False,
+                  station_cones=False, satellite_cone=False):
     """Render a lat/lon grid statistic as a coloured, slightly transparent layer
     draped over the textured Earth (3D version of the pcolormesh world maps).
     values: (num_lat, num_lon) array matching lats_deg/lons_deg."""
     plotter, off_screen = _open_scene(sm, clouds=clouds)
     _add_grid_field(plotter, lats_deg, lons_deg, values, scalar_label, cmap, clim)
     r_content = _add_orbits_and_models(plotter, sm.time_gmst, satellites, sat_pos_hist,
-                                       model_file, model_scale, show_satellite, show_orbit)
+                                       model_file, model_scale, show_satellite,
+                                       show_orbit, model_axes=model_axes)
     _add_stations(plotter, sm)
+    _add_scene_extras(plotter, sm, satellites, ground_track=ground_track,
+                      station_cones=station_cones, satellite_cone=satellite_cone)
     _finish_scene(plotter, satellites, off_screen, file_name, r_content)
 
 
 def movie_3d(sm, satellites, sat_pos_hist_eci, file_name, fps=20,
              track_latlon=None, swath_edges=None, grid=None,
-             model_file=None, model_scale=200e3, show_orbit=True, clouds=False):
+             model_file=None, model_scale=200e3, show_orbit=True, clouds=False,
+             model_axes=None):
     """Fly-along MP4 of the 3D scene (<MP4>True</MP4>): the camera circles once
     around the first satellite while the satellites move along their orbits
     over the simulation time, with the Earth in view and the analysis content
@@ -474,7 +630,7 @@ def movie_3d(sm, satellites, sat_pos_hist_eci, file_name, fps=20,
     models = []
     for satellite in satellites:
         parts = []
-        for mesh, color in _make_satellite_meshes(model_file):
+        for mesh, color in _make_satellite_meshes(model_file, model_axes):
             mesh = mesh.copy()
             base = np.asarray(mesh.points, dtype=float) * model_scale
             plotter.add_mesh(mesh, color=color, smooth_shading=False)
@@ -567,7 +723,9 @@ def movie_3d(sm, satellites, sat_pos_hist_eci, file_name, fps=20,
 
 def plot_contours_3d(sm, satellites, sat_pos_hist, contours, file_name,
                      model_file=None, model_scale=200e3,
-                     show_satellite=True, show_orbit=True, clouds=False):
+                     show_satellite=True, show_orbit=True, clouds=False,
+                  model_axes=None, ground_track=None, show_stations=False,
+                  station_cones=False, satellite_cone=False):
     """Render satellite visibility contours on the textured Earth as filled,
     semi-transparent spherical caps with a bold outline, so the covered region
     reads unambiguously as lying on the surface. contours: list of (n, 2)
@@ -602,6 +760,9 @@ def plot_contours_3d(sm, satellites, sat_pos_hist, contours, file_name,
         outline = np.vstack([ring, ring[:1]])
         plotter.add_mesh(pv.lines_from_points(outline), color=color, line_width=5)
     r_content = _add_orbits_and_models(plotter, sm.time_gmst, satellites, sat_pos_hist,
-                                       model_file, model_scale, show_satellite, show_orbit)
+                                       model_file, model_scale, show_satellite,
+                                       show_orbit, model_axes=model_axes)
     _add_stations(plotter, sm)
+    _add_scene_extras(plotter, sm, satellites, ground_track=ground_track,
+                      station_cones=station_cones, satellite_cone=satellite_cone)
     _finish_scene(plotter, satellites, off_screen, file_name, r_content)

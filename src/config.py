@@ -18,7 +18,7 @@ from analysis_nav import *
 from analysis_orb import *
 from analysis_sat import *  # sat_ platform subsystem analyses (thermal, AOCS, power, data)
 
-from segments import Constellation, Satellite, Station, User, Ground2SpaceLink, User2SpaceLink, Space2SpaceLink
+from segments import Constellation, Satellite, Station, User, Ground2SpaceLink, User2SpaceLink, Space2SpaceLink, det_sso_raan
 import logging_svs as ls
 import misc_fn
 import copy
@@ -188,6 +188,12 @@ class AppConfig:
                 if satellite.find('LTAN') is not None:
                     sat.kepler.inclination =  math.acos(-pow(sat.kepler.semi_major_axis/12352000,7/2))
                     sat.ltan = float(satellite.find('LTAN').text)
+                    # RAAN from the LTAN already at load: the HPOP/SGP4 initial
+                    # states and the analytic uses (collision screening, delta-v
+                    # budgets, eclipse year overview) need the correct node -
+                    # previously it stayed 0 for LTAN satellites under HPOP,
+                    # silently shifting the local time of the simulated orbit
+                    sat.kepler.right_ascension = det_sso_raan(sat, sat.kepler.epoch_mjd)
                 else:
                     sat.kepler.inclination = radians(float(satellite.find('Inclination').text))
                     sat.kepler.right_ascension = radians(float(satellite.find('RAAN').text))

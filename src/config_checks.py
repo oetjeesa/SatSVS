@@ -14,7 +14,8 @@ import logging_svs as ls
 
 # 3D-plot options shared by every world-map analysis (AnalysisPlot3D mixin)
 PLOT3D_PARAMS = {'Plot3D', 'ShowSatellite', 'ShowOrbit', 'SatelliteModelFile',
-                 'SatelliteModelScale', 'MP4', 'EarthClouds'}
+                 'SatelliteModelScale', 'ModelRamAxis', 'ModelNadirAxis',
+                 'MP4', 'EarthClouds', 'StationCones', 'SatelliteCone'}
 
 # 2D-map decorations shared by every world-map analysis (AnalysisMap2D mixin)
 MAP2D_PARAMS = {'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack',
@@ -102,7 +103,8 @@ ANALYSIS_PARAMS = {
                  'MaxPointingOffset', 'ResidualDipole', 'DragArea', 'DragCoefficient',
                  'SrpArea', 'Reflectivity', 'CopOffset', 'WheelMomentum'},
     'sat_drag_coefficient': {'ConstellationID', 'SatelliteID', 'SatelliteModelFile',
-                             'SatelliteModelScale', 'AccommodationCoefficient',
+                             'SatelliteModelScale', 'ModelRamAxis', 'ModelNadirAxis',
+                             'AccommodationCoefficient',
                              'WallTemperature', 'ExosphericTemperature',
                              'AttitudeStep', 'Shadowing', 'MaxFacets'},
 }
@@ -234,7 +236,7 @@ BOOL_TAGS = {'IncludeStation2SpaceLinks', 'IncludeUser2SpaceLinks',
              'IncludeGas', 'IncludeScintillation', 'IncludeClouds', 'Revisit',
              'Plot3D', 'ShowSatellite', 'ShowOrbit', 'MP4', 'EarthClouds',
              'ShowStations', 'ShowUsers', 'EarthImage', 'ShowGroundTrack',
-             'Coastlines', 'Report', 'Shadowing',
+             'Coastlines', 'Report', 'Shadowing', 'StationCones', 'SatelliteCone',
              'Geopotential', 'EarthPoleRotation', 'Drag', 'SolarRadiationPressure',
              'ThirdBodySun', 'ThirdBodyMoon', 'ThirdBodyPlanets', 'SolidTides',
              'OceanTides', 'Relativity'}

@@ -477,7 +477,11 @@ on closing it. The following parameters in the Analysis block control it:
 <ShowOrbit>True</ShowOrbit>
 <SatelliteModelFile>../input/my_satellite.stl</SatelliteModelFile>
 <SatelliteModelScale>200000</SatelliteModelScale>
+<ModelRamAxis>+x</ModelRamAxis>
+<ModelNadirAxis>+z</ModelNadirAxis>
 <EarthClouds>False</EarthClouds>
+<StationCones>False</StationCones>
+<SatelliteCone>False</SatelliteCone>
 <MP4>False</MP4>
 ```
 - Plot3D: enables the 3D plot (default False).
@@ -489,8 +493,21 @@ on closing it. The following parameters in the Analysis block control it:
   The track is the inertial orbit path over the simulation, oriented as the
   Earth stands at the final epoch — i.e. the familiar orbit ellipse(s) (the
   path relative to the rotating Earth is what the ground track shows).
-- SatelliteModelFile: optional satellite mesh file (STL/OBJ/PLY/VTK, +x flight
-  direction, +y solar panel axis, +z towards nadir).
+- SatelliteModelFile: optional satellite mesh file. A monochrome mesh
+  (STL/OBJ/PLY/VTK) is drawn light gray; a __glTF export (.glb/.gltf__, e.g.
+  from Blender) keeps its material colours.
+- ModelRamAxis / ModelNadirAxis: which axes of the model file point along the
+  flight (ram) and nadir directions (defaults `+x` and `+z`) — model files are
+  rarely drawn in the tool's body convention; e.g. a model with the ram along
+  its y axis uses `<ModelRamAxis>+y</ModelRamAxis>`. The same tags apply in
+  sat_drag_coefficient so the aerodynamics uses the same orientation.
+- StationCones: translucent visibility cone of every ground station (opening
+  90 deg minus its elevation mask, up to the first satellite's altitude).
+- SatelliteCone: translucent cone from each satellite down to its
+  geometric-horizon circle on the surface.
+- The 2D map decorations `<ShowGroundTrack>` and `<ShowStations>` also apply to
+  the 3D view: the recorded subsatellite track is drawn on the globe and the
+  stations as magenta markers.
 - SatelliteModelScale: size of the (hugely exaggerated) satellite model in
   metres, default 200000, so that it is visible at globe scale. For MEO
   constellations like GPS a larger value (e.g. 500000) is recommended.
@@ -1980,6 +1997,8 @@ Optional in the analysis part are:
     <SatelliteID>1</SatelliteID>
     <SatelliteModelFile>../input/satellite.stl</SatelliteModelFile>
     <SatelliteModelScale>1.0</SatelliteModelScale>
+    <ModelRamAxis>+x</ModelRamAxis>
+    <ModelNadirAxis>+z</ModelNadirAxis>
     <AccommodationCoefficient>0.93</AccommodationCoefficient>
     <WallTemperature>300</WallTemperature>
     <ExosphericTemperature>1000</ExosphericTemperature>

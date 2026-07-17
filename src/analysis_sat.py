@@ -808,6 +808,8 @@ class AnalysisSatDragCoefficient(AnalysisBase):
         self.satellite_id = 0  # Optional selection
         self.model_file = None  # STL in metres (default: built-in model)
         self.model_scale = 1.0  # Metres per STL unit
+        self.model_ram_axis = '+x'  # Model axis pointing along flight/ram
+        self.model_nadir_axis = '+z'  # Model axis pointing to nadir
         self.accommodation = 0.93  # Energy accommodation coefficient [-]
         self.wall_temp = 300.0  # Spacecraft surface temperature [K]
         self.t_exo = 1000.0  # Exospheric temperature [K]
@@ -827,6 +829,10 @@ class AnalysisSatDragCoefficient(AnalysisBase):
             self.model_file = node.find('SatelliteModelFile').text
         if node.find('SatelliteModelScale') is not None:
             self.model_scale = float(node.find('SatelliteModelScale').text)
+        if node.find('ModelRamAxis') is not None:
+            self.model_ram_axis = node.find('ModelRamAxis').text.strip()
+        if node.find('ModelNadirAxis') is not None:
+            self.model_nadir_axis = node.find('ModelNadirAxis').text.strip()
         if node.find('AccommodationCoefficient') is not None:
             self.accommodation = float(node.find('AccommodationCoefficient').text)
         if node.find('WallTemperature') is not None:
@@ -846,8 +852,17 @@ class AnalysisSatDragCoefficient(AnalysisBase):
         import pyvista as pv
         if self.model_file:
             mesh = pv.read(misc_fn.resolve_path(self.model_file))
+            if isinstance(mesh, pv.MultiBlock):  # e.g. glTF/GLB geometry
+                mesh = mesh.combine().extract_surface()
             if self.model_scale != 1.0:
                 mesh = mesh.scale(self.model_scale)
+            # Rotate the STL into the body convention (+x ram, +z nadir) when
+            # the model is drawn along other axes (<ModelRamAxis> etc.)
+            rotation = misc_fn.model_axes_rotation(self.model_ram_axis,
+                                                   self.model_nadir_axis)
+            if rotation is not None:
+                mesh = mesh.copy()
+                mesh.points = np.asarray(mesh.points, dtype=float) @ rotation.T
         else:
             # Built-in model of plot_3d (bus + two solar panels), taken as
             # metres: a ~1 m class satellite with a 5.4 m panel span

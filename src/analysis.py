@@ -263,8 +263,12 @@ class AnalysisPlot3D:
         self.show_orbit = True  # Draw the orbital track(s)
         self.model_file = None  # Optional satellite mesh (STL/OBJ/PLY/VTK)
         self.model_scale = 200e3  # Satellite model size in m (exaggerated)
+        self.model_ram_axis = '+x'  # Model axis pointing along flight/ram
+        self.model_nadir_axis = '+z'  # Model axis pointing to nadir
         self.mp4 = False  # Optional MP4 movies of the 2D and 3D world maps
         self.earth_clouds = False  # Cloud layer on the 3D globe
+        self.station_cones = False  # Station-to-orbit visibility cones (3D)
+        self.satellite_cone = False  # Satellite-to-Earth visibility cone (3D)
         # (num_sat, num_epoch, 3) ECI positions: the orbit is drawn as the
         # inertial path oriented at the final epoch (plot_3d rotates it by the
         # final GMST), which reads as the familiar orbit ellipse instead of the
@@ -282,10 +286,18 @@ class AnalysisPlot3D:
             self.model_file = misc_fn.resolve_path(node.find('SatelliteModelFile').text)
         if node.find('SatelliteModelScale') is not None:
             self.model_scale = float(node.find('SatelliteModelScale').text)
+        if node.find('ModelRamAxis') is not None:
+            self.model_ram_axis = node.find('ModelRamAxis').text.strip()
+        if node.find('ModelNadirAxis') is not None:
+            self.model_nadir_axis = node.find('ModelNadirAxis').text.strip()
         if node.find('MP4') is not None:
             self.mp4 = misc_fn.str2bool(node.find('MP4').text)
         if node.find('EarthClouds') is not None:
             self.earth_clouds = misc_fn.str2bool(node.find('EarthClouds').text)
+        if node.find('StationCones') is not None:
+            self.station_cones = misc_fn.str2bool(node.find('StationCones').text)
+        if node.find('SatelliteCone') is not None:
+            self.satellite_cone = misc_fn.str2bool(node.find('SatelliteCone').text)
 
     def before_loop_3d(self, sm):
         # The 3D movie needs the ECI position history even without ShowOrbit
@@ -308,8 +320,15 @@ class AnalysisPlot3D:
 
     def _kwargs_3d(self):
         return dict(model_file=self.model_file, model_scale=self.model_scale,
+                    model_axes=(self.model_ram_axis, self.model_nadir_axis),
                     show_satellite=self.show_satellite, show_orbit=self.show_orbit,
-                    clouds=self.earth_clouds)
+                    clouds=self.earth_clouds,
+                    # Generic scene layers, shared with the 2D map decorations
+                    ground_track=(self._map2d_track if self.show_ground_track
+                                  else None),
+                    show_stations=self.show_stations,
+                    station_cones=self.station_cones,
+                    satellite_cone=self.satellite_cone)
 
     def render_movie_3d(self, sm, satellites, pos_hist_eci, track_latlon=None,
                         swath_edges=None, grid=None):
@@ -322,6 +341,7 @@ class AnalysisPlot3D:
                      sm.output_path(self.type + '_3d.mp4'),
                      track_latlon=track_latlon, swath_edges=swath_edges, grid=grid,
                      model_file=self.model_file, model_scale=self.model_scale,
+                     model_axes=(self.model_ram_axis, self.model_nadir_axis),
                      show_orbit=self.show_orbit, clouds=self.earth_clouds)
 
     def _sats_and_hist(self, sm, satellites):

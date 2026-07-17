@@ -57,6 +57,30 @@ def track_with_gaps(lon, lat):
     return np.insert(lon, jumps, np.nan), np.insert(lat, jumps, np.nan)
 
 
+def model_axes_rotation(ram_axis, nadir_axis):
+    """3x3 rotation taking satellite model (STL) coordinates into the body
+    frame convention (+x flight/ram, +y completing, +z nadir). The config
+    strings name the MODEL axes that point along ram and nadir, e.g. '+y'
+    and '-z'; models are rarely drawn in the body convention. Returns None
+    for the identity mapping ('+x'/'+z')."""
+    def unit(spec):
+        s = str(spec).strip().lower().replace(' ', '')
+        sign = -1.0 if s.startswith('-') else 1.0
+        idx = {'x': 0, 'y': 1, 'z': 2}[s.lstrip('+-')]
+        v = np.zeros(3)
+        v[idx] = sign
+        return v
+    x_body = unit(ram_axis)
+    z_body = unit(nadir_axis)
+    if abs(np.dot(x_body, z_body)) > 1e-9:
+        raise ValueError(f'ModelRamAxis ({ram_axis}) and ModelNadirAxis '
+                         f'({nadir_axis}) must be orthogonal')
+    if x_body[0] == 1.0 and z_body[2] == 1.0:
+        return None  # Already the body convention
+    y_body = np.cross(z_body, x_body)
+    return np.vstack([x_body, y_body, z_body])  # Rows: body axes in model coords
+
+
 def _fetch_celestrak(query, label, dest_file, min_lines=3):
     """Shared CelesTrak gp.php download into dest_file. Returns True on
     success; on any failure (offline, unknown satellite/group) a warning is
