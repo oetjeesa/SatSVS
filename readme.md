@@ -4,6 +4,40 @@
 
 <img src="/docs/schema.png" alt="schema"/>
 
+## What's new in v3 (2026)
+New analyses (each has its own section below):
+- __Orbit__: __orb_altitude__ (height over ground per orbit and over the run),
+  __orb_environment__ (trapped radiation/SAA, dose vs. shielding, atomic oxygen,
+  micrometeoroids), __orb_deltav_injection__ / __orb_deltav_reentry__ /
+  __orb_deltav_collision__ (launcher-injection correction, two-step controlled
+  re-entry and collision-avoidance maneuver budgets), __orb_collision_check__
+  (CelesTrak conjunction screening with collision probability) and
+  __orb_collision_alt_check__ (catalog objects sharing the altitude band).
+- __Earth observation__: __obs_aoi_revisit__ (revisit over a polygon area of
+  interest) and __obs_target_imaging__ (agility-cone imaging opportunities of
+  point targets).
+- __Satellite platform__ (the former pow_/dat_ analyses renamed to sat_*, plus):
+  __sat_drag_coefficient__ (Sentman free-molecular Cd/CdA from the satellite
+  model geometry) and an analytic full-year eclipse/beta-angle overview in
+  __sat_eclipse_duration__.
+
+Tool-level features:
+- Command line arguments: scenario file and __--output-dir__ per run; config
+  validation at startup with unknown-tag warnings and did-you-mean hints.
+- CSV data dump next to every plot and a pytest golden-CSV regression suite.
+- TLE download from CelesTrak by name/NORAD number (__TLEFromCelestrak__) and
+  full catalog groups (__CelestrakGroup__) with offline caching.
+- HTML mission report per run (__Report__ flag or standalone `py src/report.py
+  <output-dir>`) with the scenario summary and all analysis figures.
+- 2D world maps: continuous ground-track lines, optional __EarthImage__,
+  __ShowStations__, __ShowUsers__, __ShowGroundTrack__ and __Coastlines__
+  decorations; multi-panel figures split into separate suffixed PNGs.
+- 3D globe renders: coloured Blender __.glb/.gltf__ satellite models besides
+  monochrome STL, __ModelRamAxis__/__ModelNadirAxis__ body-frame mapping (also
+  used by sat_drag_coefficient), ground tracks/stations on the globe,
+  __StationCones__ and __SatelliteCone__ visibility cones, smoother Earth and
+  star textures, cloud layer and MP4 fly-along movies.
+
 ## Installation & first run
 Download from github and install the dependencies from the included
 __pyproject.toml__ (run from the repository root):
@@ -432,9 +466,16 @@ The analysis are described below:
 
 ## Analysis parameters
 In order to run an analysis block it has to be uncommented and the parameters adapted. To add a new analysis to the code the following has to be performed:
-- Add a new analysis class at the end of analysis.py
-- Use as a template one of the other analysis classes above or the base analysis class definition
-- Add the class instantiation at the end of config.py
+- Add a new analysis class at the end of the relevant analysis_*.py module
+  (analysis_cov/obs/com/nav/orb/sat), using an existing class or AnalysisBase
+  as a template; write plots via sm.output_path(...) and dump the plotted
+  numbers with self.write_csv(sm, columns, data).
+- Add the type-string to class branch in config.py load_simulation.
+- Register the type and its parameters in config_checks.py (ANALYSIS_PARAMS,
+  ANALYSIS_REQUIRED) so the startup validation knows it.
+- Document it in this readme, add an example block in
+  input/example_analysis_blocks/, and add a test scenario in
+  tests/make_configs.py with goldens via tests/run_test.py.
 
 ### 2D map options
 Every analysis that produces a 2D world map accepts these optional flags in its
